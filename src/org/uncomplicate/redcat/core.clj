@@ -53,13 +53,25 @@
   ((fmap str) [1 2 3])
   => [\"1\" \"2\" \"3\"]
   "
-  ([f functor] (p/fmap functor f))
-  ([f] (or (= identity f) (fn [functor] (fmap f functor)))))
+  ([f functor] 
+    (p/fmap functor f))
+  ([f] 
+    (or (= identity f) 
+        (fn 
+          ([functor] (p/fmap functor f))
+          ([functor & functors] (p/fmap functor f functors)))))
+  ([f functor & functors]
+    (p/fmap functor f functors)))
 
-
-
+;TODO COMMENT
 
 (def pure p/pure)
+
+(defn <*> 
+  ([af as] 
+    (p/<*> as af))
+  ([af as & ass]
+    (p/<*> as af ass)))
 
 (def liftm fmap)
 

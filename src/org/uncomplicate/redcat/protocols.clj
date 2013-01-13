@@ -2,11 +2,11 @@
 
 (defprotocol Functor
   "TODO documentation"
-  (fmap [v g] "TODO documentation"))
+  (fmap [fv g] [fv g fvs] "TODO documentation"))
 
 (defprotocol Applicative
-  (pure [f v] "TODO documentation") 
-  (<*> [fg fv] "TODO documentaion")) 
+  (pure [av v] "TODO documentation") 
+  (<*> [av ag] [av ag avs] "TODO documentaion")) 
   ;perhaps we should always check that all parameters are of f typer and 
   ;if they are not, call wrap to wrap it. Then we do not have to explicitly wrap the parameters
 

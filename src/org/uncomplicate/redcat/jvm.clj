@@ -9,14 +9,21 @@
   (fmap [_ _] nil)
   Applicative
   (wrap [_ _] nil)
-  (<*> [_ _] nil)
+  (<*> 
+    ([_ _] nil)
+    ([_ _ args] nil))
   Monad
   (bind [_ _] nil)
   (join [_] nil))
 
 (extend-type Object
   Functor
-  (fmap [o f] (f o)))
+  (fmap 
+    ([o f] (f o))
+    ([o f os] (apply f o os))))
+  ;Applicative
+  ;(pure [o v] v)
+  ;(<*> [f v] )
 
 (defn op-fun 
   ([e op] (r/monoid op (constantly e)))
@@ -24,31 +31,54 @@
 
 (extend-type clojure.lang.IPersistentCollection
   Functor
-  (fmap [c g] (into (empty c) (r/map g c)))
+  (fmap
+    ([c g] 
+      (into (empty c) (r/map g c)))
+    ([c g cs]
+      (into (empty c) (apply map g c cs))))
   Applicative
-  (pure [c v] (conj (empty c) v))
-  (<*> [cg sv] (bind cg (partial fmap sv)))
+  (pure [c v] 
+    (conj (empty c) v))
+  (<*> 
+    ([cv sg] 
+      (into (empty cv) (r/mapcat #(r/map % cv) sg)));(bind cg (partial fmap sv)))
+    ([cv sg svs] 
+      (into (empty cv) (r/mapcat #(apply map % cv svs) sg))))
   Monad
-  (join [mc] (r/reduce into (empty mc) mc))
-  (bind [c g] (join (fmap c g)))
+  (join [mc] 
+    (into (empty mc) (r/flatten mc)))
+  (bind [c g] 
+    (into (empty c) (r/mapcat g c))); (join (fmap c g)))
   Semigroup
-  (op [c s] (into c s))
+  (op [c s] 
+    (into c s))
   Monoid
-  (id [c] (empty c))
+  (id [c] 
+    (empty c))
   Foldable
-  (fold [c] (r/fold (op-fun (first c)) c))
-  (foldmap [c g] (fold (fmap c g))))
+  (fold [c] 
+    (r/fold (op-fun (first c)) c))
+  (foldmap [c g] 
+    (fold (fmap c g))))
 
 (extend-type clojure.lang.LazySeq
   Functor
-  (fmap [s g] (map g s))
+  (fmap 
+    ([s g] (map g s))
+    ([s g ss] (apply map g s ss)))
   Applicative
-  (pure [_ v] (lazy-seq [v]))
-  (<*> [sg sv] (bind sg (partial fmap sv))))
+  (pure [_ v] (lazy-seq '(v)))
+  (<*> 
+    ([sv sg] 
+      (mapcat #(map % sv) sg)) ;(bind sg (partial fmap sv))))
+    ([sv sg svs]
+      (mapcat #(apply map % sv svs) sg))))
 
 (extend-type clojure.lang.MapEntry
   Functor
-  (fmap [e g] (clojure.lang.MapEntry. (key e) (g (val e)))))
+  (fmap 
+    ([e g] (clojure.lang.MapEntry. (key e) (g (val e))))
+    ([e g es] (clojure.lang.MapEntry. (key e) (apply g (val e) (vals es))))))
   
 (extend-type String
   Functor
@@ -69,7 +99,7 @@
   (fmap [a g] (do (swap! a g) a))
   Applicative
   (pure [a v] (atom v))
-  (<*> [ag av] (fmap av (deref ag)))
+  (<*> [av ag] (fmap av (deref ag)))
   Monad
   (join [ma] (fmap ma deref))
   (bind [a g] (join (fmap a g))))
@@ -79,7 +109,7 @@
   (fmap [r g] (do (alter r g) r))
   Applicative
   (pure [r v] (ref v))
-  (<*> [rg rv] (fmap rv (deref rg)))
+  (<*> [rv rg] (fmap rv (deref rg)))
   Monad
   (join [ma] (fmap ma deref))
   (bind [a g] (join (fmap a g))))

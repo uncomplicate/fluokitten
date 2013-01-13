@@ -1,6 +1,7 @@
 (ns org.uncomplicate.redcat.core-test
   (:use midje.sweet
-        [org.uncomplicate.redcat core jvm])
+        org.uncomplicate.redcat.core)
+  (:use org.uncomplicate.redcat.jvm)
   (:require [clojure.data.generators :as gen])
   (:require [clojure.string :as s]))
 
@@ -8,12 +9,15 @@
   (first (apply gen/one-of (map vector fs))))
 
 ;====================================== Functor tests ==========================================
-(defmacro functor-law2 [fgen xgen]
+;TODO test varargs functor!
+(defmacro functor-law2
+  ([fgen xgen] `(functor-law2 ~fgen ~fgen ~xgen))
+  ([fgen1 fgen2 xgen]
   `(formula "Second functor law."
-            [f1# ~fgen
-             f2# ~fgen
+            [f1# ~fgen1
+             f2# ~fgen2
              x# ~xgen]
-            (fmap (comp f1# f2#) x#) => (fmap f1# (fmap f2# x#))))
+            (fmap (comp f1# f2#) x#) => (fmap f1# (fmap f2# x#)))))
 
 (defmacro fmap-keeps-type [f xgen]
   `(formula "fmap should return data of the same type as the functor argument."
@@ -84,6 +88,30 @@
 ;Functor functions on an atom
 (dosync (functor-law2 (gen-fn (partial * 100) inc) (ref (gen/int))))
 (dosync (fmap-keeps-type inc (ref (gen/int))))
+
+;Functor functions on a function
+(functor-law2 (gen-fn (partial * 100) inc) (gen-fn (partial * 44) dec) (gen/int))
+
 ;============================= Applicative tests ================================================
 
+;Applicative functions on an Object
+;(facts
+ ; (pure 3 1) => 1)
 
+(defmacro applicative-law1 [fgen xgen]
+  `(formula "First applicative law."
+            [f# ~fgen
+             x# ~xgen]
+            (<*> (pure x# f#) x#) => (fmap f# x#)))
+
+(defmacro applicative-law2 [xgen]
+  `(formula "Second applicative law."
+            [x# ~xgen]
+            (<*> (pure x# identity) x#) => x#))
+
+;Applicative function on a vector
+(applicative-law1 (gen-fn inc (partial * 10)) (gen/vec (gen/int)))
+(applicative-law2 (gen/vec (gen/int)))
+
+(fact
+  (<*> [+] [1 2 3] [10 20 30] [100 200 300]) => [111 222 333])
