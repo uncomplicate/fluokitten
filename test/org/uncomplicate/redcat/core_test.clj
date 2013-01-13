@@ -4,7 +4,7 @@
   (:use org.uncomplicate.redcat.jvm)
   (:require [clojure.data.generators :as gen])
   (:require [clojure.string :as s]))
-
+(comment
 (defn gen-fn [& fs]
   (first (apply gen/one-of (map vector fs))))
 
@@ -90,7 +90,7 @@
 (dosync (fmap-keeps-type inc (ref (gen/int))))
 
 ;Functor functions on a function
-(functor-law2 (gen-fn (partial * 100) inc) (gen-fn (partial * 44) dec) (gen/int))
+;not a proper test at all!!(functor-law2 (gen-fn (partial * 100) inc) (gen-fn (partial * 44) dec) (gen/int))
 
 ;============================= Applicative tests ================================================
 
@@ -115,3 +115,5 @@
 
 (fact
   (<*> [+] [1 2 3] [10 20 30] [100 200 300]) => [111 222 333])
+)
+(fact ((fmap inc dec dec) 1) => 0)

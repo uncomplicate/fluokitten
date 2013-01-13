@@ -6,7 +6,9 @@
 
 (extend-type nil
   Functor
-  (fmap [_ _] nil)
+  (fmap
+    ([_ _] nil)
+    ([_ _ args] nil))
   Applicative
   (wrap [_ _] nil)
   (<*> 
@@ -19,8 +21,12 @@
 (extend-type Object
   Functor
   (fmap 
-    ([o f] (f o))
-    ([o f os] (apply f o os))))
+    ([o f]
+      (f o))
+    ([o f os] 
+      (if (some nil? os) 
+        nil 
+        (apply f o os)))))
   ;Applicative
   ;(pure [o v] v)
   ;(<*> [f v] )
@@ -47,13 +53,13 @@
   Monad
   (join [mc] 
     (into (empty mc) (r/flatten mc)))
-  (bind [c g] 
+  (bind [c g]
     (into (empty c) (r/mapcat g c))); (join (fmap c g)))
   Semigroup
   (op [c s] 
     (into c s))
   Monoid
-  (id [c] 
+  (id [c]
     (empty c))
   Foldable
   (fold [c] 
@@ -92,7 +98,11 @@
 
 (extend-type clojure.lang.Fn
   Functor
-  (fmap [f g] (comp g f)))
+  (fmap 
+    ([f g] 
+      (comp g f))
+    ([f g gs] 
+      (apply comp g f gs))))
 
 (extend-type clojure.lang.Atom
   Functor
