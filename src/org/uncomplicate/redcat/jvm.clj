@@ -16,7 +16,11 @@
     ([_ _ args] nil))
   Monad
   (bind [_ _] nil)
-  (join [_] nil))
+  (join [_] nil)
+  Semigroup
+  (op [_ _] nil)
+  Monoid
+  (id [c] nil))
 
 (extend-type Object
   Functor
@@ -27,13 +31,17 @@
       (if (some nil? os) 
         nil 
         (apply f o os)))))
-  ;Applicative
-  ;(pure [o v] v)
-  ;(<*> [f v] )
 
 (defn op-fun 
   ([e op] (r/monoid op (constantly e)))
   ([x] (op-fun (id x) op)))
+
+(defn monoidalf
+  ([e] 
+    (let [ide (id e)]
+      (fn 
+        ([] ide)
+        ([e1 e2] (op e1 e2))))))
 
 (extend-type clojure.lang.IPersistentCollection
   Functor
@@ -63,7 +71,7 @@
     (empty c))
   Foldable
   (fold [c] 
-    (r/fold (op-fun (first c)) c))
+    (r/fold (monoidalf (first c)) c))
   (foldmap [c g] 
     (fold (fmap c g))))
 
@@ -73,7 +81,9 @@
     ([s g] (map g s))
     ([s g ss] (apply map g s ss)))
   Applicative
-  (pure [_ v] (lazy-seq '(v)))
+  (pure [_ v] 
+    (let [p [v]] 
+      (lazy-seq p)))
   (<*> 
     ([sv sg] 
       (mapcat #(map % sv) sg)) ;(bind sg (partial fmap sv))))
@@ -88,7 +98,15 @@
   
 (extend-type String
   Functor
-  (fmap [s g] (apply str (g s))))
+  (fmap 
+    ([s g] 
+      (apply str (g s)))
+    ([s g ss] (apply str (apply g s ss))))
+  Semigroup
+  (op [s s1] 
+    (str s s1))
+  Monoid
+  (id [s] (str)))
 
 (extend-type Number
   Semigroup
@@ -106,7 +124,9 @@
 
 (extend-type clojure.lang.Atom
   Functor
-  (fmap [a g] (do (swap! a g) a))
+  (fmap 
+    ([a g] (do (swap! a g) a))
+    ([a g args] (do (apply swap! a g args) a)))
   Applicative
   (pure [a v] (atom v))
   (<*> [av ag] (fmap av (deref ag)))
@@ -116,7 +136,9 @@
 
 (extend-type clojure.lang.Ref
   Functor
-  (fmap [r g] (do (alter r g) r))
+  (fmap 
+    ([r g] (do (alter r g) r))
+    ([a g args] (do (apply alter a g args) a)))
   Applicative
   (pure [r v] (ref v))
   (<*> [rv rg] (fmap rv (deref rg)))
