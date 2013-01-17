@@ -10,7 +10,7 @@
     ([_ _] nil)
     ([_ _ args] nil))
   Applicative
-  (wrap [_ _] nil)
+  (pure [_ _] nil)
   (<*> 
     ([_ _] nil)
     ([_ _ args] nil))
@@ -43,16 +43,74 @@
         ([] ide)
         ([e1 e2] (op e1 e2))))))
 
-(extend-type clojure.lang.IPersistentCollection
+;=============== Functor implementations =========================
+
+(defn reducible-fmap
+  ([c g]
+    (into (empty c) (r/map g c)))
+  ([c g cs]
+    (into (empty c) (apply map g c cs))))
+
+(defn seq-fmap
+  ([c g] 
+    (into (empty c) (into (list) (map g c))))
+  ([c g cs]
+    (into (empty c) (into (list) (apply map g c cs)))))
+
+(defn lazy-fmap
+  ([s g] 
+    (map g s))
+  ([s g ss] 
+    (apply map g s ss)))
+
+(defn coll-fmap
+  ([c g] 
+    (into (empty c) (map g c)))
+  ([c g ss] 
+    (into (empty c) (apply map g c ss))))
+
+(extend clojure.lang.IPersistentCollection
   Functor
-  (fmap
-    ([c g] 
-      (into (empty c) (r/map g c)))
-    ([c g cs]
-      (into (empty c) (apply map g c cs))))
+  {:fmap coll-fmap})
+
+(extend clojure.lang.APersistentVector
+  Functor
+  {:fmap reducible-fmap})
+
+(extend clojure.lang.ASeq
+  Functor
+  {:fmap seq-fmap})
+
+(extend clojure.lang.LazySeq
+  Functor
+  {:fmap lazy-fmap})
+
+(extend clojure.lang.APersistentSet
+  Functor
+  {:fmap reducible-fmap})
+
+(extend clojure.lang.APersistentMap
+  Functor
+  {:fmap reducible-fmap})
+
+
+
+(extend-protocol Applicative
+  clojure.lang.PersistentVector
+  (pure [cv v]
+    [v])
+  (<*> 
+    ([cv sg] 
+      (into (empty cv) (r/mapcat #(r/map % cv) sg)))
+    ([cv sg svs] 
+      (into (empty cv) (r/mapcat #(apply map % cv svs) sg)))))
+  
+(extend-type clojure.lang.IPersistentCollection
   Applicative
-  (pure [c v] 
-    (conj (empty c) v))
+  (pure [cv v]
+    (conj (empty cv) v))
+  (wrap [cv v]
+     (conj (empty cv) v))
   (<*> 
     ([cv sg] 
       (into (empty cv) (r/mapcat #(r/map % cv) sg)));(bind cg (partial fmap sv)))

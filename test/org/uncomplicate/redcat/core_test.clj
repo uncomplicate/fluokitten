@@ -1,7 +1,7 @@
 (ns org.uncomplicate.redcat.core-test
-  (:use midje.sweet
-        org.uncomplicate.redcat.core)
-  (:use org.uncomplicate.redcat.jvm)
+  (:use org.uncomplicate.redcat.core
+        org.uncomplicate.redcat.jvm
+        midje.sweet)
   (:require [clojure.data.generators :as gen])
   (:require [clojure.string :as s]))
 
@@ -26,7 +26,6 @@
 
 (fact "First functor law."
       (fmap identity) => identity)
-
 ;nil as a functor
 (functor-law2 (gen-fn inc dec) nil)
 
@@ -53,11 +52,11 @@
 
 ;Functor functions on a vector
 (functor-law2 (gen-fn (partial * 100) inc) (gen/vec gen/int))
-(fmap-keeps-type inc (partial gen/vec gen/int))
+(fmap-keeps-type inc (gen/vec gen/int))
 
 ;Functor functions on a list
-(functor-law2 (gen-fn (partial * 100) inc) (gen/list gen/int))
-(fmap-keeps-type inc (partial gen/list gen/int))
+(functor-law2 (gen-fn (partial * 100) inc) (into (list) (gen/list gen/int)))
+(fmap-keeps-type inc (into (list) (gen/list gen/int)))
 
 ;Functor functions on a set
 (functor-law2 (gen-fn (partial * 100) inc) (gen/set gen/int))
@@ -74,20 +73,20 @@
 (fmap-keeps-type inc (lazy-seq (gen/list gen/int)))
 
 ;Functor functions on a map entry
-;(functor-law2 (gen-fn (partial * 100) inc) (clojure.lang.MapEntry (gen/keyword) (gen/int))) ;#(or (first (gen/hash-map gen/keyword gen/int)) (first {:a 1})))
-;(fmap-keeps-type inc (clojure.lang.MapEntry (gen/keyword) (gen/int)));#(or (first (gen/hash-map gen/keyword gen/int)) (first {:a 1})))
+(functor-law2 (gen-fn (partial * 100) inc) (clojure.lang.MapEntry. (gen/keyword) (gen/int))) ;#(or (first (gen/hash-map gen/keyword gen/int)) (first {:a 1})))
+(fmap-keeps-type inc (clojure.lang.MapEntry. (gen/keyword) (gen/int)));#(or (first (gen/hash-map gen/keyword gen/int)) (first {:a 1})))
 
 ;Functor functions on a map (depends on proper behavior of map entries as functors)
 (functor-law2 (fmap (gen-fn (partial * 100) inc)) (gen/hash-map gen/keyword gen/int))
 (fmap-keeps-type (fmap inc) (gen/hash-map gen/keyword gen/int))
 
 ;Functor functions on an atom
-;(functor-law2 (gen-fn (partial * 100) inc) #(atom (gen/int)))
-;(fmap-keeps-type  inc #(atom (gen/int)))
+(functor-law2 (gen-fn (partial * 100) inc) (atom (gen/int)))
+(fmap-keeps-type  inc (atom (gen/int)))
 
 ;Functor functions on a ref
-;(dosync (functor-law2 (gen-fn (partial * 100) inc) #(ref (gen/int))))
-;(dosync (fmap-keeps-type inc #(ref (gen/int))))
+(dosync (functor-law2 (gen-fn (partial * 100) inc) (ref (gen/int))))
+(dosync (fmap-keeps-type inc (ref (gen/int))))
 
 ;Functor functions on a function
 ;not a proper test at all!!(functor-law2 (gen-fn (partial * 100) inc) (gen-fn (partial * 44) dec) (gen/int))
@@ -126,13 +125,18 @@
              ap# ~apgen]
     (<*> (pure ap# f#) (pure ap# x#)) => (<*> (pure ap# ($ x#)) (pure ap# f#))))
 
+(fact
+  (<*> [+] [1 2 3] [10 20 30] [100 200 300]) => [111 222 333])
+
+(fact
+  (pure [] 1) => [1])
+
 ;Vectors
 (applicative-law1 (gen-fn inc (partial * 10)) (gen/vec gen/int))
 (applicative-law2-identity (gen/vec gen/int))
 (applicative-law3-composition (gen/one-of [inc] [(partial * 10)]) (gen/vec gen/int))
 (applicative-law4-homomorphism (gen/vec gen/int) (gen-fn inc (partial * 10)) (gen/int))
 (applicative-law5-interchange (gen/vec gen/int) (gen-fn inc (partial * 10)) (gen/int))
-
 ;Lists
 (applicative-law1 (gen-fn inc (partial * 10)) (apply list (gen/list (gen/int))))
 (applicative-law2-identity (apply list (gen/list (gen/int))))
@@ -146,7 +150,7 @@
 (fact
   (<*> [+] [1 2 3] [10 20 30] [100 200 300]) => [111 222 333])
 
-(fact ((fmap inc dec dec) 1) => 0)
+(fact ((fmap inc dec dec) 1) => 0) 
 
         
         

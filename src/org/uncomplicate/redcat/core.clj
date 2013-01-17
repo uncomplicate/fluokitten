@@ -79,7 +79,9 @@
 
 ;TODO COMMENT
 
-(def pure p/pure)
+(def pure (fn [a v] (p/pure a v))) 
+; (def pure p/pure) causes strange unreliable execution of midje tests.
+; Investigate later
 
 (defn <*> 
   ([af as] 
