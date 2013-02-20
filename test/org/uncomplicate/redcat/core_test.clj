@@ -244,18 +244,19 @@
 
 (applicative-law4-homomorphism (first {57 57}) inc 5)
 
-(applicative-law4-homomorphism (first {58 58}) inc 5)
+(applicative-law5-interchange (first {58 58}) inc 5)
 
 ;;-------------- Map ----------------
 ;;figure out how to create pure map. probably it shouid require [k v] pairs
 (fact (pure {1 1} 2) => {0 2})
 
-(applicative-law1 (fn [[k v]] [k (inc v)]) {5 5})
+(applicative-law1 (fmap inc) {6 6 0 93})
 
+(applicative-law2-identity {6 6 -4 -445})
 
-;;(applicative-law2-identity (comp inc key) {:a 5})
-
-;;(applicative-law3-composition {inc} #{(partial * 10)} #{4 -5 -6})
+(applicative-law3-composition {0 (fmap inc)}
+                              {0 (fmap (partial * 10))}
+                              {6 6 -5 -6})
 
 ;;(applicative-law4-homomorphism {} inc 4)
 
