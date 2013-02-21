@@ -51,6 +51,12 @@
   ([c g cs]
     (into (empty c) (apply map g c cs))))
 
+(defn map-fmap
+  ([m g]
+     (into (empty m) (r/map (fn [[k v]] [k (g v)]) m)))
+  ([c g cs]
+    (into (empty c) (apply map g c cs))))
+
 (defn seq-fmap
   ([s g]
     (into (empty s) (into (list) (map g s))))
@@ -79,13 +85,19 @@
 
 (defn map-<*>
   ([mv mg]
-     (into (empty mv) (r/mapcat #(r/map (val %) mv) mg)))
+     (let [f (fn [[res m] [kg vg]]
+               (if (= identity kg)
+                 [(map-fmap m vg) m]
+                 (if-let [[kv vv] (find m kg)]
+                   [(conj res [kv (vg vv)]) m]
+                   [res m])))]
+       (merge mv (first (reduce f [{} mv] mg)))))
   ([mv mg mvs]
-     (into (empty mv) (r/mapcat #(apply map (val %) mv mvs) mg))))
+     ([])));;TODO
 
 (defn seq-<*>
   ([cv sg]
-     (into (empty cv) (into (list) (mapcat #(map % cv) sg))));(bind cg (partial fmap sv)))
+     (into (empty cv) (into (list) (mapcat #(map % cv) sg))));(bind cg (p fmap sv)))
   ([cv sg svs]
      (into (empty cv) (into (list) (mapcat #(apply map % cv svs) sg)))))
 
@@ -142,13 +154,9 @@
 
 (extend clojure.lang.APersistentMap
   Functor
-  {:fmap reducible-fmap}
+  {:fmap map-fmap}
   Applicative
-  {:pure (fn [m v] (assoc (empty m)
-                    (if-let [[k _] (first m)]
-                      (id k)
-                      nil)
-                    v))
+  {:pure (fn [m v] (assoc (empty m) identity v))
    :<*> map-<*>})
 
 (extend-type clojure.lang.MapEntry
@@ -162,9 +170,11 @@
         (apply g ve (vals es)))))
   Applicative
   (pure [[ke _] v]
-    (clojure.lang.MapEntry. (id ke) v))
-  (<*> [[kv vv] [_ vg]]
-    (clojure.lang.MapEntry. kv (vg vv))))
+    (clojure.lang.MapEntry. ke v))
+  (<*> [e [kg vg]]
+    (if (= (key e) kg)
+      (clojure.lang.MapEntry. kg (vg (val e)))
+      e)))
 
 (extend-type clojure.lang.IPersistentCollection
   Monad
@@ -210,7 +220,11 @@
     ([f g]
       (comp g f))
     ([f g gs]
-      (apply comp g f gs))))
+       (apply comp g f gs)))
+  Semigroup
+  (op [f g] (comp f g))
+  Monoid
+  (id [f] identity))
 
 ;;====================== References ========================
 (extend-type clojure.lang.Atom

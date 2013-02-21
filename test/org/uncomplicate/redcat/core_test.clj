@@ -102,11 +102,11 @@
 
 ;Functor functions on a map (depends on proper behavior of map entries as functors)
 (functor-law2
- (fmap (gen-fn (partial * 100) inc))
+ (gen-fn (partial * 100) inc)
  (gen/hash-map gen/keyword gen/int))
 
 (fmap-keeps-type
- (fmap inc)
+ inc
  (gen/hash-map gen/keyword gen/int))
 
 ;Functor functions on an atom
@@ -248,18 +248,23 @@
 
 ;;-------------- Map ----------------
 ;;figure out how to create pure map. probably it shouid require [k v] pairs
-(fact (pure {1 1} 2) => {0 2})
+(fact (pure {} 2) => {identity 2})
 
-(applicative-law1 (fmap inc) {6 6 0 93})
+(fact (<*> {:a inc :b dec} {:a 1 :b 100}) => {:a 2 :b 99})
 
-(applicative-law2-identity {6 6 -4 -445})
+(fact (-> (<*> {identity #(partial comp %)} {6 inc}) (<*> {6 inc}) (<*> {6 5}))
+      => {6 7})
 
-(applicative-law3-composition {0 (fmap inc)}
-                              {0 (fmap (partial * 10))}
+(applicative-law1 inc {identity 6})
+
+(applicative-law2-identity {identity 6})
+
+(applicative-law3-composition {6 inc}
+                              {6 (partial * 10)}
                               {6 6 -5 -6})
 
-;;(applicative-law4-homomorphism {} inc 4)
+(applicative-law4-homomorphism {} inc 4)
 
-;;(applicative-law5-interchange {} inc 4)
+(applicative-law5-interchange {} inc 4)
 
-;;(<*>-keeps-type inc {4 -2 5})
+(<*>-keeps-type inc {4 -2 5 5})
