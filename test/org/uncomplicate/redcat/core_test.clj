@@ -250,14 +250,16 @@
 ;;figure out how to create pure map. probably it shouid require [k v] pairs
 (fact (pure {} 2) => {identity 2})
 
-(fact (<*> {:a inc :b dec} {:a 1 :b 100}) => {:a 2 :b 99})
-
-(fact (-> (<*> {identity #(partial comp %)} {6 inc}) (<*> {6 inc}) (<*> {6 5}))
-      => {6 7})
+(fact (<*> {:a inc :b dec} {:a 1 :b 100})
+      => {:a 2 :b 99})
 
 (applicative-law1 inc {identity 6})
 
+(applicative-law1 inc {6 6})
+
 (applicative-law2-identity {identity 6})
+
+(applicative-law2-identity {6 6})
 
 (applicative-law3-composition {6 inc}
                               {6 (partial * 10)}

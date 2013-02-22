@@ -86,14 +86,17 @@
 (defn map-<*>
   ([mv mg]
      (let [f (fn [[res m] [kg vg]]
-               (if (= identity kg)
-                 [(map-fmap m vg) m]
+               ;(if (= identity kg)
+                ; [(map-fmap m vg) m]
                  (if-let [[kv vv] (find m kg)]
                    [(conj res [kv (vg vv)]) m]
-                   [res m])))]
-       (merge mv (first (reduce f [{} mv] mg)))))
+                   [res m]))]
+       (let [imv (if-let [ig (mg identity)]
+                   (map-fmap mv ig)
+                   mv)]
+         (merge imv (first (reduce f [{} imv] (dissoc mg identity)))))))
   ([mv mg mvs]
-     ([])));;TODO
+     ([])));;TOSO
 
 (defn seq-<*>
   ([cv sg]
