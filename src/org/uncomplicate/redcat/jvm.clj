@@ -86,8 +86,6 @@
 (defn map-<*>
   ([mv mg]
      (let [f (fn [[res m] [kg vg]]
-               ;(if (= identity kg)
-                ; [(map-fmap m vg) m]
                  (if-let [[kv vv] (find m kg)]
                    [(conj res [kv (vg vv)]) m]
                    [res m]))]
@@ -96,11 +94,11 @@
                    mv)]
          (merge imv (first (reduce f [{} imv] (dissoc mg identity)))))))
   ([mv mg mvs]
-     ([])));;TOSO
+     (throw (java.lang.UnsupportedOperationException. "TODO"))));;TODO
 
 (defn seq-<*>
   ([cv sg]
-     (into (empty cv) (into (list) (mapcat #(map % cv) sg))));(bind cg (p fmap sv)))
+     (into (empty cv) (into (list) (mapcat #(map % cv) sg))))
   ([cv sg svs]
      (into (empty cv) (into (list) (mapcat #(apply map % cv svs) sg)))))
 

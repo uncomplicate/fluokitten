@@ -2,43 +2,34 @@
   (:use org.uncomplicate.redcat.core
         org.uncomplicate.redcat.jvm
         midje.sweet)
-  (:require [clojure.data.generators :as gen])
   (:require [clojure.string :as s]))
-
-(defn gen-fn [& fs]
-  (first (apply gen/one-of (map vector fs))))
 
 ;====================================== Functor tests ==========================================
 ;TODO test varargs functor!
 (defmacro functor-law2
-  ([fgen xgen] `(functor-law2 ~fgen ~fgen ~xgen))
-  ([fgen1 fgen2 xgen]
-    `(formula "Second functor law."
-              [f1# ~fgen1
-               f2# ~fgen2
-               x# ~xgen]
-              (= (fmap (comp f1# f2#) x#) (fmap f1# (fmap f2# x#))) => true?)))
+  ([f x] `(functor-law2 ~f ~f ~x))
+  ([f1 f2 x]
+     `(fact "Second functor law."
+            (fmap (comp ~f1 ~f2) ~x) => (fmap ~f1 (fmap ~f2 ~x)))))
 
-(defmacro fmap-keeps-type [f xgen]
-  `(formula "fmap should return data of the same type
+(defmacro fmap-keeps-type [f x]
+  `(fact "fmap should return data of the same type
             as the functor argument."
-            [x# ~xgen]
-            (type (fmap ~f x#)) => (type x#)))
+         (type (fmap ~f ~x)) => (type ~x)))
 
 (fact "First functor law."
       (fmap identity) => identity)
+
 ;nil as a functor
-(functor-law2 (gen-fn inc dec) nil)
+(functor-law2 inc nil)
 
 ;Functor operations on any Object, if more particular implementation is not specified.
 ;The type of the result does not have to be the same as the type of the input object.
 ;The result type depends on the function that is being applied.
 ;However, keeping the type is not required by any Functor law.
-(functor-law2
- (gen-fn inc (partial * 100))
- (gen/int))
+(functor-law2 inc (partial * 100) 101)
 
-(functor-law2 str (gen/char))
+(functor-law2 str \a)
 
 (tabular
   (fact "Plain Objects as functors."
@@ -51,85 +42,69 @@
   + \a => (throws ClassCastException))
 
 ;Functor functions on a string
-(functor-law2
- (gen-fn s/capitalize s/lower-case s/upper-case s/reverse)
- (gen/string))
+(functor-law2 s/capitalize s/reverse "something")
 
-(fmap-keeps-type s/reverse (gen/string))
+(fmap-keeps-type s/reverse "something")
 
 ;Functor functions on a vector
-(functor-law2
- (gen-fn (partial * 100) inc)
- (gen/vec gen/int))
+(functor-law2 (partial * 100) inc [1 -199 9])
 
-(fmap-keeps-type inc (gen/vec gen/int))
+(fmap-keeps-type inc [100 0 -999])
 
 ;Functor functions on a list
-(functor-law2
- (gen-fn (partial * 100) inc)
- (into (list) (gen/list gen/int)))
+(functor-law2 (partial * 100) inc (list -3 5 0))
 
-(fmap-keeps-type inc (into (list) (gen/list gen/int)))
+(fmap-keeps-type inc (list 77 0 -39))
 
 ;Functor functions on a set
-(functor-law2
- (gen-fn (partial * 100) inc)
- (gen/set gen/int))
+(functor-law2 (partial * 100) inc #{-449 9 6})
 
-(fmap-keeps-type inc (gen/set gen/int))
+(fmap-keeps-type inc #{5 89 -7})
 
 ;Functor functions on a seq
 ;Due to Clojure implementation details, the type of the result does not have to be the same
 ;as the type of the input seq. However, keeping the type is not required by any Functor law.
 ;Both seqs implement the seq interface, though.
-(functor-law2
- (gen-fn (partial * 100) inc)
- (seq (gen/list gen/int)))
+(functor-law2 (partial * 100) inc
+              (seq (list 8 9 10)))
 
 ;Functor functions on a lazy seq
-(functor-law2
- (gen-fn (partial * 100) inc)
- (lazy-seq (gen/list gen/int)))
+(functor-law2 (partial * 100) inc
+              (lazy-seq (list 78 -3 5)))
 
-(fmap-keeps-type inc (lazy-seq (gen/list gen/int)))
+(fmap-keeps-type inc (lazy-seq (list 8 9 -2)))
 
 ;Functor functions on a map entry
-(functor-law2
- (gen-fn (partial * 100) inc)
- (clojure.lang.MapEntry. (gen/keyword) (gen/int))) ;#(or (first (gen/hash-map gen/keyword gen/int)) (first {:a 1})))
+(functor-law2 (partial * 100) inc
+              (first { :a 11}))
 
-(fmap-keeps-type inc (clojure.lang.MapEntry. (gen/keyword) (gen/int)));#(or (first (gen/hash-map gen/keyword gen/int)) (first {:a 1})))
+(fmap-keeps-type inc (first {:c 3}))
 
 ;Functor functions on a map (depends on proper behavior of map entries as functors)
-(functor-law2
- (gen-fn (partial * 100) inc)
- (gen/hash-map gen/keyword gen/int))
+(functor-law2 (partial * 100) inc
+              {:a 2 :t 5 :h 99})
 
-(fmap-keeps-type
- inc
- (gen/hash-map gen/keyword gen/int))
+(fmap-keeps-type inc
+              {:a 2 :t 5 :h 99})
 
 ;Functor functions on an atom
-(functor-law2
- (gen-fn (partial * 100) inc)
- (atom (gen/int)))
+(let [a (atom 44)]
+  (functor-law2 (partial * 100) inc a)
 
-(fmap-keeps-type  inc (atom (gen/int)))
+  (fmap-keeps-type  inc a))
 
 ;Functor functions on a ref
-(dosync
- (functor-law2
-  (gen-fn (partial * 100) inc)
-  (ref (gen/int))))
+(let [r (ref 457)]
+  (dosync
+   (functor-law2 (partial * 100) inc r))
 
-(dosync
- (fmap-keeps-type inc (ref (gen/int))))
+  (dosync
+   (fmap-keeps-type inc r)))
 
-;Functor functions on a function
-;not a proper test at all!!(functor-law2 (gen-fn (partial * 100) inc) (gen-fn (partial * 44) dec) (gen/int))
+
+;;not a proper test at all!! (functor-law2 (gen-fn (partial * 100) inc) (gen-fn (partial * 44) dec) (gen/int))
 
 ;============================= Applicative tests ==========================
-
 (defmacro applicative-law1 [f x]
   `(fact "First applicative law."
          (<*> (pure ~x ~f) ~x) => (fmap ~f ~x)))
@@ -180,7 +155,7 @@
 
 (applicative-law3-composition (list inc)
                               (list (partial * 10))
-                              (list 2 -445 2))
+                              (list 2 8 -33))
 
 (applicative-law4-homomorphism (list) inc 2)
 
