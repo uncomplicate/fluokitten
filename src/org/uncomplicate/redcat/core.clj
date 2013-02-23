@@ -99,7 +99,7 @@
 
 ;(defn when [i ma]
 
-(def >>= p/bind)
+(def >>= #(p/bind %1 %2))
 
 (defn =<< [f mv] (>>= mv f))
 

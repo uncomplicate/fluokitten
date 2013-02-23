@@ -1,6 +1,6 @@
 (ns org.uncomplicate.redcat.core-test
-  (:use org.uncomplicate.redcat.core
-        org.uncomplicate.redcat.jvm
+  (:use org.uncomplicate.redcat.jvm
+        org.uncomplicate.redcat.core
         midje.sweet)
   (:require [clojure.string :as s]))
 
@@ -223,16 +223,16 @@
 
 ;;-------------- Map ----------------
 ;;figure out how to create pure map. probably it shouid require [k v] pairs
-(fact (pure {} 2) => {identity 2})
+(fact (pure {} 2) => {nil 2})
 
 (fact (<*> {:a inc :b dec} {:a 1 :b 100})
       => {:a 2 :b 99})
 
-(applicative-law1 inc {identity 6})
+(applicative-law1 inc {nil 6})
 
 (applicative-law1 inc {6 6})
 
-(applicative-law2-identity {identity 6})
+(applicative-law2-identity {nil 6})
 
 (applicative-law2-identity {6 6})
 
@@ -240,8 +240,94 @@
                               {6 (partial * 10)}
                               {6 6 -5 -6})
 
+(applicative-law3-composition {nil inc}
+                              {nil (partial * 10)}
+                              {6 6 -5 -6})
+
 (applicative-law4-homomorphism {} inc 4)
 
 (applicative-law5-interchange {} inc 4)
 
 (<*>-keeps-type inc {4 -2 5 5})
+
+;;=============== Monad tests ============================
+
+(defmacro monad-law1-left-identity [m g x]
+  `(fact "Left Identity Monad Law"
+         (>>= (pure ~m ~x) ~g) => (~g ~x)))
+
+(defmacro monad-law2-right-identity [m]
+  `(fact "Right Identity Monad Law"
+         (>>= ~m (partial pure ~m)) => ~m))
+
+(defmacro monad-law3-associativity [f g m]
+  `(fact "Associativity Monad Law"
+         (-> (>>= ~m ~f) (>>= ~g))
+         => (>>= ~m #(>>= (~f %) ~g))))
+
+;;--------------- Vector ---------------------------------
+(monad-law1-left-identity [] (comp vector inc) 1)
+
+(monad-law2-right-identity [1 2 -33])
+
+(monad-law3-associativity (comp vector inc)
+                          (comp vector (partial * 10))
+                          [1 -3 -88])
+
+;;--------------- List -----------------------------------
+(monad-law1-left-identity (list) (comp list inc) 2)
+
+(monad-law2-right-identity (list 2 4 -33))
+
+(monad-law3-associativity (comp list inc)
+                          (comp list (partial * 10))
+                          (list 2 -3 -88))
+
+;;--------------- LazySeq -----------------------------------
+(monad-law1-left-identity (lazy-seq (list))
+                          (comp list inc) 3)
+
+(monad-law2-right-identity (lazy-seq (list 3 2 -33)))
+
+(monad-law3-associativity (comp list inc)
+                          (comp list (partial * 10))
+                          (lazy-seq (list 3 -3 -88)))
+
+;;--------------- Seq -----------------------------------
+(monad-law1-left-identity (conj (seq [0]) 2)
+                          (comp seq vector inc) 4)
+
+(monad-law2-right-identity (conj (seq [4 2 -33]) 2))
+
+(monad-law3-associativity (comp seq vector inc)
+                          (comp seq vector (partial * 10))
+                          (conj (seq [4 -3 -88]) 2))
+
+;;--------------- Set ---------------------------------
+(monad-law1-left-identity #{} (comp hash-set inc) 6)
+
+(monad-law2-right-identity #{5 -3 24})
+
+(monad-law3-associativity (comp hash-set inc)
+                          (comp hash-set (partial * 10))
+                          #{5 -56 30})
+
+;;--------------- Map ---------------------------------
+(monad-law1-left-identity {} #(hash-map :increment (inc %)) 5)
+
+(monad-law2-right-identity {:a 1 :b 2})
+
+(monad-law3-associativity #(hash-map :increment (inc %))
+                          #(hash-map :10times (* 10 %))
+                          {:a 1 :b 2})
+
+;;--------------- MapEntry ----------------------------
+(monad-law1-left-identity (first {:a 1})
+                          #(first (hash-map :increment (inc %)))
+                          5)
+
+(monad-law2-right-identity (first {:a 4}))
+
+(monad-law3-associativity #(first (hash-map :increment (inc %)))
+                          #(first (hash-map :10times (* 10 %)))
+                          (first {:a 1}))
