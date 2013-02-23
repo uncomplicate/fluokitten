@@ -47,15 +47,21 @@
 ;;--------------- fmap implementations ---------------
 (defn reducible-fmap
   ([c g]
-     (into (empty c) (r/map g c)))
+     (into (empty c)
+           (r/map g c)))
   ([c g cs]
-     (into (empty c) (apply map g c cs))))
+     (into (empty c)
+           (apply map g c cs))))
 
 (defn map-fmap
   ([m g]
-     (into (empty m) (r/map (fn [[k v]] [k (g v)]) m)))
+     (into (empty m)
+           (r/map
+            (fn [[k v]] [k (g v)])
+            m)))
   ([c g cs]
-     (into (empty c) (apply map g c cs))))
+     (into (empty c)
+           (apply map g c cs))))
 
 (defn list-fmap
   ([s g]
@@ -110,9 +116,12 @@
 
 (defn coll-<*>
   ([cv sg]
-     (into (empty cv) (mapcat #(map % cv) sg)));(bind cg (partial fmap sv)))
+     (into (empty cv)
+           (mapcat #(map % cv) sg)))
+  ;;(bind cg (partial fmap sv)))
   ([cv sg svs]
-     (into (empty cv) (mapcat #(apply map % cv svs) sg))))
+     (into (empty cv)
+           (mapcat #(apply map % cv svs) sg))))
 
 (defn coll-pure [cv v]
   (conj (empty cv) v))
@@ -305,23 +314,34 @@
 (extend-type clojure.lang.Atom
   Functor
   (fmap
-    ([a g] (do (swap! a g) a))
-    ([a g args] (do (apply swap! a g args) a)))
+    ([a g]
+       (do (swap! a g) a))
+    ([a g args]
+       (do (apply swap! a g args) a)))
   Applicative
-  (pure [a v] (atom v))
-  (<*> [av ag] (fmap av (deref ag)))
+  (pure [a v]
+    (atom v))
+  (<*> [av ag]
+    (fmap av (deref ag)))
   Monad
-  (join [ma] (fmap ma deref))
-  (bind [a g] (join (fmap a g))))
+  (join [ma]
+    (fmap ma deref))
+  (bind [a g]
+    (join (fmap a g))))
 
 (extend-type clojure.lang.Ref
   Functor
   (fmap
-    ([r g] (do (alter r g) r))
-    ([a g args] (do (apply alter a g args) a)))
+    ([r g]
+       (do (alter r g) r))
+    ([a g args]
+       (do (apply alter a g args) a)))
   Applicative
   (pure [r v] (ref v))
-  (<*> [rv rg] (fmap rv (deref rg)))
+  (<*> [rv rg]
+    (fmap rv (deref rg)))
   Monad
-  (join [ma] (fmap ma deref))
-  (bind [a g] (join (fmap a g))))
+  (join [ma]
+    (fmap ma deref))
+  (bind [a g]
+    (join (fmap a g))))
