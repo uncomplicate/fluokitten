@@ -4,104 +4,155 @@
         midje.sweet)
   (:require [clojure.string :as s]))
 
-;====================================== Functor tests ==========================================
-;TODO test varargs functor!
+;=============== Functor tests ========================
 (defmacro functor-law2
   ([f x] `(functor-law2 ~f ~f ~x))
-  ([f1 f2 x]
-     `(fact "Second functor law."
-            (fmap (comp ~f1 ~f2) ~x) => (fmap ~f1 (fmap ~f2 ~x)))))
+  ([f1 f2 x & xs]
+     `(facts "Second functor law."
+             (fmap (comp ~f1 ~f2) ~x ~@xs) =>
+             (fmap ~f1 (fmap ~f2 ~x ~@xs)))))
 
-(defmacro fmap-keeps-type [f x]
+(defmacro fmap-keeps-type [f x & xs]
   `(fact "fmap should return data of the same type
             as the functor argument."
-         (type (fmap ~f ~x)) => (type ~x)))
+         (type (fmap ~f ~x ~@xs)) => (type ~x)))
 
 (fact "First functor law."
       (fmap identity) => identity)
 
-;nil as a functor
-(functor-law2 inc nil)
+;;--------------- nil ---------------
+(functor-law2 inc + nil)
+(functor-law2 inc + nil 99 0)
 
-;Functor operations on any Object, if more particular implementation is not specified.
-;The type of the result does not have to be the same as the type of the input object.
-;The result type depends on the function that is being applied.
-;However, keeping the type is not required by any Functor law.
+;;--------------- literals ---------------
+;; Functor operations on any Object, if more particular
+;; implementation is not specified.
+;; The type of the result does not have to be the same
+;; as the type of the input object. The result type
+;; depends on the function that is being applied.
+;; However, keeping the type is not required by any
+;; Functor law, so keeping the type is convenient
+;; but not mandatory.
+
 (functor-law2 inc (partial * 100) 101)
+(functor-law2 inc (partial * 100) 101 2 3)
 
-(functor-law2 str \a)
+(functor-law2 s/capitalize str \a)
+(functor-law2 s/capitalize str \a \b \c)
 
-(tabular
-  (fact "Plain Objects as functors."
-        (fmap ?f ?o) ?arrow ?expected)
-  ?f ?o ?arrow ?expected
-  identity 1 => 1
-  inc 1 => 2
-  str 1 => "1"
-  str \a => "a"
-  + \a => (throws ClassCastException))
+(facts "Objects as functors."
+       (fmap identity 1) => 1
+       (fmap inc 1) => 2
+       (fmap str 1) => "1"
+       (fmap str \a) => "a"
+       (fmap  + \a) => (throws ClassCastException))
 
-;Functor functions on a string
+;;--------------- String ---------------
 (functor-law2 s/capitalize s/reverse "something")
+(functor-law2 s/capitalize str "something" "else")
 
 (fmap-keeps-type s/reverse "something")
+(fmap-keeps-type str "something" "else")
 
-;Functor functions on a vector
-(functor-law2 (partial * 100) inc [1 -199 9])
+;;--------------- Vector ---------------
+(functor-law2 inc (partial * 100)
+              [1 -199 9])
+(functor-law2 inc (partial * 100)
+              [1 -199 9]
+              [1 -66 9])
 
 (fmap-keeps-type inc [100 0 -999])
+(fmap-keeps-type + [100 0 -999]
+                 (list 44 0 -54))
 
-;Functor functions on a list
-(functor-law2 (partial * 100) inc (list -3 5 0))
+;;--------------- List ---------------
+(functor-law2 inc (partial * 100)
+              (list -3 5 0))
+(functor-law2 inc (partial * 100)
+              (list -3 5 0)
+              (list -3 44 -2))
 
 (fmap-keeps-type inc (list 77 0 -39))
+(fmap-keeps-type + (list 77 0 -39)
+                 (list 88 -8 8))
 
-;Functor functions on a set
-(functor-law2 (partial * 100) inc #{-449 9 6})
+;;--------------- Set ---------------
+(functor-law2 inc (partial * 100)
+              #{-449 9 6})
+(functor-law2 inc (partial * 100)
+              #{-449 9 6}
+              #{-4 88 7})
 
 (fmap-keeps-type inc #{5 89 -7})
+(fmap-keeps-type + #{5 89 -7}
+                 (list -3 -4 -45))
 
-;Functor functions on a seq
-;Due to Clojure implementation details, the type of the result does not have to be the same
-;as the type of the input seq. However, keeping the type is not required by any Functor law.
-;Both seqs implement the seq interface, though.
-(functor-law2 (partial * 100) inc
+;;--------------- Seq ---------------
+;; Due to Clojure implementation details,
+;; the type of the result does not have to be the same
+;; as the type of the input seq.
+;; However, keeping the type is not mandated by any Functor law.
+;; Both seqs implement the seq interface, though.
+
+(functor-law2 inc (partial * 100)
               (seq (list 8 9 10)))
+(functor-law2 inc (partial * 100)
+              (seq (list 8 9 10))
+              (seq (list -5 -4 -5)))
 
-;Functor functions on a lazy seq
-(functor-law2 (partial * 100) inc
+;;--------------- LazySeq ---------------
+(functor-law2 inc (partial * 100)
               (lazy-seq (list 78 -3 5)))
+(functor-law2 inc (partial * 100)
+              (lazy-seq (list 78 -3 5))
+              (lazy-seq (list 88 0 -4)))
 
 (fmap-keeps-type inc (lazy-seq (list 8 9 -2)))
+(fmap-keeps-type + (lazy-seq (list 8 9 -2))
+                 (lazy-seq (list 18 5 -92)))
 
-;Functor functions on a map entry
-(functor-law2 (partial * 100) inc
-              (first { :a 11}))
+
+;;--------------- MapEntry ---------------
+(functor-law2 inc (partial * 100)
+              (first {:a 11}))
+(functor-law2 inc (partial * 100)
+              (first {:a 11})
+              (first {:a 5}))
 
 (fmap-keeps-type inc (first {:c 3}))
+(fmap-keeps-type + (first {:c 3})
+                 (first {:d 5}))
 
-;Functor functions on a map (depends on proper behavior of map entries as functors)
-(functor-law2 (partial * 100) inc
+;;--------------- Map ---------------
+(functor-law2 inc (partial * 100)
               {:a 2 :t 5 :h 99})
+(functor-law2 inc (partial * 100)
+              {:a 2 :t 5 :h 99}
+              {:a 8 :t 3 :h 59})
 
-(fmap-keeps-type inc
-              {:a 2 :t 5 :h 99})
+(fmap-keeps-type inc {:a 2 :t 5 :h 99})
+(fmap-keeps-type + {:a 2 :t 5 :h 99}
+                 {:k 5 :n 4 :dd 5})
 
-;Functor functions on an atom
+;;--------------- Atom ---------------
 (let [a (atom 44)]
-  (functor-law2 (partial * 100) inc a)
+  (functor-law2 inc (partial * 100) a)
+  (functor-law2 inc (partial * 100) a (atom 5))
+  (fmap-keeps-type  inc a)
+  (fmap-keeps-type  + a (atom 5)))
 
-  (fmap-keeps-type  inc a))
-
-;Functor functions on a ref
+;;--------------- Ref ---------------
 (let [r (ref 457)]
   (dosync
-   (functor-law2 (partial * 100) inc r))
-
+   (functor-law2 inc (partial * 100) r))
   (dosync
-   (fmap-keeps-type inc r)))
+   (functor-law2 inc (partial * 100) r (ref 7)))
+  (dosync
+   (fmap-keeps-type inc r))
+  (dosync
+   (fmap-keeps-type + r (ref 4))))
 
-
+;; TODO functions
 ;;not a proper test at all!! (functor-law2 (gen-fn (partial * 100) inc) (gen-fn (partial * 44) dec) (gen/int))
 
 ;============================= Applicative tests ==========================

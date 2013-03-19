@@ -59,9 +59,12 @@
            (r/map
             (fn [[k v]] [k (g v)])
             m)))
-  ([c g cs]
-     (into (empty c)
-           (apply map g c cs))))
+  ([m g ms]
+     (into (empty m)
+           (apply map
+                  (fn [[k v] & es]
+                    [k (apply g v (vals es))])
+                  m ms))))
 
 (defn list-fmap
   ([s g]
@@ -317,7 +320,7 @@
     ([a g]
        (do (swap! a g) a))
     ([a g args]
-       (do (apply swap! a g args) a)))
+       (do (apply swap! a g (map deref args)) a)))
   Applicative
   (pure [a v]
     (atom v))
@@ -335,7 +338,7 @@
     ([r g]
        (do (alter r g) r))
     ([a g args]
-       (do (apply alter a g args) a)))
+       (do (apply alter a g (map deref args)) a)))
   Applicative
   (pure [r v] (ref v))
   (<*> [rv rg]
