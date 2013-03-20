@@ -174,14 +174,14 @@
 (defmacro applicative-law4-homomorphism [ap f x & xs]
   `(fact "Homomorphism applicative law."
          (apply <*> (pure ~ap ~f) (pure ~ap ~x)
-                (map (partial pure ~ap) '~xs))
+                (map (partial pure ~ap) ~xs))
          => (pure ~ap (~f ~x ~@xs))))
 
 (defmacro applicative-law5-interchange [ap f x & xs]
   `(fact "Interchange applicative law."
          (apply <*> (pure ~ap ~f) (pure ~ap ~x)
-                (map (partial pure ~ap) '~xs))
-         => (<*> (pure ~ap #(% ~x ~@xs))
+                (map (partial pure ~ap) ~xs))
+         => (<*> (pure ~ap #(apply % ~x ~@xs))
                  (pure ~ap ~f))))
 
 (defmacro <*>-keeps-type [f x & xs]
@@ -193,32 +193,21 @@
 ;--------------- Vector ---------------
 (applicative-law1 inc [1 -2 5])
 
-(applicative-law1 + [1 -2 5] [8 98 0])
-
 (applicative-law2-identity [1 445 -4])
 
 (applicative-law3-composition [inc]
                               [(partial * 10)]
                               [1 -34343444])
 
-(applicative-law3-composition [inc]
-                              [(partial * 10)]
-                              [1 -34343444]
-                              (list 1 78))
-
 (applicative-law4-homomorphism [] inc 1)
-(applicative-law4-homomorphism [] + 1 55 6)
 
+(comment
 (applicative-law5-interchange [] inc 1)
-(applicative-law5-interchange [] + 1 54 -2)
 
 (<*>-keeps-type inc (list 1 -4 9))
-(<*>-keeps-type + (list 1 -4 9) (list 2 -3 -4))
 
 ;;--------------- List ---------------
 (applicative-law1 inc (list 2 44 -7))
-
-(applicative-law1 + (list 2 44 -7) (list 3 5 -3))
 
 (applicative-law2-identity (list 2 -5 99))
 
@@ -226,28 +215,14 @@
                               (list (partial * 10))
                               (list 2 8 -33))
 
-(applicative-law3-composition (list inc)
-                              (list (partial * 10))
-                              (list 2 8 -33)
-                              (list -4 -5 -5))
-
 (applicative-law4-homomorphism (list) inc 2)
-
-(applicative-law4-homomorphism (list) + 2 -3 -44)
 
 (applicative-law5-interchange (list) inc 2)
 
-(applicative-law5-interchange (list) + 2 9 -21)
-
 (<*>-keeps-type inc (list 2 -4 9))
-
-(<*>-keeps-type + (list 2 -4 9) (list 9 -8))
 
 ;;-------------- Seq ----------------
 (applicative-law1 inc (seq (list 3 9 0)))
-
-(applicative-law1 + (seq (list 3 9 0))
-                  (seq (list -5 4 6)))
 
 (applicative-law2-identity (seq (list 3 -79 29)))
 
@@ -255,29 +230,14 @@
                               (seq (list (partial * 10)))
                               (seq (list 3 -1 0)))
 
-(applicative-law3-composition (seq (list inc))
-                              (seq (list (partial * 10)))
-                              (seq (list 3 -1 0))
-                              (seq (list -5 3 4)))
-
 (applicative-law4-homomorphism (seq (list 3)) inc 3)
-
-(applicative-law4-homomorphism (seq (list 3)) + 3 0 5 5)
 
 (applicative-law5-interchange (seq (list 3)) inc 3)
 
-(applicative-law5-interchange (seq (list 3)) + 3 -8 -87)
-
 (<*>-keeps-type inc (seq (list 3 -4 9)))
-
-(<*>-keeps-type + (seq (list 3 -4 9))
-                (seq (list -5 -5 -3)))
 
 ;;-------------- Lazy Seq ----------------
 (applicative-law1 inc (lazy-seq (list 3 9 0)))
-
-(applicative-law1 + (lazy-seq (list 3 9 0))
-                  (lazy-seq (list -4 -5)))
 
 (applicative-law2-identity (lazy-seq (list 3 -79 29)))
 
@@ -285,29 +245,14 @@
                               (lazy-seq (list (partial * 10)))
                               (lazy-seq (list 3 -1 0)))
 
-(applicative-law3-composition (lazy-seq (list inc))
-                              (lazy-seq (list (partial * 10)))
-                              (lazy-seq (list 3 -1 0))
-                              (lazy-seq (list 9)))
-
 (applicative-law4-homomorphism (lazy-seq (list 3)) inc 3)
-
-(applicative-law4-homomorphism (lazy-seq (list 3)) + 3 -2)
 
 (applicative-law5-interchange (lazy-seq (list 3)) inc 3)
 
-(applicative-law5-interchange (lazy-seq (list 3)) + 3 -2 -3)
-
 (<*>-keeps-type inc (lazy-seq (list 3 -4 9)))
-
-(<*>-keeps-type + (lazy-seq (list 3 -4 9))
-                (lazy-seq (list -5 -5 -5)))
 
 ;;-------------- Set ----------------
 (applicative-law1 inc #{4 2 -44})
-
-(applicative-law1 + #{4 2 -44}
-                  #{0 -8})
 
 (applicative-law2-identity #{4 40 -1})
 
@@ -315,29 +260,14 @@
                               #{(partial * 10)}
                               #{4 -5 -6})
 
-(applicative-law3-composition #{inc}
-                              #{(partial * 10)}
-                              #{4 -5 -6}
-                              #{0 -4})
-
 (applicative-law4-homomorphism #{} inc 4)
-
-(applicative-law4-homomorphism #{} + 4 0 -98)
 
 (applicative-law5-interchange #{} inc 4)
 
-(applicative-law5-interchange #{} + 4 -8)
-
 (<*>-keeps-type inc #{4 -2 5})
-
-(<*>-keeps-type + #{4 -2 5}
-                #{-9 -7})
 
 ;;-------------- MapEntry -----------
 (applicative-law1 inc (first {5 5}))
-
-(applicative-law1 + (first {5 5})
-                  (first {5 6}))
 
 (applicative-law2-identity (first {5 5}))
 
@@ -345,20 +275,12 @@
                               (first {57 (partial * 10)})
                               (first {5 5}))
 
-(applicative-law3-composition (first {58 inc})
-                              (first {57 (partial * 10)})
-                              (first {5 5})
-                              (first {5 6}))
-
 (applicative-law4-homomorphism (first {57 57}) inc 5)
-
-(applicative-law4-homomorphism (first {57 57}) + 5 -4 5)
 
 (applicative-law5-interchange (first {58 58}) inc 5)
 
-(applicative-law5-interchange (first {58 58}) + 5 3 4 5)
-
 ;;-------------- Map ----------------
+;;figure out how to create pure map. probably it shouid require [k v] pairs
 (fact (pure {} 2) => {nil 2})
 
 (fact (<*> {:a inc :b dec} {:a 1 :b 100})
@@ -385,7 +307,7 @@
 (applicative-law5-interchange {} inc 4)
 
 (<*>-keeps-type inc {4 -2 5 5})
-
+)
 ;;=============== Monad tests ============================
 
 (defmacro monad-law1-left-identity [m g x]

@@ -1,18 +1,6 @@
 (ns org.uncomplicate.redcat.core
   (:require [org.uncomplicate.redcat.protocols :as p]))
 
-(defn $
-  ([x]
-    #(% x))
-  ([x y]
-    #(% x y))
-  ([x y z]
-    #(% x y z))
-  ([x y z w]
-    #(% x y z w))
-  ([x y z w & args]
-    #(apply % x y z w args)))
-
 (defn fmap
   "Applies a function f to the value inside functor's context
    while preserving the context.
