@@ -259,10 +259,18 @@
   Applicative
   (pure [e v]
     (clojure.lang.MapEntry. nil v))
-  (<*> [[ke ve :as e] [kg vg]]
-    (if (or (nil? kg) (= ke kg))
-      (clojure.lang.MapEntry. ke (vg ve))
-      e))
+  (<*>
+    ([[ke ve :as e] [kg vg]]
+       (if (or (nil? kg) (= ke kg))
+         (clojure.lang.MapEntry. ke (vg ve))
+         e))
+    ([[ke ve :as e] [kg vg] es]
+       (if (or (nil? kg)
+               (not (some (fn [[k _]]
+                            (not= k kg))
+                          (cons e es))))
+         (clojure.lang.MapEntry. ke (apply vg ve (map val es)))
+         e)))
   Monad
   (join [e] (throw (UnsupportedOperationException. "TODO"))) ;;TODO
   (bind [[ke ve] g]
