@@ -167,6 +167,7 @@
 
 (defmacro applicative-law3-composition [u v x & xs]
   `(fact "Composition applicative law."
+         ;;TODO This could be more idiomatic with vararg <*>
          (-> (pure ~x #(partial comp %))
              (<*> ~u) (<*> ~v) (<*> ~x ~@xs))
          => (<*> ~u (<*> ~v ~x ~@xs))))
@@ -361,12 +362,20 @@
 ;;-------------- Map ----------------
 (fact (pure {} 2) => {nil 2})
 
-(fact (<*> {:a inc :b dec} {:a 1 :b 100})
-      => {:a 2 :b 99})
+(fact (<*> {:a inc :b dec nil (partial * 2)} {:a 1 :b 5})
+      => {:a 4 :b 8})
+
+(fact (<*> {:a + :b - nil (partial * 2)}
+           {:a 1 :b 1}
+           {:a 2 :b 3 :c 44}
+           {:b 4})
+      => {:a 6 :b -12 :c 88})
 
 (applicative-law1 inc {nil 6})
 
 (applicative-law1 inc {6 6})
+
+(applicative-law1 + {nil 6} {2 23})
 
 (applicative-law2-identity {nil 6})
 

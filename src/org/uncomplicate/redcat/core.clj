@@ -56,11 +56,12 @@
   ([f functor]
     (p/fmap functor f))
   ([f]
-    (or (= identity f)
-        (fn
-          ([functor]
+     (if (= identity f)
+       identity
+       (fn
+         ([functor]
             (p/fmap functor f))
-          ([functor & functors]
+         ([functor & functors]
             (p/fmap functor f functors)))))
   ([f functor & functors]
     (p/fmap functor f functors)))

@@ -56,15 +56,9 @@
 (defn map-fmap
   ([m g]
      (into (empty m)
-           (r/map
-            (fn [[k v]] [k (g v)])
-            m)))
+           (r/map (fn [[k v]] [k (g v)]) m)))
   ([m g ms]
-     (into (empty m)
-           (apply map
-                  (fn [[k v] & es]
-                    [k (apply g v (vals es))])
-                  m ms))))
+     (apply merge-with g m ms)))
 
 (defn list-fmap
   ([s g]
@@ -88,22 +82,41 @@
 ;;-------------- <*> implementations ----------------
 (defn reducible-<*>
   ([cv sg]
-     (into (empty cv) (r/mapcat #(r/map % cv) sg)))
+     (into (empty cv)
+           (r/mapcat #(r/map % cv) sg)))
   ([cv sg svs]
-     (into (empty cv) (r/mapcat #(apply map % cv svs) sg))))
+     (into (empty cv)
+           (r/mapcat #(apply map % cv svs) sg))))
+
+(defn- apply-universal-f [mf m]
+  (if-let [f (mf nil)]
+    (map-fmap m f)
+    m))
 
 (defn map-<*>
   ([mv mg]
-     (let [f (fn [[res m] [kg vg]]
-                 (if-let [[kv vv] (find m kg)]
-                   [(conj res [kv (vg vv)]) m]
-                   [res m]))]
-       (let [imv (if-let [ig (mg nil)]
-                   (map-fmap mv ig)
-                   mv)]
-         (merge imv (first (reduce f [{} imv] (dissoc mg nil)))))))
+     (let [apply-g (fn [res [kg vg]]
+                     (if-let [[kv vv] (find mv kg)]
+                       (conj res [kv (vg vv)])
+                       res))]
+       (apply-universal-f mg
+         (merge mv
+                (reduce apply-g {}
+                        (dissoc mg nil))))))
   ([mv mg mvs]
-     (throw (java.lang.UnsupportedOperationException. "TODO"))));;TODO
+     (let [ms (vec (cons mv mvs))
+           apply-g (fn [res [kg vg]]
+                     (let [vs (into []
+                                    (r/map val
+                                      (r/remove nil?
+                                        (r/map #(find % kg) ms))))]
+                       (if (empty? vs)
+                         res
+                         (conj res [kg (apply vg vs)]))))]
+       (apply-universal-f mg
+         (apply merge (conj ms
+                            (reduce apply-g {}
+                                    (dissoc mg nil))))))))
 
 (defn list-<*>
   ([cv sg]
@@ -270,7 +283,7 @@
                             (not= k kg))
                           (cons e es))))
          (clojure.lang.MapEntry. ke (apply vg ve (map val es)))
-         e)))
+         e)));;TODO e should be represented with Nothing once Maybe is implemented
   Monad
   (join [e] (throw (UnsupportedOperationException. "TODO"))) ;;TODO
   (bind [[ke ve] g]
