@@ -115,8 +115,7 @@
                          (conj res [kg (apply vg vs)]))))]
        (apply-universal-f mg
          (apply merge (conj ms
-                            (reduce apply-g {}
-                                    (dissoc mg nil))))))))
+                            (reduce apply-g {} mg)))))))
 
 (defn list-<*>
   ([cv sg]
@@ -139,6 +138,7 @@
      (into (empty cv)
            (mapcat #(apply map % cv svs) sg))))
 
+;;TODO Implement varargs pure
 (defn coll-pure [cv v]
   (conj (empty cv) v))
 

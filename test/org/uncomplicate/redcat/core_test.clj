@@ -385,13 +385,22 @@
                               {6 (partial * 10)}
                               {6 6 -5 -6})
 
+(applicative-law3-composition {6 inc}
+                              {6 (partial * 10)}
+                              {6 6 -5 -6}
+                              {6 8 -5 -2})
+
 (applicative-law3-composition {nil inc}
                               {nil (partial * 10)}
                               {6 6 -5 -6})
 
 (applicative-law4-homomorphism {} inc 4)
 
+(applicative-law4-homomorphism {} + 4 7 9)
+
 (applicative-law5-interchange {} inc 4)
+
+(applicative-law5-interchange {} + 4 8 9)
 
 (<*>-keeps-type inc {4 -2 5 5})
 
