@@ -11,7 +11,7 @@
     ([_ _ args] nil))
   Applicative
   (pure [_ _] nil)
-  (<*>
+  (fapply
     ([_ _] nil)
     ([_ _ args] nil))
   Monad
@@ -79,8 +79,8 @@
     (into (empty c) (apply map g c ss))))
 
 ;;================ Applicative implementations ==================
-;;-------------- <*> implementations ----------------
-(defn reducible-<*>
+;;-------------- fapply implementations ----------------
+(defn reducible-fapply
   ([cv sg]
      (into (empty cv)
            (r/mapcat #(r/map % cv) sg)))
@@ -93,16 +93,17 @@
     (map-fmap m f)
     m))
 
-(defn map-<*>
+(defn map-fapply
   ([mv mg]
      (let [apply-g (fn [res [kg vg]]
                      (if-let [[kv vv] (find mv kg)]
-                       (conj res [kv (vg vv)])
+                       (conj! res [kv (vg vv)])
                        res))]
        (apply-universal-f mg
-         (merge mv
-                (reduce apply-g {}
-                        (dissoc mg nil))))))
+                          (merge mv
+                                 (persistent!
+                                  (reduce apply-g (transient {})
+                                          (dissoc mg nil)))))))
   ([mv mg mvs]
      (let [ms (vec (cons mv mvs))
            apply-g (fn [res [kg vg]]
@@ -112,24 +113,28 @@
                                         (r/map #(find % kg) ms))))]
                        (if (empty? vs)
                          res
-                         (conj res [kg (apply vg vs)]))))]
+                         (conj! res [kg (apply vg vs)]))))]
        (apply-universal-f mg
-         (apply merge (conj ms
-                            (reduce apply-g {} mg)))))))
+                          (apply merge
+                                 (conj ms
+                                       (persistent!
+                                        (reduce apply-g
+                                                (transient {})
+                                                mg))))))))
 
-(defn list-<*>
+(defn list-fapply
   ([cv sg]
      (apply list (mapcat #(map % cv) sg)))
   ([cv sg svs]
      (apply list (mapcat #(apply map % cv svs) sg))))
 
-(defn seq-<*>
+(defn seq-fapply
   ([cv sg]
      (mapcat #(map % cv) sg))
   ([cv sg svs]
      (mapcat #(apply map % cv svs) sg)))
 
-(defn coll-<*>
+(defn coll-fapply
   ([cv sg]
      (into (empty cv)
            (mapcat #(map % cv) sg)))
@@ -138,7 +143,6 @@
      (into (empty cv)
            (mapcat #(apply map % cv svs) sg))))
 
-;;TODO Implement varargs pure
 (defn coll-pure [cv v]
   (conj (empty cv) v))
 
@@ -191,7 +195,7 @@
   {:fmap coll-fmap}
   Applicative
   {:pure coll-pure
-   :<*> coll-<*>}
+   :fapply coll-fapply}
   Monad
   {:join coll-join
    :bind coll-bind}
@@ -205,7 +209,7 @@
   {:fmap reducible-fmap}
   Applicative
   {:pure coll-pure
-   :<*> reducible-<*>}
+   :fapply reducible-fapply}
   Monad
   {:join reducible-join
    :bind reducible-bind})
@@ -215,7 +219,7 @@
   {:fmap list-fmap}
   Applicative
   {:pure coll-pure
-   :<*> list-<*>}
+   :fapply list-fapply}
   Monad
   {:join list-join
    :bind list-bind})
@@ -225,7 +229,7 @@
   {:fmap seq-fmap}
   Applicative
   {:pure coll-pure
-   :<*> seq-<*>}
+   :fapply seq-fapply}
   Monad
   {:join flatten
    :bind seq-bind})
@@ -235,7 +239,7 @@
   {:fmap seq-fmap}
   Applicative
   {:pure lazyseq-pure
-   :<*> seq-<*>}
+   :fapply seq-fapply}
   Monad
   {:join flatten
    :bind seq-bind})
@@ -245,7 +249,7 @@
   {:fmap reducible-fmap}
   Applicative
   {:pure coll-pure
-   :<*> reducible-<*>}
+   :fapply reducible-fapply}
   Monad
   {:join reducible-join
    :bind reducible-bind})
@@ -255,9 +259,9 @@
   {:fmap map-fmap}
   Applicative
   {:pure map-pure
-   :<*> map-<*>}
+   :fapply map-fapply}
   Monad
-  {:join nil
+  {:join nil;;TODO
    :bind map-bind})
 
 (extend-type clojure.lang.MapEntry
@@ -272,7 +276,7 @@
   Applicative
   (pure [e v]
     (clojure.lang.MapEntry. nil v))
-  (<*>
+  (fapply
     ([[ke ve :as e] [kg vg]]
        (if (or (nil? kg) (= ke kg))
          (clojure.lang.MapEntry. ke (vg ve))
@@ -345,7 +349,7 @@
   Applicative
   (pure [a v]
     (atom v))
-  (<*> [av ag]
+  (fapply [av ag]
     (fmap av (deref ag)))
   Monad
   (join [ma]
@@ -362,7 +366,7 @@
        (do (apply alter a g (map deref args)) a)))
   Applicative
   (pure [r v] (ref v))
-  (<*> [rv rg]
+  (fapply [rv rg]
     (fmap rv (deref rg)))
   Monad
   (join [ma]

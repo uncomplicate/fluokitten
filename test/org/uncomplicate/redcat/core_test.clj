@@ -158,37 +158,37 @@
 ;============================= Applicative tests ==========================
 (defmacro applicative-law1 [f x & xs]
   `(fact "First applicative law."
-         (<*> (pure ~x ~f) ~x ~@xs)
+         (fapply (pure ~x ~f) ~x ~@xs)
          => (fmap ~f ~x ~@xs)))
 
 (defmacro applicative-law2-identity [x]
   `(fact "Identity applicative law."
-         (<*> (pure ~x identity) ~x) => ~x))
+         (fapply (pure ~x identity) ~x) => ~x))
 
 (defmacro applicative-law3-composition [u v x & xs]
   `(fact "Composition applicative law."
-         ;;TODO This could be more idiomatic with vararg <*>
+         ;;TODO This could be more idiomatic with vararg fapply
          (-> (pure ~x #(partial comp %))
-             (<*> ~u) (<*> ~v) (<*> ~x ~@xs))
-         => (<*> ~u (<*> ~v ~x ~@xs))))
+             (fapply ~u) (fapply ~v) (fapply ~x ~@xs))
+         => (fapply ~u (fapply ~v ~x ~@xs))))
 
 (defmacro applicative-law4-homomorphism [ap f x & xs]
   `(fact "Homomorphism applicative law."
-         (apply <*> (pure ~ap ~f) (pure ~ap ~x)
+         (apply fapply (pure ~ap ~f) (pure ~ap ~x)
                 (map (partial pure ~ap) '~xs))
          => (pure ~ap (~f ~x ~@xs))))
 
 (defmacro applicative-law5-interchange [ap f x & xs]
   `(fact "Interchange applicative law."
-         (apply <*> (pure ~ap ~f) (pure ~ap ~x)
+         (apply fapply (pure ~ap ~f) (pure ~ap ~x)
                 (map (partial pure ~ap) '~xs))
-         => (<*> (pure ~ap #(% ~x ~@xs))
+         => (fapply (pure ~ap #(% ~x ~@xs))
                  (pure ~ap ~f))))
 
-(defmacro <*>-keeps-type [f x & xs]
-  `(fact "<*> should return data of the same type
+(defmacro fapply-keeps-type [f x & xs]
+  `(fact "fapply should return data of the same type
             as the applicative argument."
-         (type (<*> (pure ~x ~f) ~x ~@xs))
+         (type (fapply (pure ~x ~f) ~x ~@xs))
          => (type ~x)))
 
 ;--------------- Vector ---------------
@@ -213,8 +213,8 @@
 (applicative-law5-interchange [] inc 1)
 (applicative-law5-interchange [] + 1 54 -2)
 
-(<*>-keeps-type inc (list 1 -4 9))
-(<*>-keeps-type + (list 1 -4 9) (list 2 -3 -4))
+(fapply-keeps-type inc (list 1 -4 9))
+(fapply-keeps-type + (list 1 -4 9) (list 2 -3 -4))
 
 ;;--------------- List ---------------
 (applicative-law1 inc (list 2 44 -7))
@@ -240,9 +240,9 @@
 
 (applicative-law5-interchange (list) + 2 9 -21)
 
-(<*>-keeps-type inc (list 2 -4 9))
+(fapply-keeps-type inc (list 2 -4 9))
 
-(<*>-keeps-type + (list 2 -4 9) (list 9 -8))
+(fapply-keeps-type + (list 2 -4 9) (list 9 -8))
 
 ;;-------------- Seq ----------------
 (applicative-law1 inc (seq (list 3 9 0)))
@@ -269,9 +269,9 @@
 
 (applicative-law5-interchange (seq (list 3)) + 3 -8 -87)
 
-(<*>-keeps-type inc (seq (list 3 -4 9)))
+(fapply-keeps-type inc (seq (list 3 -4 9)))
 
-(<*>-keeps-type + (seq (list 3 -4 9))
+(fapply-keeps-type + (seq (list 3 -4 9))
                 (seq (list -5 -5 -3)))
 
 ;;-------------- Lazy Seq ----------------
@@ -299,9 +299,9 @@
 
 (applicative-law5-interchange (lazy-seq (list 3)) + 3 -2 -3)
 
-(<*>-keeps-type inc (lazy-seq (list 3 -4 9)))
+(fapply-keeps-type inc (lazy-seq (list 3 -4 9)))
 
-(<*>-keeps-type + (lazy-seq (list 3 -4 9))
+(fapply-keeps-type + (lazy-seq (list 3 -4 9))
                 (lazy-seq (list -5 -5 -5)))
 
 ;;-------------- Set ----------------
@@ -329,9 +329,9 @@
 
 (applicative-law5-interchange #{} + 4 -8)
 
-(<*>-keeps-type inc #{4 -2 5})
+(fapply-keeps-type inc #{4 -2 5})
 
-(<*>-keeps-type + #{4 -2 5}
+(fapply-keeps-type + #{4 -2 5}
                 #{-9 -7})
 
 ;;-------------- MapEntry -----------
@@ -362,10 +362,10 @@
 ;;-------------- Map ----------------
 (fact (pure {} 2) => {nil 2})
 
-(fact (<*> {:a inc :b dec nil (partial * 2)} {:a 1 :b 5})
+(fact (fapply {:a inc :b dec nil (partial * 2)} {:a 1 :b 5})
       => {:a 4 :b 8})
 
-(fact (<*> {:a + :b - nil (partial * 2)}
+(fact (fapply {:a + :b - nil (partial * 2)}
            {:a 1 :b 1}
            {:a 2 :b 3 :c 44}
            {:b 4})
@@ -402,7 +402,7 @@
 
 (applicative-law5-interchange {} + 4 8 9)
 
-(<*>-keeps-type inc {4 -2 5 5})
+(fapply-keeps-type inc {4 -2 5 5})
 
 ;;=============== Monad tests ============================
 

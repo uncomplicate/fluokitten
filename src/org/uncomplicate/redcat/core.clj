@@ -72,15 +72,15 @@
 ; (def pure p/pure) causes strange unreliable execution of midje tests.
 ; Investigate later
 
-(defn <*>
+(defn fapply
   ([af as]
-    (p/<*> as af))
+    (p/fapply as af))
   ([af as & ass]
-    (p/<*> as af ass)))
+    (p/fapply as af ass)))
 
 (def liftm fmap)
 
-(def ap p/<*>)
+(def <*> p/fapply)
 
 (defn sequencem [smv] (p/pure (first smv) (fmap deref smv)))
 
