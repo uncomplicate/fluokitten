@@ -53,12 +53,23 @@
      (into (empty c)
            (apply map g c cs))))
 
+(defn group-entries [k ms]
+  (r/map val
+         (r/remove nil?
+                   (r/map #(find % k) ms))))
+
+(defn apply-key [g maps k]
+  [k (apply g (into [] (group-entries k maps)))])
+
 (defn map-fmap
   ([m g]
      (into (empty m)
            (r/map (fn [[k v]] [k (g v)]) m)))
   ([m g ms]
-     (apply merge-with g m ms)))
+     (let [source (cons m ms)
+           keys (distinct (into [] (r/flatten (r/map keys source))))]
+       (into (empty m)
+             (r/map (partial apply-key g source) keys)))))
 
 (defn list-fmap
   ([s g]
@@ -95,32 +106,27 @@
 
 (defn map-fapply
   ([mv mg]
-     (let [apply-g (fn [res [kg vg]]
-                     (if-let [[kv vv] (find mv kg)]
-                       (conj! res [kv (vg vv)])
-                       res))]
-       (apply-universal-f mg
-                          (merge mv
-                                 (persistent!
-                                  (reduce apply-g (transient {})
-                                          (dissoc mg nil)))))))
+     (into
+      (if-let [f (mg nil)]
+        (map-fmap mv f)
+        mv)
+      (r/remove
+       nil?
+       (r/map (fn [[kg vg]]
+                (if-let [[kv vv] (find mv kg)]
+                  [kv (vg vv)]))
+              mg))))
   ([mv mg mvs]
-     (let [ms (vec (cons mv mvs))
-           apply-g (fn [res [kg vg]]
-                     (let [vs (into []
-                                    (r/map val
-                                      (r/remove nil?
-                                        (r/map #(find % kg) ms))))]
-                       (if (empty? vs)
-                         res
-                         (conj! res [kg (apply vg vs)]))))]
-       (apply-universal-f mg
-                          (apply merge
-                                 (conj ms
-                                       (persistent!
-                                        (reduce apply-g
-                                                (transient {})
-                                                mg))))))))
+     (into
+      (if-let [f (mg nil)]
+        (map-fmap mv f mvs)
+        (apply merge mv mvs))
+      (r/remove
+       nil?
+       (r/map (fn [[kg vg]]
+                (if-let [vs (seq (into [] (group-entries kg (cons mv mvs))))]
+                  [kg (apply vg vs)]))
+              mg)))))
 
 (defn list-fapply
   ([cv sg]
@@ -154,41 +160,76 @@
 
 ;;================== Monad Implementations ======================
 
-(defn default-bind [c g]
-  (join (fmap c g)))
+(defn default-bind
+  ([c g]
+     (join (fmap c g)));;TODO check which version of fmap is this, core or protocols.:w
+  ([c g ss]
+     (join (apply fmap c g ss))))
 
 (defn reducible-join [c]
   (into (empty c) (r/flatten c)))
 
-(defn reducible-bind [c g]
-  (into (empty c) (r/mapcat g c)))
+(defn reducible-bind
+  ([c g]
+     (into (empty c)
+           (r/mapcat g c)))
+  ([c g ss]
+     (into (empty c)
+           (apply mapcat g c ss))))
 
-(defn map-bind [c g]
-  (into (empty c)
-        (r/mapcat (fn [[k v]]
-                    (r/map (fn [[kx vx]]
-                             (if (nil? k)
-                               [kx vx]
-                               (if (nil? kx)
-                                 [k vx]
-                                 [(join [k kx]) vx])))
-                           (g v)))
-                  c)))
+(defn map-join [m]
+  (into (empty m)
+        (r/mapcat (fn [[k x :as e]]
+                    (if (map? x)
+                      (r/map (fn [[kx vx]]
+                             [(if (and k kx)
+                                (join [k kx])
+                                (or k kx))
+                              vx])
+                           x)
+                      [e]))
+                  m)))
+
+(defn map-bind
+  ([c g]
+     (into (empty c)
+           (r/mapcat (fn [[k v]]
+                       (r/map (fn [[kx vx]]
+                                [(if (and k kx)
+                                   (join [k kx])
+                                   (or k kx))
+                                 vx])
+                              (g v)))
+                     c)))
+  ([m g ms]
+     (join (map-fmap m g ms))))
 
 (defn coll-join [c]
   (into (empty c) (flatten c)))
 
-(defn coll-bind [c g]
-  (into (empty c) (mapcat g c)))
+(defn coll-bind
+  ([c g]
+     (into (empty c)
+           (mapcat g c)))
+  ([c g ss]
+     (into (empty c)
+           (apply mapcat g c ss))))
 
 (defn list-join [c]
   (apply list (flatten c)))
 
-(defn list-bind [c g]
-  (apply list (mapcat g c)))
+(defn list-bind
+  ([c g]
+     (apply list (mapcat g c)))
+  ([c g ss]
+     (apply list (apply mapcat g c ss))))
 
-(defn seq-bind [c g]
-  (mapcat g c))
+(defn seq-bind
+  ([c g]
+     (mapcat g c))
+  ([c g ss]
+     (apply mapcat g c ss)))
+
 ;;================== Collections Extensions =====================
 (extend clojure.lang.IPersistentCollection
   Functor
@@ -261,7 +302,7 @@
   {:pure map-pure
    :fapply map-fapply}
   Monad
-  {:join nil;;TODO
+  {:join map-join
    :bind map-bind})
 
 (extend-type clojure.lang.MapEntry
@@ -289,13 +330,19 @@
          (clojure.lang.MapEntry. ke (apply vg ve (map val es)))
          e)));;TODO e should be represented with Nothing once Maybe is implemented
   Monad
-  (join [e] (throw (UnsupportedOperationException. "TODO"))) ;;TODO
-  (bind [[ke ve] g]
-    (let [[kg vg] (g ve)]
-      (clojure.lang.MapEntry. (if (and ke kg)
-                                (join [ke kg])
-                                (or ke kg))
-                              vg))))
+  (join [[k x :as e]]
+    (if (vector? x)
+      (let [[kx vx] x]
+        (clojure.lang.MapEntry. (if (and k kx)
+                                  (join [k kx])
+                                  (or k kx))
+                                vx))
+      e))
+  (bind
+    ([e g]
+       (default-bind e g))
+    ([e g & es]
+       (default-bind e g es))))
 
 (extend-type clojure.lang.IPersistentCollection
   Foldable

@@ -124,10 +124,21 @@
                  (first {:d 5}))
 
 ;;--------------- Map ---------------
+(fact
+ (fmap (comp inc +) {:a 1} {:a 2} {:a 3})
+ => {:a 7})
+
+(fact
+ (fmap (fn [& xs]
+         (hash-map :sum (apply + xs)))
+       {:a 1 :b 2} {:a 4})
+ => {:a {:sum 5}, :b {:sum 2}})
+
 (functor-law2 inc (partial * 100)
               {:a 2 :t 5 :h 99})
-(functor-law2 inc (partial * 100)
+(functor-law2 inc +
               {:a 2 :t 5 :h 99}
+              {:a 7 :t 8 :h 49}
               {:a 8 :t 3 :h 59})
 
 (fmap-keeps-type inc {:a 2 :t 5 :h 99})
@@ -363,13 +374,28 @@
 (fact (pure {} 2) => {nil 2})
 
 (fact (fapply {:a inc :b dec nil (partial * 2)} {:a 1 :b 5})
-      => {:a 4 :b 8})
+      => {:a 2 :b 4})
+
+(fact (fapply {:a inc :b dec} {:a 1 :c 2})
+      => {:a 2 :c 2})
 
 (fact (fapply {:a + :b - nil (partial * 2)}
            {:a 1 :b 1}
            {:a 2 :b 3 :c 44}
            {:b 4})
-      => {:a 6 :b -12 :c 88})
+      => {:a 3 :b -6 :c 88})
+
+(fact (fapply {:a + :b - :d (partial * 2)}
+           {:a 1 :b 1}
+           {:a 2 :b 3 :c 44}
+           {:b 4})
+      => {:a 3 :b -6 :c 44})
+
+(fact (fapply {nil +}
+              {:a 1 :b 3}
+              {:a 2 :b 4}
+              {:a 3 :b 5})
+      => {:a 6 :b 12})
 
 (applicative-law1 inc {nil 6})
 
@@ -406,21 +432,27 @@
 
 ;;=============== Monad tests ============================
 
-(defmacro monad-law1-left-identity [m g x]
+(defmacro monad-law1-left-identity [m g x & xs]
   `(fact "Left Identity Monad Law"
-         (>>= (pure ~m ~x) ~g) => (~g ~x)))
+         (apply bind (pure ~m ~x) ~g
+                (map (partial pure ~m) '~xs))
+         => (~g ~x ~@xs)))
 
 (defmacro monad-law2-right-identity [m]
   `(fact "Right Identity Monad Law"
-         (>>= ~m (partial pure ~m)) => ~m))
+         (bind ~m (partial pure ~m)) => ~m))
 
-(defmacro monad-law3-associativity [f g m]
+(defmacro monad-law3-associativity [f g m & ms]
   `(fact "Associativity Monad Law"
-         (-> (>>= ~m ~f) (>>= ~g))
-         => (>>= ~m #(>>= (~f %) ~g))))
+         (-> (bind ~m ~f ~@ms) (bind ~g))
+         => (bind ~m (fn [& xs#]
+                       (bind (apply ~f xs#) ~g))
+                  ~@ms)))
 
 ;;--------------- Vector ---------------------------------
 (monad-law1-left-identity [] (comp vector inc) 1)
+
+(monad-law1-left-identity [] (comp vector +) 1 2 3)
 
 (monad-law2-right-identity [1 2 -33])
 
@@ -430,6 +462,8 @@
 
 ;;--------------- List -----------------------------------
 (monad-law1-left-identity (list) (comp list inc) 2)
+
+(monad-law1-left-identity (list) (comp list +) 2 3 4)
 
 (monad-law2-right-identity (list 2 4 -33))
 
@@ -441,6 +475,9 @@
 (monad-law1-left-identity (lazy-seq (list))
                           (comp list inc) 3)
 
+(monad-law1-left-identity (lazy-seq (list))
+                          (comp list +) 3 49 9)
+
 (monad-law2-right-identity (lazy-seq (list 3 2 -33)))
 
 (monad-law3-associativity (comp list inc)
@@ -451,6 +488,9 @@
 (monad-law1-left-identity (conj (seq [0]) 2)
                           (comp seq vector inc) 4)
 
+(monad-law1-left-identity (conj (seq [0]) 2)
+                          (comp seq vector +) 4 8 9)
+
 (monad-law2-right-identity (conj (seq [4 2 -33]) 2))
 
 (monad-law3-associativity (comp seq vector inc)
@@ -460,6 +500,8 @@
 ;;--------------- Set ---------------------------------
 (monad-law1-left-identity #{} (comp hash-set inc) 6)
 
+(monad-law1-left-identity #{} (comp hash-set +) 6 7 99)
+
 (monad-law2-right-identity #{5 -3 24})
 
 (monad-law3-associativity (comp hash-set inc)
@@ -467,7 +509,17 @@
                           #{5 -56 30})
 
 ;;--------------- Map ---------------------------------
+(facts
+ (join {:a 1 :b 2}) => {:a 1 :b 2}
+ (join {:a {:a1 1 :a2 5} :b {:b1 2}})
+ => {[:a :a1] 1 [:a :a2] 5 [:b :b1] 2})
+
 (monad-law1-left-identity {} #(hash-map :increment (inc %)) 5)
+
+(monad-law1-left-identity {}
+                          (fn [& xs]
+                            (hash-map :sum (apply + xs)))
+                          5 6 88 9)
 
 (monad-law2-right-identity {:a 1 :b 2})
 
@@ -475,13 +527,34 @@
                           #(hash-map :10times (* 10 %))
                           {:a 1 :b 2})
 
+(monad-law3-associativity (fn [& xs] (hash-map :sum (apply + xs)))
+                          #(hash-map :10times (* 10 %))
+                          {:a 1 :b 2 :c 3}
+                          {:a 4 :b 3 :c 2}
+                          {:a 12 :b 23 :c 9})
+
 ;;--------------- MapEntry ----------------------------
+(facts
+ (join (first {:a 1})) => (first {:a 1})
+ (join (first {:a [:b 1]})) => (first {[:a :b] 1}))
+
 (monad-law1-left-identity (first {:a 1})
                           #(first (hash-map :increment (inc %)))
                           5)
+
+(monad-law1-left-identity (first {:a 1})
+                          (fn [& xs] (first (hash-map :sum (apply + xs))))
+                          5 77 8)
 
 (monad-law2-right-identity (first {:a 4}))
 
 (monad-law3-associativity #(first (hash-map :increment (inc %)))
                           #(first (hash-map :10times (* 10 %)))
                           (first {:a 1}))
+
+(monad-law3-associativity (fn [& xs]
+                            (first (hash-map :sum (apply + xs))))
+                          #(first (hash-map :10times (* 10 %)))
+                          (first {:a 1})
+                          (first {:a 2})
+                          (first {:a 77}))

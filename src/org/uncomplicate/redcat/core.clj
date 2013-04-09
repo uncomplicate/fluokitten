@@ -68,9 +68,9 @@
 
 ;TODO COMMENT
 
-(def pure (fn [a v] (p/pure a v)))
-; (def pure p/pure) causes strange unreliable execution of midje tests.
-; Investigate later
+(def pure #(p/pure %1 %2))
+;; (def pure p/pure) causes strange unreliable execution of midje tests.
+;;TODO Investigate later
 
 (defn fapply
   ([af as]
@@ -80,17 +80,26 @@
 
 (def liftm fmap)
 
-(def <*> p/fapply)
+(def <*> fapply)
 
-(defn sequencem [smv] (p/pure (first smv) (fmap deref smv)))
+(defn sequencem [smv]
+  (p/pure (first smv) (fmap deref smv)))
 
-(defn replicatem [n ma] (sequence (repeat n ma)))
+(defn replicatem [n ma]
+  (sequence (repeat n ma)))
 
-;(defn when [i ma]
+(defn join [x] (p/join x))
 
-(def >>= #(p/bind %1 %2))
+(defn bind
+  ([m f]
+     (p/bind m f))
+  ([m f & ms]
+     (p/bind m f ms)))
 
-(defn =<< [f mv] (>>= mv f))
+(def >>= bind)
+
+(defn =<< [f mv & mvs]
+  (apply bind mv f mvs))
 
 (defn mapm [m f s] (sequence (map f s)))
 

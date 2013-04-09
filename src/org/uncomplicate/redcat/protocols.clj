@@ -7,12 +7,10 @@
 (defprotocol Applicative
   (pure [av v] "TODO documentation")
   (fapply [av ag] [av ag avs] "TODO documentaion"))
-  ;perhaps we should always check that all parameters are of f typer and
-  ;if they are not, call wrap to wrap it. Then we do not have to explicitly wrap the parameters
 
 (defprotocol Monad
   "TODO documentation"
-  (bind [mv g])
+  (bind [mv g] [mv g mvs])
   (join [mv]))
 
 ; Algebraic structures
