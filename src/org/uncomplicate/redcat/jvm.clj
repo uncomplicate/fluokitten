@@ -4,6 +4,9 @@
 
 (set! *warn-on-reflection* true)
 
+(defn deref? [x]
+  (instance? clojure.lang.IDeref x))
+
 (extend-type nil
   Functor
   (fmap
@@ -61,15 +64,19 @@
 (defn apply-key [g maps k]
   [k (apply g (into [] (group-entries k maps)))])
 
-(defn map-fmap
+(defn map-fmap-r
   ([m g]
-     (into (empty m)
-           (r/map (fn [[k v]] [k (g v)]) m)))
+     (r/map (fn [[k v]] [k (g v)]) m))
   ([m g ms]
      (let [source (cons m ms)
            keys (distinct (into [] (r/flatten (r/map keys source))))]
-       (into (empty m)
-             (r/map (partial apply-key g source) keys)))))
+       (r/map (partial apply-key g source) keys))))
+
+(defn map-fmap
+  ([m g]
+     (into (empty m) (map-fmap-r m g)))
+  ([m g ms]
+     (into (empty m) (map-fmap-r m g ms))))
 
 (defn list-fmap
   ([s g]
@@ -144,7 +151,6 @@
   ([cv sg]
      (into (empty cv)
            (mapcat #(map % cv) sg)))
-  ;;(bind cg (partial fmap sv)))
   ([cv sg svs]
      (into (empty cv)
            (mapcat #(apply map % cv svs) sg))))
@@ -162,7 +168,7 @@
 
 (defn default-bind
   ([c g]
-     (join (fmap c g)));;TODO check which version of fmap is this, core or protocols.:w
+     (join (fmap c g)))
   ([c g ss]
      (join (apply fmap c g ss))))
 
@@ -177,32 +183,30 @@
      (into (empty c)
            (apply mapcat g c ss))))
 
+(defn map-join-r [m]
+  (r/mapcat (fn [[k x :as e]]
+              (if (map? x)
+                (r/map (fn [[kx vx]]
+                         [(if (and k kx)
+                            (join [k kx])
+                            (or k kx))
+                          vx])
+                       x)
+                [e]))
+            m))
+
 (defn map-join [m]
-  (into (empty m)
-        (r/mapcat (fn [[k x :as e]]
-                    (if (map? x)
-                      (r/map (fn [[kx vx]]
-                             [(if (and k kx)
-                                (join [k kx])
-                                (or k kx))
-                              vx])
-                           x)
-                      [e]))
-                  m)))
+  (into (empty m) (map-join-r m)))
 
 (defn map-bind
-  ([c g]
-     (into (empty c)
-           (r/mapcat (fn [[k v]]
-                       (r/map (fn [[kx vx]]
-                                [(if (and k kx)
-                                   (join [k kx])
-                                   (or k kx))
-                                 vx])
-                              (g v)))
-                     c)))
+  ([m g]
+     (into (empty m)
+           (map-join-r
+            (map-fmap-r m g))))
   ([m g ms]
-     (join (map-fmap m g ms))))
+     (into (empty m)
+           (map-join-r
+            (map-fmap-r m g ms)))))
 
 (defn coll-join [c]
   (into (empty c) (flatten c)))
@@ -359,6 +363,7 @@
       (apply str (g s)))
     ([s g ss]
        (apply str (apply g s ss))))
+  ;;TODO maybe lambda in a string would be appropriate as applicative
   Semigroup
   (op [s s1]
     (str s s1))
@@ -377,7 +382,7 @@
   Functor
   (fmap
     ([f g]
-      (comp g f))
+       (comp g f))
     ([f g gs]
        (apply comp g f gs)))
   Semigroup
@@ -386,23 +391,36 @@
   (id [f] identity))
 
 ;;====================== References ========================
-(extend-type clojure.lang.Atom
-  Functor
-  (fmap
-    ([a g]
-       (do (swap! a g) a))
-    ([a g args]
-       (do (apply swap! a g (map deref args)) a)))
-  Applicative
-  (pure [a v]
-    (atom v))
-  (fapply [av ag]
-    (fmap av (deref ag)))
-  Monad
-  (join [ma]
+(defn agent-fmap
+  ([a g]
+     (do (swap! a g) a))
+  ([a g as]
+     (do (apply swap! a g (map deref as)) a)))
+
+(defn agent-pure [a v]
+  (atom v))
+
+(defn agent-fapply
+  ([av ag]
+     (agent-fmap av (deref ag)))
+  ([av ag avs]
+     (agent-fmap av (deref ag) avs)))
+
+(defn agent-join [ma]
     (fmap ma deref))
-  (bind [a g]
-    (join (fmap a g))))
+
+(defn agent-bind [a g]
+    (join (fmap a g)))
+
+(extend clojure.lang.Atom
+  Functor
+  {:fmap agent-fmap}
+  Applicative
+  {:pure agent-pure
+   :fapply agent-fapply}
+  Monad
+  {:join agent-join
+   :bind agent-bind})
 
 (extend-type clojure.lang.Ref
   Functor

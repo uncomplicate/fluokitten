@@ -4,6 +4,12 @@
         midje.sweet)
   (:require [clojure.string :as s]))
 
+(defn check-eq [expected]
+  (if (deref? expected)
+    (let [exp (deref expected)]
+      #(= exp (deref %)))
+    #(= expected %)))
+
 ;=============== Functor tests ========================
 (defmacro functor-law2
   ([f x] `(functor-law2 ~f ~f ~x))
@@ -157,11 +163,11 @@
   (dosync
    (functor-law2 inc (partial * 100) r))
   (dosync
-   (functor-law2 inc (partial * 100) r (ref 7)))
+   (functor-law2 inc (partial * 100) r (atom 3) (ref 7)))
   (dosync
    (fmap-keeps-type inc r))
   (dosync
-   (fmap-keeps-type + r (ref 4))))
+   (fmap-keeps-type + r (ref 4) (atom 7))))
 
 ;; TODO functions
 ;;not a proper test at all!! (functor-law2 (gen-fn (partial * 100) inc) (gen-fn (partial * 44) dec) (gen/int))
@@ -169,8 +175,8 @@
 ;============================= Applicative tests ==========================
 (defmacro applicative-law1 [f x & xs]
   `(fact "First applicative law."
-         (fapply (pure ~x ~f) ~x ~@xs)
-         => (fmap ~f ~x ~@xs)))
+        (fapply (pure ~x ~f) ~x ~@xs)
+        => (fmap ~f ~x ~@xs)))
 
 (defmacro applicative-law2-identity [x]
   `(fact "Identity applicative law."
@@ -187,14 +193,14 @@
   `(fact "Homomorphism applicative law."
          (apply fapply (pure ~ap ~f) (pure ~ap ~x)
                 (map (partial pure ~ap) '~xs))
-         => (pure ~ap (~f ~x ~@xs))))
+         => (check-eq (pure ~ap (~f ~x ~@xs)))))
 
 (defmacro applicative-law5-interchange [ap f x & xs]
   `(fact "Interchange applicative law."
          (apply fapply (pure ~ap ~f) (pure ~ap ~x)
                 (map (partial pure ~ap) '~xs))
-         => (fapply (pure ~ap #(% ~x ~@xs))
-                 (pure ~ap ~f))))
+         => (check-eq (fapply (pure ~ap #(% ~x ~@xs))
+                 (pure ~ap ~f)))))
 
 (defmacro fapply-keeps-type [f x & xs]
   `(fact "fapply should return data of the same type
@@ -430,6 +436,30 @@
 
 (fapply-keeps-type inc {4 -2 5 5})
 
+;;-------------- Atom -----------
+(let [a (atom 6)]
+  (applicative-law1 inc a)
+
+  (applicative-law1 + a (atom 9) (atom -77) (atom -1))
+
+  (applicative-law2-identity a)
+
+  (applicative-law3-composition (atom inc)
+                                (atom (partial * 10))
+                                a)
+
+  (applicative-law3-composition (atom inc)
+                                (atom (partial * 10))
+                                a
+                                (atom -2))
+
+  (applicative-law4-homomorphism a inc 5)
+
+  (applicative-law4-homomorphism a + 5 -4 5)
+
+  (applicative-law5-interchange a inc 5)
+
+  (applicative-law5-interchange a + 5 3 4 5))
 ;;=============== Monad tests ============================
 
 (defmacro monad-law1-left-identity [m g x & xs]
@@ -532,6 +562,11 @@
                           {:a 1 :b 2 :c 3}
                           {:a 4 :b 3 :c 2}
                           {:a 12 :b 23 :c 9})
+
+(fact (let [f #(hash-map :increment (inc %))
+            m {:a 1 :b 2}]
+        (fapply (pure {} f) m)
+        => (bind (pure {} f) #(fmap % m))))
 
 ;;--------------- MapEntry ----------------------------
 (facts

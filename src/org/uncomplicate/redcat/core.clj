@@ -59,10 +59,8 @@
      (if (= identity f)
        identity
        (fn
-         ([functor]
-            (p/fmap functor f))
          ([functor & functors]
-            (p/fmap functor f functors)))))
+            (apply fmap f functor functors)))))
   ([f functor & functors]
     (p/fmap functor f functors)))
 
@@ -73,14 +71,18 @@
 ;;TODO Investigate later
 
 (defn fapply
-  ([af as]
-    (p/fapply as af))
-  ([af as & ass]
-    (p/fapply as af ass)))
-
-(def liftm fmap)
+  ([af]
+     (fn
+       ([av & avs]
+          (apply fapply af av avs))))
+  ([af av]
+     (p/fapply av af))
+  ([af av & avs]
+     (p/fapply av af avs)))
 
 (def <*> fapply)
+
+(def liftm fmap)
 
 (defn sequencem [smv]
   (p/pure (first smv) (fmap deref smv)))
@@ -91,6 +93,10 @@
 (defn join [x] (p/join x))
 
 (defn bind
+  ([f]
+     (fn
+       ([m & ms]
+          (apply bind m f ms))))
   ([m f]
      (p/bind m f))
   ([m f & ms]
