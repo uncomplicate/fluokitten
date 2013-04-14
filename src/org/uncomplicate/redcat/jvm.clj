@@ -350,45 +350,51 @@
   {:join collreduce-join
    :bind collreduce-bind})
 
+(defn create-mapentry [k v]
+  (clojure.lang.MapEntry. k v))
 
-(extend-type clojure.lang.MapEntry
+(defn mapentry-fmap
+  ([[ke ve] g]
+     (create-mapentry ke (g ve)))
+  ([[ke ve] g es]
+     (create-mapentry
+      ke
+      (apply g ve (vals es)))))
+
+(defn mapentry-pure [e v]
+  (create-mapentry nil v))
+
+(defn mapentry-fapply
+  ([[ke ve :as e] [kg vg]]
+     (if (or (nil? kg) (= ke kg))
+       (create-mapentry ke (vg ve))
+       e))
+  ([[ke ve :as e] [kg vg] es]
+     (if (or (nil? kg)
+             (not (some (fn [[k _]]
+                          (not= k kg))
+                        (cons e es))))
+       (create-mapentry ke (apply vg ve (map val es)))
+       e)));;TODO e should be represented with Nothing once Maybe is implemented
+
+(defn mapentry-join [[k x :as e]]
+  (if (vector? x)
+    (let [[kx vx] x]
+      (create-mapentry (if (and k kx)
+                                (join [k kx])
+                                (or k kx))
+                              vx))
+    e))
+
+(extend clojure.lang.MapEntry
   Functor
-  (fmap
-    ([[ke ve] g]
-       (clojure.lang.MapEntry. ke (g ve)))
-    ([[ke ve] g es]
-       (clojure.lang.MapEntry.
-        ke
-        (apply g ve (vals es)))))
+  {:fmap mapentry-fmap}
   Applicative
-  (pure [e v]
-    (clojure.lang.MapEntry. nil v))
-  (fapply
-    ([[ke ve :as e] [kg vg]]
-       (if (or (nil? kg) (= ke kg))
-         (clojure.lang.MapEntry. ke (vg ve))
-         e))
-    ([[ke ve :as e] [kg vg] es]
-       (if (or (nil? kg)
-               (not (some (fn [[k _]]
-                            (not= k kg))
-                          (cons e es))))
-         (clojure.lang.MapEntry. ke (apply vg ve (map val es)))
-         e)));;TODO e should be represented with Nothing once Maybe is implemented
+  {:pure mapentry-pure
+   :fapply mapentry-fapply}
   Monad
-  (join [[k x :as e]]
-    (if (vector? x)
-      (let [[kx vx] x]
-        (clojure.lang.MapEntry. (if (and k kx)
-                                  (join [k kx])
-                                  (or k kx))
-                                vx))
-      e))
-  (bind
-    ([e g]
-       (default-bind e g))
-    ([e g es]
-       (default-bind e g es))))
+  {:join mapentry-join
+   :bind default-bind})
 
 (extend-type clojure.lang.IPersistentCollection
   Foldable

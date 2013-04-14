@@ -114,3 +114,7 @@
 (defn foldmap [f ta] (p/foldmap ta f))
 
 (def fold p/fold)
+
+(def op p/op)
+
+(def id p/id)
