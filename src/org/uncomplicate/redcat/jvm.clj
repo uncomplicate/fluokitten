@@ -7,6 +7,9 @@
 (defn deref? [x]
   (instance? clojure.lang.IDeref x))
 
+(defn reducible? [x]
+  (instance? clojure.core.protocols.CollReduce x))
+
 (extend-type nil
   Functor
   (fmap
@@ -46,8 +49,21 @@
          ([] ide)
          ([e1 e2] (op e1 e2))))))
 
+(defn reducible [c]
+  (r/map identity c))
+
+(defn realize [c cr]
+  (into (empty c) cr))
+
 ;=============== Functor implementations =========================
 ;;--------------- fmap implementations ---------------
+(defn collreduce-fmap
+  ([cr g]
+     (r/map g cr))
+  ([_ _ _]
+     (throw (java.lang.UnsupportedOperationException.
+             "Fmap for reducibles does not support varargs."))))
+
 (defn reducible-fmap
   ([c g]
      (into (empty c)
@@ -98,6 +114,12 @@
 
 ;;================ Applicative implementations ==================
 ;;-------------- fapply implementations ----------------
+(defn collreduce-fapply [crv crg]
+  (r/mapcat #(r/map % crv) crg))
+
+(defn collreduce-pure [_ v]
+  (r/map identity  [v]))
+
 (defn reducible-fapply
   ([cv sg]
      (into (empty cv)
@@ -165,12 +187,21 @@
   (coll-pure m [nil v]))
 
 ;;================== Monad Implementations ======================
+(defn collreduce-join [cr]
+  (r/flatten cr))
+
+(defn collreduce-bind
+  ([cr g]
+     (r/mapcat g cr))
+  ([cr g ss]
+     (throw (java.lang.UnsupportedOperationException.
+             "Bind for reducibles does not support varargs."))))
 
 (defn default-bind
-  ([c g]
-     (join (fmap c g)))
-  ([c g ss]
-     (join (apply fmap c g ss))))
+  ([m g]
+     (join (fmap m g)))
+  ([m g ms]
+     (join (fmap m g ms))))
 
 (defn reducible-join [c]
   (into (empty c) (r/flatten c)))
@@ -309,6 +340,17 @@
   {:join map-join
    :bind map-bind})
 
+(extend clojure.core.protocols.CollReduce
+  Functor
+  {:fmap collreduce-fmap}
+  Applicative
+  {:pure collreduce-pure
+   :fapply collreduce-fapply}
+  Monad
+  {:join collreduce-join
+   :bind collreduce-bind})
+
+
 (extend-type clojure.lang.MapEntry
   Functor
   (fmap
@@ -345,7 +387,7 @@
   (bind
     ([e g]
        (default-bind e g))
-    ([e g & es]
+    ([e g es]
        (default-bind e g es))))
 
 (extend-type clojure.lang.IPersistentCollection
@@ -391,6 +433,17 @@
   (id [f] identity))
 
 ;;====================== References ========================
+;;----------------- Universal ------------------
+(defn reference-fapply
+  ([rv rg]
+     (fmap rv (deref rg)))
+  ([rv rg rvs]
+     (fmap rv (deref rg) rvs)))
+
+(defn reference-join [r]
+    (fmap r deref))
+
+;;----------------- Agent -----------------------
 (defn agent-fmap
   ([a g]
      (do (swap! a g) a))
@@ -400,41 +453,32 @@
 (defn agent-pure [a v]
   (atom v))
 
-(defn agent-fapply
-  ([av ag]
-     (agent-fmap av (deref ag)))
-  ([av ag avs]
-     (agent-fmap av (deref ag) avs)))
+;;------------------- Ref --------------------------
+(defn ref-fmap
+  ([r g]
+     (do (alter r g) r))
+  ([r g rs]
+     (do (apply alter r g (map deref rs)) r)))
 
-(defn agent-join [ma]
-    (fmap ma deref))
-
-(defn agent-bind [a g]
-    (join (fmap a g)))
+(defn ref-pure [a v]
+  (ref v))
 
 (extend clojure.lang.Atom
   Functor
   {:fmap agent-fmap}
   Applicative
   {:pure agent-pure
-   :fapply agent-fapply}
+   :fapply reference-fapply}
   Monad
-  {:join agent-join
-   :bind agent-bind})
+  {:join reference-join
+   :bind default-bind})
 
-(extend-type clojure.lang.Ref
+(extend clojure.lang.Ref
   Functor
-  (fmap
-    ([r g]
-       (do (alter r g) r))
-    ([a g args]
-       (do (apply alter a g (map deref args)) a)))
+  {:fmap ref-fmap}
   Applicative
-  (pure [r v] (ref v))
-  (fapply [rv rg]
-    (fmap rv (deref rg)))
+  {:pure ref-pure
+   :fapply reference-fapply}
   Monad
-  (join [ma]
-    (fmap ma deref))
-  (bind [a g]
-    (join (fmap a g))))
+  {:join reference-join
+   :bind default-bind})

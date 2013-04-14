@@ -66,9 +66,11 @@
 
 ;TODO COMMENT
 
-(def pure #(p/pure %1 %2))
-;; (def pure p/pure) causes strange unreliable execution of midje tests.
-;;TODO Investigate later
+(defn pure
+  ([av]
+     #(p/pure av %))
+  ([av v]
+     (p/pure av v)))
 
 (defn fapply
   ([af]

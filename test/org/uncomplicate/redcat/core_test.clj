@@ -5,18 +5,22 @@
   (:require [clojure.string :as s]))
 
 (defn check-eq [expected]
-  (if (deref? expected)
-    (let [exp (deref expected)]
-      #(= exp (deref %)))
-    #(= expected %)))
+  (cond
+   (deref? expected)
+   (let [exp (deref expected)]
+     #(and (instance? (type expected) %)
+           (= exp (deref %))))
+   (reducible? expected)
+   #(= (into [] expected) (into [] %))
+   :else #(= expected %)))
 
-;=============== Functor tests ========================
+;;=============== Functor tests ========================
 (defmacro functor-law2
   ([f x] `(functor-law2 ~f ~f ~x))
   ([f1 f2 x & xs]
      `(facts "Second functor law."
              (fmap (comp ~f1 ~f2) ~x ~@xs) =>
-             (fmap ~f1 (fmap ~f2 ~x ~@xs)))))
+             (check-eq (fmap ~f1 (fmap ~f2 ~x ~@xs))))))
 
 (defmacro fmap-keeps-type [f x & xs]
   `(fact "fmap should return data of the same type
@@ -118,6 +122,12 @@
                  (lazy-seq (list 18 5 -92)))
 
 
+;;--------------- CollReduce ---------------
+(functor-law2 inc (partial * 100)
+              (reducible [1 -199 9]))
+
+(fmap-keeps-type inc (reducible [100 0 -999]))
+
 ;;--------------- MapEntry ---------------
 (functor-law2 inc (partial * 100)
               (first {:a 11}))
@@ -152,22 +162,26 @@
                  {:k 5 :n 4 :dd 5})
 
 ;;--------------- Atom ---------------
-(let [a (atom 44)]
-  (functor-law2 inc (partial * 100) a)
-  (functor-law2 inc (partial * 100) a (atom 5))
-  (fmap-keeps-type  inc a)
-  (fmap-keeps-type  + a (atom 5)))
+(functor-law2 inc (partial * 100) (atom 34))
+
+(functor-law2 inc (partial * 100) (atom 35) (atom 5))
+
+(fmap-keeps-type  inc (atom 36))
+
+(fmap-keeps-type  + (atom 37) (atom 5))
 
 ;;--------------- Ref ---------------
-(let [r (ref 457)]
-  (dosync
-   (functor-law2 inc (partial * 100) r))
-  (dosync
-   (functor-law2 inc (partial * 100) r (atom 3) (ref 7)))
-  (dosync
-   (fmap-keeps-type inc r))
-  (dosync
-   (fmap-keeps-type + r (ref 4) (atom 7))))
+(dosync
+ (functor-law2 inc (partial * 100) (ref 44)))
+
+(dosync
+ (functor-law2 inc (partial * 100) (ref 45) (atom 3) (ref 7)))
+
+(dosync
+ (fmap-keeps-type inc (ref 46)))
+
+(dosync
+ (fmap-keeps-type + (ref 47) (ref 4) (atom 7)))
 
 ;; TODO functions
 ;;not a proper test at all!! (functor-law2 (gen-fn (partial * 100) inc) (gen-fn (partial * 44) dec) (gen/int))
@@ -176,18 +190,19 @@
 (defmacro applicative-law1 [f x & xs]
   `(fact "First applicative law."
         (fapply (pure ~x ~f) ~x ~@xs)
-        => (fmap ~f ~x ~@xs)))
+        => (check-eq (fmap ~f ~x ~@xs))))
 
 (defmacro applicative-law2-identity [x]
   `(fact "Identity applicative law."
-         (fapply (pure ~x identity) ~x) => ~x))
+         (fapply (pure ~x identity) ~x)
+         => (check-eq ~x)))
 
 (defmacro applicative-law3-composition [u v x & xs]
   `(fact "Composition applicative law."
          ;;TODO This could be more idiomatic with vararg fapply
          (-> (pure ~x #(partial comp %))
              (fapply ~u) (fapply ~v) (fapply ~x ~@xs))
-         => (fapply ~u (fapply ~v ~x ~@xs))))
+         => (check-eq (fapply ~u (fapply ~v ~x ~@xs)))))
 
 (defmacro applicative-law4-homomorphism [ap f x & xs]
   `(fact "Homomorphism applicative law."
@@ -230,8 +245,23 @@
 (applicative-law5-interchange [] inc 1)
 (applicative-law5-interchange [] + 1 54 -2)
 
-(fapply-keeps-type inc (list 1 -4 9))
-(fapply-keeps-type + (list 1 -4 9) (list 2 -3 -4))
+(fapply-keeps-type inc  [1 -4 9])
+(fapply-keeps-type + [1 -4 9] [2 -3 -4])
+
+;--------------- CollReduce ---------------
+(applicative-law1 inc (reducible [1 -2 5]))
+
+(applicative-law2-identity (reducible [1 445 -4]))
+
+(applicative-law3-composition [inc]
+                              [(partial * 10)]
+                              (reducible [1 -34343444]))
+
+(applicative-law4-homomorphism (reducible []) inc 1)
+
+(applicative-law5-interchange (reducible []) inc 1)
+
+(fapply-keeps-type inc (reducible [1 -4 9]))
 
 ;;--------------- List ---------------
 (applicative-law1 inc (list 2 44 -7))
@@ -437,47 +467,81 @@
 (fapply-keeps-type inc {4 -2 5 5})
 
 ;;-------------- Atom -----------
-(let [a (atom 6)]
-  (applicative-law1 inc a)
+(applicative-law1 inc (atom 6))
 
-  (applicative-law1 + a (atom 9) (atom -77) (atom -1))
+(applicative-law1 + (atom 6) (atom 9) (atom -77) (atom -1))
 
-  (applicative-law2-identity a)
+(applicative-law2-identity (atom 6))
 
-  (applicative-law3-composition (atom inc)
-                                (atom (partial * 10))
-                                a)
+(applicative-law3-composition (atom inc)
+                              (atom (partial * 10))
+                              (atom 6))
 
-  (applicative-law3-composition (atom inc)
-                                (atom (partial * 10))
-                                a
-                                (atom -2))
+(applicative-law3-composition (atom inc)
+                              (atom (partial * 10))
+                              (atom 6)
+                              (atom -2))
 
-  (applicative-law4-homomorphism a inc 5)
+(applicative-law4-homomorphism (atom 6) inc 5)
 
-  (applicative-law4-homomorphism a + 5 -4 5)
+(applicative-law4-homomorphism (atom 6) + 5 -4 5)
 
-  (applicative-law5-interchange a inc 5)
+(applicative-law5-interchange (atom 6) inc 5)
 
-  (applicative-law5-interchange a + 5 3 4 5))
+(applicative-law5-interchange (atom 6) + 5 3 4 5)
+
+;;-------------- Ref -----------
+(dosync
+ (applicative-law1 inc (ref 6)))
+
+(dosync
+ (applicative-law1 + (ref 6) (ref 9) (ref -77) (ref -1)))
+
+(dosync
+ (applicative-law2-identity (ref 6)))
+
+(dosync
+ (applicative-law3-composition (ref inc)
+                               (ref (partial * 10))
+                               (ref 6)))
+
+(dosync
+ (applicative-law3-composition (ref inc)
+                               (ref (partial * 10))
+                               (ref 6)
+                               (ref -2)))
+
+(dosync
+   (applicative-law4-homomorphism (ref 6) inc 5))
+
+(dosync
+ (applicative-law4-homomorphism (ref 6) + 5 -4 5))
+
+(dosync
+   (applicative-law5-interchange (ref 6) inc 5))
+
+(dosync
+   (applicative-law5-interchange (ref 6) + 5 3 4 5))
+
 ;;=============== Monad tests ============================
 
 (defmacro monad-law1-left-identity [m g x & xs]
   `(fact "Left Identity Monad Law"
          (apply bind (pure ~m ~x) ~g
                 (map (partial pure ~m) '~xs))
-         => (~g ~x ~@xs)))
+         => (check-eq (~g ~x ~@xs))))
 
 (defmacro monad-law2-right-identity [m]
   `(fact "Right Identity Monad Law"
-         (bind ~m (partial pure ~m)) => ~m))
+         (bind ~m (partial pure ~m))
+         => (check-eq ~m)))
 
 (defmacro monad-law3-associativity [f g m & ms]
   `(fact "Associativity Monad Law"
          (-> (bind ~m ~f ~@ms) (bind ~g))
-         => (bind ~m (fn [& xs#]
-                       (bind (apply ~f xs#) ~g))
-                  ~@ms)))
+         => (check-eq (bind ~m (fn [& xs#]
+                                 (bind (apply ~f xs#) ~g))
+                            ~@ms))))
 
 ;;--------------- Vector ---------------------------------
 (monad-law1-left-identity [] (comp vector inc) 1)
@@ -489,6 +553,16 @@
 (monad-law3-associativity (comp vector inc)
                           (comp vector (partial * 10))
                           [1 -3 -88])
+
+;;--------------- CollReduce ---------------------------------
+(monad-law1-left-identity (reducible [])
+                          (comp reducible vector inc) 1)
+
+(monad-law2-right-identity (reducible [1 2 -33]))
+
+(monad-law3-associativity (comp reducible vector inc)
+                          (comp reducible vector (partial * 10))
+                          (reducible [1 -3 -88]))
 
 ;;--------------- List -----------------------------------
 (monad-law1-left-identity (list) (comp list inc) 2)
@@ -593,3 +667,29 @@
                           (first {:a 1})
                           (first {:a 2})
                           (first {:a 77}))
+
+;;--------------- Atom ----------------------------
+(monad-law1-left-identity (atom 9) (comp atom inc) 1)
+
+(monad-law1-left-identity (atom 9) (comp atom +) 1 2 3)
+
+(monad-law2-right-identity (atom 9))
+
+(monad-law3-associativity (comp atom inc)
+                          (comp atom (partial * 10))
+                          (atom 9))
+
+;;--------------- Ref ----------------------------
+(dosync
+ (monad-law1-left-identity (ref 9) (comp ref inc) 1))
+
+(dosync
+ (monad-law1-left-identity (ref 9) (comp ref +) 1 2 3))
+
+(dosync
+ (monad-law2-right-identity (ref 9)))
+
+(dosync
+ (monad-law3-associativity (comp ref inc)
+                           (comp ref (partial * 10))
+                           (ref 9)))
