@@ -1,5 +1,8 @@
 (ns org.uncomplicate.redcat.protocols)
 
+(defprotocol Curried
+  (original [f]))
+
 (defprotocol Functor
   "TODO documentation"
   (fmap [fv g] [fv g fvs] "TODO documentation"))

@@ -4,6 +4,18 @@
         midje.sweet)
   (:require [clojure.string :as s]))
 
+(defn scaffold [iface]
+  (doseq [[iface methods] (->> iface .getMethods
+                            (map #(vector (.getName (.getDeclaringClass %))
+                                    (symbol (.getName %))
+                                    (count (.getParameterTypes %))))
+                            (group-by first))]
+    (println (str "  " iface))
+    (doseq [[_ name argcount] methods]
+      (println
+        (str "    "
+          (list name (into ['this] (take argcount (repeatedly gensym)))))))))
+
 (defn check-eq [expected]
   (cond
    (deref? expected)
@@ -13,6 +25,11 @@
    (reducible? expected)
    #(= (into [] expected) (into [] %))
    :else #(= expected %)))
+
+;;=============== Curried tests ========================
+(facts
+ ((curry + 3) 1 2 3) => 6
+ (((curry + 2) 1) 2) => 3)
 
 ;;=============== Functor tests ========================
 (defmacro functor-law2
@@ -25,13 +42,14 @@
 (defmacro fmap-keeps-type [f x & xs]
   `(fact "fmap should return data of the same type
             as the functor argument."
-         (type (fmap ~f ~x ~@xs)) => (type ~x)))
+         (type (fmap ~f ~x ~@xs)) => #(isa? % (type ~x))))
 
 (fact "First functor law."
       (fmap identity) => identity)
 
 ;;--------------- nil ---------------
 (functor-law2 inc + nil)
+
 (functor-law2 inc + nil 99 0)
 
 ;;--------------- literals ---------------
@@ -45,9 +63,11 @@
 ;; but not mandatory.
 
 (functor-law2 inc (partial * 100) 101)
+
 (functor-law2 inc (partial * 100) 101 2 3)
 
 (functor-law2 s/capitalize str \a)
+
 (functor-law2 s/capitalize str \a \b \c)
 
 (facts "Objects as functors."
@@ -59,41 +79,49 @@
 
 ;;--------------- String ---------------
 (functor-law2 s/capitalize s/reverse "something")
+
 (functor-law2 s/capitalize str "something" "else")
 
 (fmap-keeps-type s/reverse "something")
+
 (fmap-keeps-type str "something" "else")
 
 ;;--------------- Vector ---------------
 (functor-law2 inc (partial * 100)
               [1 -199 9])
+
 (functor-law2 inc (partial * 100)
               [1 -199 9]
               [1 -66 9])
 
 (fmap-keeps-type inc [100 0 -999])
+
 (fmap-keeps-type + [100 0 -999]
                  (list 44 0 -54))
 
 ;;--------------- List ---------------
 (functor-law2 inc (partial * 100)
               (list -3 5 0))
+
 (functor-law2 inc (partial * 100)
               (list -3 5 0)
               (list -3 44 -2))
 
 (fmap-keeps-type inc (list 77 0 -39))
+
 (fmap-keeps-type + (list 77 0 -39)
                  (list 88 -8 8))
 
 ;;--------------- Set ---------------
 (functor-law2 inc (partial * 100)
               #{-449 9 6})
+
 (functor-law2 inc (partial * 100)
               #{-449 9 6}
               #{-4 88 7})
 
 (fmap-keeps-type inc #{5 89 -7})
+
 (fmap-keeps-type + #{5 89 -7}
                  (list -3 -4 -45))
 
@@ -106,6 +134,7 @@
 
 (functor-law2 inc (partial * 100)
               (seq (list 8 9 10)))
+
 (functor-law2 inc (partial * 100)
               (seq (list 8 9 10))
               (seq (list -5 -4 -5)))
@@ -113,11 +142,13 @@
 ;;--------------- LazySeq ---------------
 (functor-law2 inc (partial * 100)
               (lazy-seq (list 78 -3 5)))
+
 (functor-law2 inc (partial * 100)
               (lazy-seq (list 78 -3 5))
               (lazy-seq (list 88 0 -4)))
 
 (fmap-keeps-type inc (lazy-seq (list 8 9 -2)))
+
 (fmap-keeps-type + (lazy-seq (list 8 9 -2))
                  (lazy-seq (list 18 5 -92)))
 
@@ -131,11 +162,13 @@
 ;;--------------- MapEntry ---------------
 (functor-law2 inc (partial * 100)
               (first {:a 11}))
+
 (functor-law2 inc (partial * 100)
               (first {:a 11})
               (first {:a 5}))
 
 (fmap-keeps-type inc (first {:c 3}))
+
 (fmap-keeps-type + (first {:c 3})
                  (first {:d 5}))
 
@@ -158,6 +191,7 @@
               {:a 8 :t 3 :h 59})
 
 (fmap-keeps-type inc {:a 2 :t 5 :h 99})
+
 (fmap-keeps-type + {:a 2 :t 5 :h 99}
                  {:k 5 :n 4 :dd 5})
 
@@ -183,8 +217,18 @@
 (dosync
  (fmap-keeps-type + (ref 47) (ref 4) (atom 7)))
 
-;; TODO functions
-;;not a proper test at all!! (functor-law2 (gen-fn (partial * 100) inc) (gen-fn (partial * 44) dec) (gen/int))
+;;--------------- Function ---------------
+(fact "Second functor law."
+      ((fmap (comp inc dec) inc) 1)
+      => ((fmap inc (fmap dec inc))1))
+
+(fact "Second functor law - varargs."
+      ((fmap (comp inc dec) +) 1 2 3)
+      => ((fmap inc (fmap dec +)) 1 2 3))
+
+(fact "Fmap keeps type." (fn? (fmap inc dec)))
+
+(fact "Fmap keeps type - varargs." (fn? (fmap inc dec +)))
 
 ;============================= Applicative tests ==========================
 (defmacro applicative-law1 [f x & xs]
@@ -522,6 +566,22 @@
 
 (dosync
    (applicative-law5-interchange (ref 6) + 5 3 4 5))
+
+;;------------------- Function ---------------------------
+(facts "First applicative law."
+       ((fapply (pure identity inc) (pure identity 1)) 7)
+       => ((fmap inc (pure identity 1)) 7)
+      ;; ((fapply (pure identity +) (pure identity 1)) 7 9 11 13)
+      ;; => ((fmap + (pure identity 1)) 7 9 11 13)
+       )
+
+(facts "Learn You a Haskell example."
+       ((fapply (fmap + (partial + 3)) (partial * 100)) 5) => 508
+       ;;((fapply (fmap + (partial + 3)) (partial * 100)) 2 3 4) => 2412
+       ((fapply (fapply (pure identity +) (partial + 3)) (partial * 100)) 6) => 609
+       ;;((fapply (fmap + (partial + 3)) (partial * 100)) 5 1) => 509
+       ;;((fapply (fmap + (partial + 3)) (partial * 100)) 5 1 2) => 1011
+       )
 
 ;;=============== Monad tests ============================
 

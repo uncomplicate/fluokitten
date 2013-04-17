@@ -10,6 +10,13 @@
 (defn reducible? [x]
   (instance? clojure.core.protocols.CollReduce x))
 
+;; TODO see whether it is necessary
+(defn arg-counts [f]
+  (map alength (map (fn [^java.lang.reflect.Method m]
+                      ( .getParameterTypes m))
+                    (.getDeclaredMethods
+                     ^java.lang.Class (class f)))))
+
 (extend-type nil
   Functor
   (fmap
@@ -426,17 +433,100 @@
   (id [n] 0))
 
 ;;===================== Function ===========================
-(extend-type clojure.lang.Fn
+;;--------------------- Curried ----------------------------
+(comment (defn curry
+           ([f] (curry f (min 2 (apply max (arg-counts f)))))
+           ([f n]
+              (if (and (fn? f) (pos? n))
+                (fn [& args]
+                  (let [as (- n (count args))]
+                    (if (pos? as)
+                      (curry (apply partial f args) as)
+                      (apply f args))))
+                f))))
+
+(defn- gen-invoke [^clojure.lang.IFn f arity n]
+  (let [args (map #(symbol (str "a" %)) (range arity))]
+        `(invoke [~'_ ~@args]
+                 (if (> ~n ~arity)
+                   (curry (partial ~f ~@args) (- ~n ~arity))
+                   (.invoke ~f ~@args)))))
+
+(defn- gen-applyto [^clojure.lang.IFn f n]
+  `(applyTo [~'_ ~'args]
+            (let [as# (- ~n (count ~'args))]
+              (if (pos? as#)
+                (curry (apply partial ~f ~'args) as#)
+                (.applyTo ~f ~'args)))))
+
+(comment
+  (defmacro  curry* [^clojure.lang.IFn f n]
+    `(reify
+       Curried
+       (original [_] ~f)
+       clojure.lang.IFn
+       ~@(map #(gen-invoke f % n) (range 22))
+       ~(gen-applyto f n)
+       java.util.concurrent.Callable
+       (call [_]
+         (if (pos? ~n) ~f (.call ^java.util.concurrent.Callable ~f)))
+       java.lang.Runnable
+       (run [_]
+         (if (pos? ~n) ~f (.run ^java.lang.Runnable ~f))))))
+
+(defmacro deftype-curried-fn []
+  `(deftype ~'CurriedFn ~'[^clojure.lang.IFn f n]
+     Curried
+     ~'(original [_] f)
+     clojure.lang.IFn
+     ~@(map #(gen-invoke 'f % 'n) (range 22))
+     ~(gen-applyto 'f 'n)
+     java.util.concurrent.Callable
+     ~'(call [_]
+         (if (pos? n) f (.call f)))
+     java.lang.Runnable
+     ~'(run [_]
+         (if (pos? n) f (.run f)))))
+
+(deftype-curried-fn)
+
+(defn- curry* [f n] (CurriedFn. f n))
+
+(defn curry
+  ([f] (curry f (min 2 (apply max (arg-counts f)))))
+  ([f n]
+     (if (and (fn? f) (pos? n))
+       (curry* f n)
+       f)))
+;;-----------------------------------------------------------------
+
+(defn function-fmap
+  ([f g]
+     (comp g f))
+  ([f g gs]
+     (apply comp g f gs)))
+
+(defn curried-pure [f x]
+  (curry (fn [& _] x)))
+
+(defn curried-fapply
+  ([g f]
+     (fn
+       ([x] (((curry f) x) (g x)))
+      ;; ([x & xs] (apply f x (conj (vec xs) (apply g xs))))
+       ))
+  ([g f hs]
+     (reduce #(fapply %2 %1) (into [f g] hs))))
+
+(extend clojure.lang.AFn
+  Curried
+  {:original identity}
   Functor
-  (fmap
-    ([f g]
-       (comp g f))
-    ([f g gs]
-       (apply comp g f gs)))
+  {:fmap function-fmap}
   Semigroup
-  (op [f g] (comp f g))
+  {:op comp}
   Monoid
-  (id [f] identity))
+  {:id identity})
 
 ;;====================== References ========================
 ;;----------------- Universal ------------------
