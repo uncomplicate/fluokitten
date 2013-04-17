@@ -1,7 +1,8 @@
 (ns org.uncomplicate.redcat.protocols)
 
 (defprotocol Curried
-  (original [f]))
+  (original [f])
+  (arity [f]))
 
 (defprotocol Functor
   "TODO documentation"

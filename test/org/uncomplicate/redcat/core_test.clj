@@ -220,15 +220,41 @@
 ;;--------------- Function ---------------
 (fact "Second functor law."
       ((fmap (comp inc dec) inc) 1)
-      => ((fmap inc (fmap dec inc))1))
+      => ((fmap inc (fmap dec inc)) 1))
 
-(fact "Second functor law - varargs."
+(fact "Second functor law"
       ((fmap (comp inc dec) +) 1 2 3)
       => ((fmap inc (fmap dec +)) 1 2 3))
+
+(fact "Second functor law - varargs"
+      ((fmap (comp inc dec) + (partial * 10)) 2 3 4)
+      => ((fmap inc (fmap dec + (partial * 10))) 2 3 4))
 
 (fact "Fmap keeps type." (fn? (fmap inc dec)))
 
 (fact "Fmap keeps type - varargs." (fn? (fmap inc dec +)))
+
+;;--------------- Curried Function ---------------
+(facts "Second functor law."
+      ((fmap (comp inc dec) (curry inc)) 1)
+      => ((fmap inc (fmap dec (curry inc))) 1)
+
+      ((fmap (comp inc dec) (curry +)) 1 2 3)
+      => ((fmap inc (fmap dec (curry +))) 1 2 3)
+
+      (((fmap (comp inc dec) (curry + 2)) 1) 2)
+      => (((fmap inc (fmap dec (curry + 2))) 1) 2))
+
+(facts "Second functor law - varargs."
+       ((fmap (comp inc dec) (curry +) (curry (partial * 10))) 2 3 5)
+       => ((fmap inc (fmap dec (curry +) (curry (partial * 10)))) 2 3 5)
+
+       (((fmap (comp inc dec) (curry +) (curry (partial * 10) 3)) 2 3) 5)
+       => (((fmap inc (fmap dec (curry +) (curry (partial * 10) 3))) 2 3) 5))
+
+(fact "Fmap keeps type." (curried? (fmap inc (curry dec))))
+
+(fact "Fmap keeps type - varargs." (curried? (fmap inc (curry dec) (curry +))))
 
 ;============================= Applicative tests ==========================
 (defmacro applicative-law1 [f x & xs]
@@ -567,21 +593,21 @@
 (dosync
    (applicative-law5-interchange (ref 6) + 5 3 4 5))
 
-;;------------------- Function ---------------------------
+;;------------------- Curried Function ---------------------------
 (facts "First applicative law."
-       ((fapply (pure identity inc) (pure identity 1)) 7)
-       => ((fmap inc (pure identity 1)) 7)
-      ;; ((fapply (pure identity +) (pure identity 1)) 7 9 11 13)
-      ;; => ((fmap + (pure identity 1)) 7 9 11 13)
+       ((fapply (pure curried inc) (pure curried 1)) 6)
+       => ((fmap inc (pure curried 1)) 7)
+       ((fapply (pure curried +) (pure curried 1)) 7 9 11 13)
+       => ((fmap + (pure curried 1)) 7 9 11 13)
        )
-
-(facts "Learn You a Haskell example."
-       ((fapply (fmap + (partial + 3)) (partial * 100)) 5) => 508
-       ;;((fapply (fmap + (partial + 3)) (partial * 100)) 2 3 4) => 2412
-       ((fapply (fapply (pure identity +) (partial + 3)) (partial * 100)) 6) => 609
-       ;;((fapply (fmap + (partial + 3)) (partial * 100)) 5 1) => 509
-       ;;((fapply (fmap + (partial + 3)) (partial * 100)) 5 1 2) => 1011
-       )
+(comment
+  (facts "Learn You a Haskell example."
+         ((fapply (fmap + (partial + 3)) (partial * 100)) 5) => 508
+         ;;((fapply (fmap + (partial + 3)) (partial * 100)) 2 3 4) => 2412
+         ((fapply (fapply (pure identity +) (partial + 3)) (partial * 100)) 6) => 609
+         ;;((fapply (fmap + (partial + 3)) (partial * 100)) 5 1) => 509
+         ;;((fapply (fmap + (partial + 3)) (partial * 100)) 5 1 2) => 1011
+         ))
 
 ;;=============== Monad tests ============================
 
