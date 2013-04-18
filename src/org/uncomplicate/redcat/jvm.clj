@@ -436,14 +436,14 @@
 ;;--------------------- Curried ----------------------------
 (declare curry*)
 
-(defn- gen-invoke [^clojure.lang.IFn f arity n]
+(defn ^:private  gen-invoke [^clojure.lang.IFn f arity n]
   (let [args (map #(symbol (str "a" %)) (range arity))]
         `(invoke [~'_ ~@args]
                  (if (> ~n ~arity)
                    (curry* (partial ~f ~@args) (- ~n ~arity))
                    (.invoke ~f ~@args)))))
 
-(defn- gen-applyto [^clojure.lang.IFn f n]
+(defn ^:private  gen-applyto [^clojure.lang.IFn f n]
   `(applyTo [~'_ ~'args]
             (let [as# (- ~n (count ~'args))]
               (if (pos? as#)
@@ -467,7 +467,7 @@
 
 (deftype-curried-fn)
 
-(defn- curry* [f n]
+(defn ^:private curry* [f n]
   (CurriedFn. f n))
 
 (def curried? (partial instance? CurriedFn))
@@ -494,11 +494,8 @@
      (curry (comp g (original cf))
             (arity cf)))
   ([cf g cfs]
-     (curry (apply comp g
-                   (original cf)
-                   (map original cfs))
-            (apply max (map arity
-                            (cons cf cfs))))))
+     (reduce curried-fmap
+             (into (list cf g) (seq cfs)))))
 
 (defn curried-pure [cf x]
   (curry* (fn [& _] x) 0))

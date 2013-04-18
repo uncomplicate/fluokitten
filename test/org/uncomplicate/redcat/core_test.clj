@@ -235,6 +235,18 @@
 (fact "Fmap keeps type - varargs." (fn? (fmap inc dec +)))
 
 ;;--------------- Curried Function ---------------
+
+(facts
+ ((((fmap (curry +) (curry +)) 1) 2) 3) => 6
+
+ ((((fmap (comp #(partial % 1) (curry + 2))
+          (curry + 2)) 1) 2) 3)
+ => 7
+
+ ((((fmap #(partial % 1)
+          (fmap (curry + 2) (curry + 2))) 1) 2) 3)
+ => 7)
+
 (facts "Second functor law."
       ((fmap (comp inc dec) (curry inc)) 1)
       => ((fmap inc (fmap dec (curry inc))) 1)
@@ -243,18 +255,45 @@
       => ((fmap inc (fmap dec (curry +))) 1 2 3)
 
       (((fmap (comp inc dec) (curry + 2)) 1) 2)
-      => (((fmap inc (fmap dec (curry + 2))) 1) 2))
+      => (((fmap inc (fmap dec (curry + 2))) 1) 2)
+
+      ((((fmap (comp #(partial %)
+                     (curry + 2)) (curry + 2)) 1) 2) 3)
+      => ((((fmap #(partial %)
+                  (fmap (curry + 2) (curry + 2))) 1) 2) 3))
+
+(facts
+ ((((fmap #(partial %)
+          (curry +)
+          (curry (partial * 10) 3)) 2 3) 5) 7)
+ => 307
+ ((((fmap (comp #(partial % 2) #(partial % 1))
+          (curry + 4)
+          (curry (partial * 10) 3)) 2 3) 5) 6)
+ => 309)
 
 (facts "Second functor law - varargs."
-       ((fmap (comp inc dec) (curry +) (curry (partial * 10))) 2 3 5)
-       => ((fmap inc (fmap dec (curry +) (curry (partial * 10)))) 2 3 5)
+       (((fmap (comp #(partial % 2) #(partial % 3))
+               (curry + 4)
+               (curry (partial * 10))) 2 3 5) 7)
+       => ((fmap #(partial % 2)
+                 (fmap #(partial % 3)
+                       (curry + 4)
+                       (curry (partial * 10)))) 2 3 5)
 
-       (((fmap (comp inc dec) (curry +) (curry (partial * 10) 3)) 2 3) 5)
-       => (((fmap inc (fmap dec (curry +) (curry (partial * 10) 3))) 2 3) 5))
+       ((((fmap (comp #(partial % 2) #(partial % 3))
+                (curry + 4)
+                (curry (partial * 10) 3)) 2 3) 5) 6)
+       => ((((fmap #(partial % 2)
+                   (fmap #(partial % 3)
+                         (curry +)
+                         (curry (partial * 10) 3))) 2 3) 5) 6))
 
-(fact "Fmap keeps type." (curried? (fmap inc (curry dec))))
+(fact "Fmap keeps type."
+      (curried? (fmap inc (curry dec))))
 
-(fact "Fmap keeps type - varargs." (curried? (fmap inc (curry dec) (curry +))))
+(fact "Fmap keeps type - varargs."
+      (curried? (fmap inc (curry dec) (curry +))))
 
 ;============================= Applicative tests ==========================
 (defmacro applicative-law1 [f x & xs]
