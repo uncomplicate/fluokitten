@@ -876,6 +876,10 @@
 
          ((bind (bind (c* 3) c*) c+) 7) => 154)
 
+  (facts "How join for curried function works."
+         ((bind c* c+) 3 4)
+         => ((join (fmap c+ c*)) 3 4))
+
   (facts "Left Identity Monad Law"
          ((bind (pure curried 7) c*) 6)
          => ((c* 7) 6)

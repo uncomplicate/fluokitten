@@ -490,7 +490,6 @@
      (apply comp g f gs)))
 
 ;;-------------------- CurriedFn --------------------------
-
 (defn curried-fmap
   ([cf g]
      (curry (comp g (original cf))
@@ -525,6 +524,9 @@
   ([cf cg hs]
      (reduce #(curried-bind %2 %1)
              (into [cg cf] hs))))
+
+(defn curried-join [cf]
+  (bind cf identity))
 ;;---------------------------------------------------------
 
 (extend clojure.lang.AFn
@@ -542,7 +544,8 @@
   {:pure curried-pure
    :fapply curried-fapply}
   Monad
-  {:bind curried-bind}
+  {:join curried-join
+   :bind curried-bind}
   Semigroup
   {:op curried-fmap}
   Monoid
