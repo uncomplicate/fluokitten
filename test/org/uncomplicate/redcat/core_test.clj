@@ -236,7 +236,7 @@
 
 ;;--------------- Curried Function ---------------
 
-(facts
+(facts "How CurriedFn fmap works for fixed args."
  ((((fmap (curry +) (curry +)) 1) 2) 3) => 6
 
  ((((fmap (comp #(partial % 1) (curry + 2))
@@ -262,7 +262,7 @@
       => ((((fmap #(partial %)
                   (fmap (curry + 2) (curry + 2))) 1) 2) 3))
 
-(facts
+(facts "How CurriedFn fmap works for variable args."
  ((((fmap #(partial %)
           (curry +)
           (curry (partial * 10) 3)) 2 3) 5) 7)
@@ -308,7 +308,6 @@
 
 (defmacro applicative-law3-composition [u v x & xs]
   `(fact "Composition applicative law."
-         ;;TODO This could be more idiomatic with vararg fapply
          (-> (pure ~x #(partial comp %))
              (fapply ~u) (fapply ~v) (fapply ~x ~@xs))
          => (check-eq (fapply ~u (fapply ~v ~x ~@xs)))))
@@ -633,20 +632,59 @@
    (applicative-law5-interchange (ref 6) + 5 3 4 5))
 
 ;;------------------- Curried Function ---------------------------
-(facts "First applicative law."
-       ((fapply (pure curried inc) (pure curried 1)) 6)
-       => ((fmap inc (pure curried 1)) 7)
-       ((fapply (pure curried +) (pure curried 1)) 7 9 11 13)
-       => ((fmap + (pure curried 1)) 7 9 11 13)
-       )
-(comment
-  (facts "Learn You a Haskell example."
-         ((fapply (fmap + (partial + 3)) (partial * 100)) 5) => 508
-         ;;((fapply (fmap + (partial + 3)) (partial * 100)) 2 3 4) => 2412
-         ((fapply (fapply (pure identity +) (partial + 3)) (partial * 100)) 6) => 609
-         ;;((fapply (fmap + (partial + 3)) (partial * 100)) 5 1) => 509
-         ;;((fapply (fmap + (partial + 3)) (partial * 100)) 5 1 2) => 1011
-         ))
+(let [c+ (curry +)
+      c* (curry *)]
+
+  (facts
+   "Learn You a Haskell Applicative curried function example."
+   ((fapply (fmap c+ (c+ 3)) (c* 100)) 5) => 508
+   ((fapply (fmap c+ (c+ 3)) (c* 100)) 2 3 4) => 2412
+
+   ((fapply (fapply (pure curried c+) (c+ 3))
+            (c* 100)) 6) => 609
+   ((fapply (pure curried c+) (c+ 3) (c* 100)) 6) => 609)
+
+  (facts "First applicative law."
+         ((fapply (pure curried inc) (pure curried 1)) 6)
+         => ((fmap inc (pure curried 1)) 7)
+
+         ((fapply (pure curried +) (pure curried 1)) 7 9 11 13)
+         => ((fmap + (pure curried 1)) 7 9 11 13))
+
+  (facts "Identity applicative law."
+         ((fapply (pure curried identity) (curry inc)) 7) => 8
+         ((fapply (pure curried identity) c+) 7 8 2) => 17)
+
+  (facts "How fapply works for curried functions"
+         ((fapply (curry + 4)
+                  (fapply (pure curried c+)
+                          (c+ 2)
+                          (c* 10))) 2 3 4)
+         => 260
+
+         ((-> (pure curried (curry comp))
+              (fapply c+)
+              (fapply c+)
+              (fapply (c* 10))) 7)
+         => 84
+
+         ((fapply c+ (pure curried 7)) 9)=> 16)
+
+  (facts "Composition applicative law"
+         ((-> (pure curried (curry comp))
+              (fapply c+)
+              (fapply c*)
+              (fapply (c* 10))) 7)
+         => ((fapply c+ (fapply c* (c* 10))) 7))
+
+  (facts "Homomorphism applicative law."
+         ((fapply (pure curried #(% 7))
+                  (pure curried (c* 10))) 8)
+         => ((pure curried (#(% 7) (c* 10))) 8))
+
+  (facts "Interchange applicative law."
+         ((fapply c+ (pure curried 7)) 9)
+         => ((fapply (pure curried #(% 7)) c+) 9)))
 
 ;;=============== Monad tests ============================
 
@@ -668,7 +706,7 @@
                                  (bind (apply ~f xs#) ~g))
                             ~@ms))))
 
-;;--------------- Vector ---------------------------------
+;;--------------- Vector --------------------------------
 (monad-law1-left-identity [] (comp vector inc) 1)
 
 (monad-law1-left-identity [] (comp vector +) 1 2 3)
@@ -818,3 +856,31 @@
  (monad-law3-associativity (comp ref inc)
                            (comp ref (partial * 10))
                            (ref 9)))
+
+;;------------------- Curried Function ---------------------------
+(let [c+ (curry +)
+      c* (curry *)]
+
+  (facts "How bind for curried functions works."
+         ((bind c+ c*) 3 4) => 84
+         ((bind (pure curried 5) c*) 3) => 15
+
+         ((bind (bind (c* 3) c*) c+) 7) => 154)
+
+  (facts "Left Identity Monad Law"
+         ((bind (pure curried 7) c*) 6)
+         => ((c* 7) 6)
+
+         ((bind (pure curried 7) c*) 6 7 8)
+         => ((c* 7) 6 7 8))
+
+  (fact "Right identity Monad Law."
+         ((bind c* (pure c*)) 2 3)
+         => (c* 2 3))
+
+  (facts "Associativity Monad Law."
+         ((bind (bind (c* 3) c*) c+) 7)
+         => ((bind (c* 3) (fn [x] (bind (c* x) c+))) 7)
+
+         ((bind (bind (c* 3) c*) c+) 2 3 4)
+         => ((bind (c* 3) (fn [x] (bind (c* x) c+))) 2 3 4)))

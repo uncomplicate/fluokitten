@@ -481,14 +481,16 @@
 
 (def curried (curry identity 1))
 
-;;-----------------------------------------------------------------
-;;-------------------- clojure.lang.IFn ---------------------------
+;;---------------------------------------------------------
+;;-------------------- clojure.lang.IFn -------------------
 (defn function-fmap
   ([f g]
      (comp g f))
   ([f g gs]
      (apply comp g f gs)))
-;;-------------------- CurriedFn ----------------------------------
+
+;;-------------------- CurriedFn --------------------------
+
 (defn curried-fmap
   ([cf g]
      (curry (comp g (original cf))
@@ -502,14 +504,29 @@
 
 (defn curried-fapply
   ([cf cg]
-     (fn
-       ([x]
-          ((cg x) (cf x)))
-       ([x & xs]
-          ((apply cg x xs) (apply cf x xs)))))
-  ([cf g hs]
-     (reduce #(fapply %2 %1) (into [g cf] hs))))
-;;-----------------------------------------------------------------
+     (curry (fn
+              ([x]
+                 ((cg x) (cf x)))
+              ([x & xs]
+                 ((apply cg x xs) (apply cf x xs))))
+            1))
+  ([cf cg hs]
+     (reduce #(curried-fapply %2 %1)
+             (into [cg cf] hs))))
+
+(defn curried-bind
+  ([cf cg]
+     (curry (fn
+              ([x]
+                 ((cg (cf x)) x))
+              ([x & xs]
+                 (apply (cg (apply cf x xs)) x xs)))
+            1))
+  ([cf cg hs]
+     (reduce #(curried-bind %2 %1)
+             (into [cg cf] hs))))
+;;---------------------------------------------------------
+
 (extend clojure.lang.AFn
   Functor
   {:fmap function-fmap}
@@ -524,12 +541,14 @@
   Applicative
   {:pure curried-pure
    :fapply curried-fapply}
+  Monad
+  {:bind curried-bind}
   Semigroup
-  {:op comp}
+  {:op curried-fmap}
   Monoid
   {:id identity})
 
-;;====================== References ========================
+;;====================== References =======================
 ;;----------------- Universal ------------------
 (defn reference-fapply
   ([rv rg]
