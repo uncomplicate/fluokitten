@@ -26,14 +26,19 @@
   (pure [_ _] nil)
   (fapply
     ([_ _] nil)
-    ([_ _ args] nil))
+    ([_ _ _] nil))
   Monad
-  (bind [_ _] nil)
+  (bind
+    ([_ _] nil)
+    ([_ _ _] nil))
   (join [_] nil)
+  Magma
+  (op
+    ([_ _] nil)
+    ([_ _ _] nil))
   Semigroup
-  (op [_ _] nil)
   Monoid
-  (id [c] nil))
+  (mid [_] nil))
 
 (extend-type Object
   Functor
@@ -47,11 +52,11 @@
 
 (defn op-fun
   ([e op] (r/monoid op (constantly e)))
-  ([x] (op-fun (id x) op)))
+  ([x] (op-fun (mid x) op)))
 
 (defn monoidalf
   ([e]
-     (let [ide (id e)]
+     (let [ide (mid e)]
        (fn
          ([] ide)
          ([e1 e2] (op e1 e2))))))
@@ -271,6 +276,24 @@
      (mapcat g c))
   ([c g ss]
      (apply mapcat g c ss)))
+;;================== Semigroup implementations ==================
+(defn coll-op
+  ([x y]
+     (into x y))
+  ([x y ys]
+     (reduce #(into %1 %2) (into x y) ys)))
+
+(defn seq-op
+  ([x y]
+     (concat x y))
+  ([x y ys]
+     (apply concat x y ys)))
+
+(defn list-op
+  ([x y]
+     (apply list (seq-op x y)))
+  ([x y ys]
+     (apply list (seq-op x y ys))))
 
 ;;================== Collections Extensions =====================
 (extend clojure.lang.IPersistentCollection
@@ -282,10 +305,11 @@
   Monad
   {:join coll-join
    :bind coll-bind}
+  Magma
+  {:op coll-op}
   Semigroup
-  {:op into}
   Monoid
-  {:id empty})
+  {:mid empty})
 
 (extend clojure.lang.APersistentVector
   Functor
@@ -305,7 +329,9 @@
    :fapply list-fapply}
   Monad
   {:join list-join
-   :bind list-bind})
+   :bind list-bind}
+  Magma
+  {:op list-op})
 
 (extend clojure.lang.ASeq
   Functor
@@ -315,7 +341,9 @@
    :fapply seq-fapply}
   Monad
   {:join flatten
-   :bind seq-bind})
+   :bind seq-bind}
+  Magma
+  {:op seq-op})
 
 (extend clojure.lang.LazySeq
   Functor
@@ -325,7 +353,9 @@
    :fapply seq-fapply}
   Monad
   {:join flatten
-   :bind seq-bind})
+   :bind seq-bind}
+  Magma
+  {:op seq-op})
 
 (extend clojure.lang.APersistentSet
   Functor
@@ -393,6 +423,13 @@
                               vx))
     e))
 
+(defn mapentry-op
+  ([[kx vx] [ky vy]]
+     (create-mapentry (op kx ky) (op vx vy)))
+  ([[kx vx] [ky vy] es]
+     (create-mapentry (op kx ky (map key es))
+                      (op vx vy (map val es)))))
+
 (extend clojure.lang.MapEntry
   Functor
   {:fmap mapentry-fmap}
@@ -401,7 +438,9 @@
    :fapply mapentry-fapply}
   Monad
   {:join mapentry-join
-   :bind default-bind})
+   :bind default-bind}
+  Magma
+  {:op mapentry-op})
 
 (extend-type clojure.lang.IPersistentCollection
   Foldable
@@ -419,18 +458,47 @@
     ([s g ss]
        (apply str (apply g s ss))))
   ;;TODO maybe lambda in a string would be appropriate as applicative
+  Magma
+  (op
+    ([x y]
+       (str x y))
+    ([x y ys]
+       (apply str x y ys)))
   Semigroup
-  (op [s s1]
-    (str s s1))
   Monoid
-  (id [s] ""))
+  (mid [s] ""))
 
 (extend-type Number
+  Magma
+  (op
+    ([x y]
+       (+ x y))
+    ([x y ys]
+       (apply + x y ys)))
   Semigroup
-  (op [n y]
-    (+ n y))
   Monoid
-  (id [n] 0))
+  (mid [x] 0))
+
+(extend-type clojure.lang.Keyword
+  Functor
+  (fmap
+    ([k g]
+       (keyword (fmap (name k) g)))
+    ([k g ks]
+       (keyword (fmap (name k) g
+                      (map name ks)))))
+  Magma
+  (op
+    ([x y]
+       (keyword (str (name x) (name y))))
+    ([x y ys]
+       (keyword (apply str
+                       (name x)
+                       (name y)
+                       (map name ys)))))
+  Semigroup
+  Monoid
+  (mid [x] (keyword "")))
 
 ;;===================== Function ===========================
 ;;--------------------- Curried ----------------------------
@@ -535,7 +603,7 @@
   Semigroup
   {:op comp}
   Monoid
-  {:id identity})
+  {:mid identity})
 
 (extend CurriedFn
   Functor
@@ -546,10 +614,11 @@
   Monad
   {:join curried-join
    :bind curried-bind}
-  Semigroup
+  Magma
   {:op curried-fmap}
+  Semigroup
   Monoid
-  {:id identity})
+  {:mid curried})
 
 ;;====================== References =======================
 ;;----------------- Universal ------------------

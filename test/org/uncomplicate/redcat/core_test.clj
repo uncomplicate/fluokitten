@@ -10,7 +10,7 @@
                                     (symbol (.getName %))
                                     (count (.getParameterTypes %))))
                             (group-by first))]
-    (println (str "  " iface))
+    ( (str "  " iface))
     (doseq [[_ name argcount] methods]
       (println
         (str "    "
@@ -687,7 +687,6 @@
          => ((fapply (pure curried #(% 7)) c+) 9)))
 
 ;;=============== Monad tests ============================
-
 (defmacro monad-law1-left-identity [m g x & xs]
   `(fact "Left Identity Monad Law"
          (apply bind (pure ~m ~x) ~g
@@ -897,3 +896,118 @@
 
          ((bind (bind (c* 3) c*) c+) 2 3 4)
          => ((bind (c* 3) (fn [x] (bind (c* x) c+))) 2 3 4)))
+
+;;============= Magmas, Semigroups and Monoids =======================
+(defmacro magma-op-keeps-type [x y & ys]
+  `(fact "Magma - op should keep the type."
+         (type (op ~x ~y ~@ys))
+         => #(isa? % (type ~x))))
+
+(defmacro semigroup-op-associativity [x y & ys]
+  `(fact "Semigroup - op associativity."
+         (op ~x ~y ~@ys)
+         => (reduce #(op %2 %1)
+                    (reverse (list ~x ~y ~@ys)))))
+
+(defmacro monoid-identity-law [x & xs]
+  `(fact "Monoid law 1."
+         (op (id ~x) ~x) => ~x
+         (op ~x (id ~x)) => ~x))
+
+;;----------------------- Vector --------------------------
+(magma-op-keeps-type [1 2] [3 4])
+
+(magma-op-keeps-type [1 2] [3 4] [5 6])
+
+(semigroup-op-associativity [1 2] [3 4])
+
+(semigroup-op-associativity [1 2] [3 4] [5 6])
+
+(fact ""
+      (id [1 2]) => [])
+
+(monoid-identity-law [1 2])
+;;----------------------- List --------------------------
+(magma-op-keeps-type (list 1 2)
+                     (list 3 4))
+
+(magma-op-keeps-type (list 1 2)
+                     (list 3 4)
+                     (list 5 6)
+                     (list 7 8))
+
+(semigroup-op-associativity (list 1 2)
+                            (list 3 4))
+
+(semigroup-op-associativity (list 1 2)
+                            (list 3 4)
+                            (list 5 6)
+                            (list 7 8))
+
+;;----------------------- LazySeq --------------------------
+(magma-op-keeps-type (lazy-seq (list 1 2))
+                     (lazy-seq (list 3 4)))
+
+(magma-op-keeps-type (lazy-seq (list 1 2))
+                     (lazy-seq (list 3 4))
+                     (lazy-seq (list 5 6))
+                     (lazy-seq (list 7 8)))
+
+(semigroup-op-associativity (lazy-seq (list 1 2))
+                            (lazy-seq (list 3 4)))
+
+(semigroup-op-associativity (lazy-seq (list 1 2))
+                            (lazy-seq (list 3 4))
+                            (lazy-seq (list 5 6))
+                            (lazy-seq (list 7 8)))
+
+;;----------------------- Seq --------------------------
+(magma-op-keeps-type (seq (list 1 2))
+                            (seq (list 3 4)))
+
+(magma-op-keeps-type (seq (list 1 2))
+                            (seq (list 3 4))
+                            (seq (list 5 6))
+                            (seq (list 7 8)))
+
+(semigroup-op-associativity (seq (list 1 2))
+                            (seq (list 3 4)))
+
+(semigroup-op-associativity (seq (list 1 2))
+                            (seq (list 3 4))
+                            (seq (list 5 6))
+                            (seq (list 7 8)))
+
+;;----------------------- Map --------------------------
+(magma-op-keeps-type {:a 1}
+                            {:b 2})
+
+(magma-op-keeps-type {:a 1}
+                            {:b 2 :c 3}
+                            {:d 5}
+                            {:e 6})
+
+(semigroup-op-associativity {:a 1}
+                            {:b 2})
+
+(semigroup-op-associativity {:a 1}
+                            {:b 2 :c 3}
+                            {:d 5}
+                            {:e 6})
+
+;;----------------------- MapEntry --------------------------
+(magma-op-keeps-type (first {:a 1})
+                     (first {:b 2}))
+
+(magma-op-keeps-type (first {:a 1})
+                            (first {:b 2 :c 3})
+                            (first {:d 5})
+                            (first {:e 6}))
+
+(semigroup-op-associativity (first {:a 1})
+                            (first {:b 2}))
+
+(semigroup-op-associativity (first {:a 1})
+                            (first {:b 2 :c 3})
+                            (first {:d 5})
+                            (first {:e 6}))

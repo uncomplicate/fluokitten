@@ -115,6 +115,10 @@
 
 (def fold p/fold)
 
-(def op p/op)
+(defn op
+  ([x y]
+     (p/op x y))
+  ([x y & ys]
+     (p/op x y ys)))
 
-(def id p/id)
+(def id #(p/mid %))

@@ -18,11 +18,13 @@
   (join [mv]))
 
 ; Algebraic structures
-(defprotocol Semigroup
-  (op [x y]))
+(defprotocol Magma
+  (op [x y] [x y ys]))
+
+(defprotocol Semigroup)
 
 (defprotocol Monoid
-  (id [x]))
+  (mid [x]))
 
 (defprotocol Foldable
   (fold [tm])
