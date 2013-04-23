@@ -832,6 +832,10 @@
                           (first {:a 77}))
 
 ;;--------------- Atom ----------------------------
+(facts "Join function for atoms."
+       (join (atom 1)) => (check-eq (atom 1))
+       (join (atom (atom 2))) => (check-eq (atom 2)))
+
 (monad-law1-left-identity (atom 9) (comp atom inc) 1)
 
 (monad-law1-left-identity (atom 9) (comp atom +) 1 2 3)
@@ -843,6 +847,11 @@
                           (atom 9))
 
 ;;--------------- Ref ----------------------------
+(dosync
+ (facts "Join function for refs."
+        (join (ref 1)) => (check-eq (ref 1))
+        (join (ref (ref 2))) => (check-eq (ref 2))))
+
 (dosync
  (monad-law1-left-identity (ref 9) (comp ref inc) 1))
 

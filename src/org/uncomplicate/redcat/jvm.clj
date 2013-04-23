@@ -557,7 +557,7 @@
      (fmap rv (deref rg) rvs)))
 
 (defn reference-join [r]
-    (fmap r deref))
+  (fmap r #(if (deref? %) (deref %) %)))
 
 ;;----------------- Agent -----------------------
 (defn agent-fmap
