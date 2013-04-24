@@ -36,9 +36,9 @@
   (op
     ([_ _] nil)
     ([_ _ _] nil))
-  Semigroup
   Monoid
-  (mid [_] nil))
+  (id [_] nil)
+  Semigroup)
 
 (extend-type Object
   Functor
@@ -52,11 +52,11 @@
 
 (defn op-fun
   ([e op] (r/monoid op (constantly e)))
-  ([x] (op-fun (mid x) op)))
+  ([x] (op-fun (id x) op)))
 
 (defn monoidalf
   ([e]
-     (let [ide (mid e)]
+     (let [ide (id e)]
        (fn
          ([] ide)
          ([e1 e2] (op e1 e2))))))
@@ -307,9 +307,9 @@
    :bind coll-bind}
   Magma
   {:op coll-op}
-  Semigroup
   Monoid
-  {:mid empty})
+  {:id empty}
+  Semigroup)
 
 (extend clojure.lang.APersistentVector
   Functor
@@ -464,9 +464,9 @@
        (str x y))
     ([x y ys]
        (apply str x y ys)))
-  Semigroup
   Monoid
-  (mid [s] ""))
+  (id [s] "")
+  Semigroup)
 
 (extend-type Number
   Magma
@@ -475,9 +475,9 @@
        (+ x y))
     ([x y ys]
        (apply + x y ys)))
-  Semigroup
   Monoid
-  (mid [x] 0))
+  (id [x] 0)
+  Semigroup)
 
 (extend-type clojure.lang.Keyword
   Functor
@@ -496,9 +496,9 @@
                        (name x)
                        (name y)
                        (map name ys)))))
-  Semigroup
   Monoid
-  (mid [x] (keyword "")))
+  (id [x] (keyword ""))
+  Semigroup)
 
 ;;===================== Function ===========================
 ;;--------------------- Curried ----------------------------
@@ -597,13 +597,13 @@
   (bind cf identity))
 ;;---------------------------------------------------------
 
-(extend clojure.lang.AFn
+(extend clojure.lang.AFunction
   Functor
   {:fmap function-fmap}
   Semigroup
   {:op comp}
   Monoid
-  {:mid identity})
+  {:id identity})
 
 (extend CurriedFn
   Functor
@@ -616,9 +616,9 @@
    :bind curried-bind}
   Magma
   {:op curried-fmap}
-  Semigroup
   Monoid
-  {:mid curried})
+  {:id curried}
+  Semigroup)
 
 ;;====================== References =======================
 ;;----------------- Universal ------------------

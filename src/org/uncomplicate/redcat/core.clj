@@ -121,4 +121,4 @@
   ([x y & ys]
      (p/op x y ys)))
 
-(def id #(p/mid %))
+(def id #(p/id %))

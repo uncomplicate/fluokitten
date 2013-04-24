@@ -24,7 +24,7 @@
 (defprotocol Semigroup)
 
 (defprotocol Monoid
-  (mid [x]))
+  (id [x]))
 
 (defprotocol Foldable
   (fold [tm])
