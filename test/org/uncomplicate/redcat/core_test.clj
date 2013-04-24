@@ -1097,3 +1097,29 @@
  (semigroup-op-associativity (ref 7)
                              (ref 8)
                              (ref 9)))
+
+;;------------------- Functions --------------------------
+(facts "Magma op keeps type"
+       (op + *) => fn?
+       (op + * /) => fn?)
+
+(facts "Function semigroup op associativity."
+       ((op (op inc (partial * 10)) +) 7 9)
+       => ((op inc (op (partial * 10) +)) 7 9))
+
+(monoid-identity-law +)
+
+;;-------------------- CurriedFn ----------------------
+(let [c+ (curry +)
+      c* (curry *)
+      cdiv (curry /)]
+
+  (magma-op-keeps-type c+ c*)
+
+  (magma-op-keeps-type c+ c* cdiv)
+
+  (facts "CurriedFn semigroup op associativity."
+         ((op (op (c+ 2) (cdiv 3)) (c* 5)) 7 9)
+         => ((op (c+ 2) (op (cdiv 3) (c* 5))) 7 9))
+
+  (monoid-identity-law c+))

@@ -21,7 +21,7 @@
   Functor
   (fmap
     ([_ _] nil)
-    ([_ _ args] nil))
+    ([_ _ _] nil))
   Applicative
   (pure [_ _] nil)
   (fapply
@@ -46,13 +46,13 @@
     ([o f]
       (f o))
     ([o f os]
-      (if (some nil? os)
-        nil
-        (apply f o os)))))
+       (apply f o os))))
 
 (defn op-fun
-  ([e op] (r/monoid op (constantly e)))
-  ([x] (op-fun (id x) op)))
+  ([e op]
+     (r/monoid op (constantly e)))
+  ([x]
+     (op-fun (id x) op)))
 
 (defn monoidalf
   ([e]
@@ -470,7 +470,6 @@
       (apply str (g s)))
     ([s g ss]
        (apply str (apply g s ss))))
-  ;;TODO maybe lambda in a string would be appropriate as applicative
   Magma
   (op
     ([x y]
@@ -561,6 +560,7 @@
        f)))
 
 (def curried (curry identity 1))
+(def cidentity curried)
 
 ;;---------------------------------------------------------
 ;;-------------------- clojure.lang.IFn -------------------
@@ -569,6 +569,16 @@
      (comp g f))
   ([f g gs]
      (apply comp g f gs)))
+
+(defn function-op
+  ([x y]
+       (if (= identity x)
+         y
+         (if (= identity y)
+           x
+           (comp x y))))
+  ([x y ys]
+     (reduce function-op x (cons y ys))))
 
 ;;-------------------- CurriedFn --------------------------
 (defn curried-fmap
@@ -608,15 +618,27 @@
 
 (defn curried-join [cf]
   (bind cf identity))
+
+(defn curried-op
+  ([x y]
+       (if (= identity (original x))
+         y
+         (if (= identity (original y))
+           x
+           (curried-fmap x y))))
+  ([x y ys]
+     (reduce curried-op x (cons y ys))))
+
 ;;---------------------------------------------------------
 
 (extend clojure.lang.AFunction
   Functor
   {:fmap function-fmap}
-  Semigroup
-  {:op comp}
+  Magma
+  {:op function-op}
   Monoid
-  {:id identity})
+  {:id (fn [_] identity)}
+  Semigroup)
 
 (extend CurriedFn
   Functor
@@ -628,9 +650,9 @@
   {:join curried-join
    :bind curried-bind}
   Magma
-  {:op curried-fmap}
+  {:op curried-op}
   Monoid
-  {:id curried}
+  {:id (fn [_] cidentity)}
   Semigroup)
 
 ;;====================== References =======================
