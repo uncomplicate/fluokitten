@@ -906,13 +906,14 @@
 (defmacro semigroup-op-associativity [x y & ys]
   `(fact "Semigroup - op associativity."
          (op ~x ~y ~@ys)
-         => (reduce #(op %2 %1)
-                    (reverse (list ~x ~y ~@ys)))))
+         => (check-eq
+             (reduce #(op %2 %1)
+                     (reverse (list ~x ~y ~@ys))))))
 
 (defmacro monoid-identity-law [x & xs]
   `(fact "Monoid law 1."
-         (op (id ~x) ~x) => ~x
-         (op ~x (id ~x)) => ~x))
+         (op (id ~x) ~x) => (check-eq ~x)
+         (op ~x (id ~x)) => (check-eq ~x)))
 
 ;;----------------------- Vector --------------------------
 (magma-op-keeps-type [1 2] [3 4])
@@ -923,10 +924,8 @@
 
 (semigroup-op-associativity [1 2] [3 4] [5 6])
 
-(fact ""
-      (id [1 2]) => [])
-
 (monoid-identity-law [1 2])
+
 ;;----------------------- List --------------------------
 (magma-op-keeps-type (list 1 2)
                      (list 3 4))
@@ -943,6 +942,8 @@
                             (list 3 4)
                             (list 5 6)
                             (list 7 8))
+
+(monoid-identity-law (list 1 2))
 
 ;;----------------------- LazySeq --------------------------
 (magma-op-keeps-type (lazy-seq (list 1 2))
@@ -961,14 +962,16 @@
                             (lazy-seq (list 5 6))
                             (lazy-seq (list 7 8)))
 
+(monoid-identity-law (lazy-seq (list 1 2)))
+
 ;;----------------------- Seq --------------------------
 (magma-op-keeps-type (seq (list 1 2))
-                            (seq (list 3 4)))
+                     (seq (list 3 4)))
 
 (magma-op-keeps-type (seq (list 1 2))
-                            (seq (list 3 4))
-                            (seq (list 5 6))
-                            (seq (list 7 8)))
+                     (seq (list 3 4))
+                     (seq (list 5 6))
+                     (seq (list 7 8)))
 
 (semigroup-op-associativity (seq (list 1 2))
                             (seq (list 3 4)))
@@ -978,14 +981,15 @@
                             (seq (list 5 6))
                             (seq (list 7 8)))
 
+(monoid-identity-law (seq (list 1 2)))
+
 ;;----------------------- Map --------------------------
-(magma-op-keeps-type {:a 1}
-                            {:b 2})
+(magma-op-keeps-type {:a 1} {:b 2})
 
 (magma-op-keeps-type {:a 1}
-                            {:b 2 :c 3}
-                            {:d 5}
-                            {:e 6})
+                     {:b 2 :c 3}
+                     {:d 5}
+                     {:e 6})
 
 (semigroup-op-associativity {:a 1}
                             {:b 2})
@@ -994,15 +998,17 @@
                             {:b 2 :c 3}
                             {:d 5}
                             {:e 6})
+
+(monoid-identity-law {:a 1 :b 2})
 
 ;;----------------------- MapEntry --------------------------
 (magma-op-keeps-type (first {:a 1})
                      (first {:b 2}))
 
 (magma-op-keeps-type (first {:a 1})
-                            (first {:b 2 :c 3})
-                            (first {:d 5})
-                            (first {:e 6}))
+                     (first {:b 2 :c 3})
+                     (first {:d 5})
+                     (first {:e 6}))
 
 (semigroup-op-associativity (first {:a 1})
                             (first {:b 2}))
@@ -1011,3 +1017,83 @@
                             (first {:b 2 :c 3})
                             (first {:d 5})
                             (first {:e 6}))
+
+;;----------------------- String --------------------------
+(magma-op-keeps-type "something"
+                     "else")
+
+(magma-op-keeps-type "something"
+                     "else"
+                     "even"
+                     "more")
+
+(semigroup-op-associativity "something"
+                            "else")
+
+(semigroup-op-associativity "something"
+                            "else"
+                            "even"
+                            "more")
+
+(monoid-identity-law "something")
+
+;;----------------------- String --------------------------
+(magma-op-keeps-type 1 2)
+
+(magma-op-keeps-type 1 2 3 4)
+
+(semigroup-op-associativity 1 2)
+
+(semigroup-op-associativity 1 2 3 4)
+
+(monoid-identity-law 4)
+
+;;----------------------- Keyword --------------------------
+(magma-op-keeps-type :something
+                     :else)
+
+(magma-op-keeps-type :something
+                     :else
+                     :even
+                     :more)
+
+(semigroup-op-associativity :something
+                            :else)
+
+(semigroup-op-associativity :something
+                            :else
+                            :even
+                            :more)
+
+(monoid-identity-law :something)
+
+;;----------------------- Atom --------------------------
+(magma-op-keeps-type (atom 1)
+                     (atom 2))
+
+(magma-op-keeps-type (atom 2)
+                     (atom 3)
+                     (atom 4))
+
+(semigroup-op-associativity (atom 5)
+                            (atom 6))
+
+(semigroup-op-associativity (atom 7)
+                            (atom 8)
+                            (atom 9))
+
+ ;;----------------------- Ref --------------------------
+(dosync
+ (magma-op-keeps-type (ref 1)
+                      (ref 2)))
+(dosync
+ (magma-op-keeps-type (ref 2)
+                      (ref 3)
+                      (ref 4)))
+(dosync
+ (semigroup-op-associativity (ref 5)
+                             (ref 6)))
+(dosync
+ (semigroup-op-associativity (ref 7)
+                             (ref 8)
+                             (ref 9)))

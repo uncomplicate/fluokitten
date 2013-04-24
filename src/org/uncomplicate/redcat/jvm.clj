@@ -321,6 +321,18 @@
   {:join reducible-join
    :bind reducible-bind})
 
+(extend clojure.lang.IPersistentList
+  Functor
+  {:fmap list-fmap}
+  Applicative
+  {:pure coll-pure
+   :fapply list-fapply}
+  Monad
+  {:join list-join
+   :bind list-bind}
+  Magma
+  {:op list-op})
+
 (extend clojure.lang.PersistentList
   Functor
   {:fmap list-fmap}
@@ -440,7 +452,8 @@
   {:join mapentry-join
    :bind default-bind}
   Magma
-  {:op mapentry-op})
+  {:op mapentry-op}
+  Semigroup);;TODO Maybe mapentry could be monoid once maybe is implemented?...
 
 (extend-type clojure.lang.IPersistentCollection
   Foldable
@@ -631,6 +644,15 @@
 (defn reference-join [r]
   (fmap r #(if (deref? %) (deref %) %)))
 
+(defn reference-op
+  ([rx ry]
+     (pure rx (op (deref rx) (deref ry))))
+  ([rx ry rys]
+     (pure rx (op
+               (deref rx)
+               (deref ry)
+               (map deref rys)))))
+
 ;;----------------- Agent -----------------------
 (defn agent-fmap
   ([a g]
@@ -659,7 +681,9 @@
    :fapply reference-fapply}
   Monad
   {:join reference-join
-   :bind default-bind})
+   :bind default-bind}
+  Magma
+  {:op reference-op})
 
 (extend clojure.lang.Ref
   Functor
@@ -669,4 +693,6 @@
    :fapply reference-fapply}
   Monad
   {:join reference-join
-   :bind default-bind})
+   :bind default-bind}
+  Magma
+  {:op reference-op})
