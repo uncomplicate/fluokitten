@@ -1158,7 +1158,20 @@
 ;;===================== Foldable =====================
 (facts "How Foldable Collections work."
        (fold [1 2 3 4 5]) => 15
+       (fold []) => nil
        (fold (list 1 2 3 4 5))= > 15
-       (into [] (fmap inc (r/map inc [1 2 3 4 5]))) => [3 4 5 6 7]
        (fold (r/map inc [1 2 3 4 5])) => 20
-       )
+       (fold (list 1 2 3 4 5)) => 15
+       (fold (lazy-seq (list 1 2 3 4 5))) => 15
+       (fold (seq (list 1 2 3 4 5))) => 15
+       (fold {:a 1 :b 2 :c 3}) => 6
+       (fold #{1 2 3 4 5}) => 15
+       (foldmap inc [1 2 3 4 5]) => 20
+       (foldmap inc []) => nil
+       (foldmap inc (list 1 2 3 4 5))= > 20
+       (foldmap inc (r/map inc [1 2 3 4 5])) => 25
+       (foldmap inc (list 1 2 3 4 5)) => 20
+       (foldmap inc (lazy-seq (list 1 2 3 4 5))) => 20
+       (foldmap inc (seq (list 1 2 3 4 5))) => 20
+       (foldmap val {:a 1 :b 2 :c 3}) => 6
+       (foldmap inc #{1 2 3 4 5}) => 20)

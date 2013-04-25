@@ -296,10 +296,16 @@
 
 ;;================== Foldable ===================================
 (defn collection-fold [c]
-  (r/fold (monoidalf (first c)) c))
+  (r/fold (monoidf (first c)) c))
 
 (defn collection-foldmap [c g]
   (fold (r/map g c)))
+
+(defn map-fold [m]
+  (collection-fold (vals m)))
+
+(defn map-foldmap [m g]
+  (collection-foldmap (seq m) g))
 
 (defn collfold-fold [c]
   (r/fold (monoidf
@@ -402,7 +408,10 @@
    :fapply map-fapply}
   Monad
   {:join map-join
-   :bind map-bind})
+   :bind map-bind}
+  Foldable
+  {:fold map-fold
+   :foldmap map-foldmap})
 
 (extend clojure.core.protocols.CollReduce
   Functor
