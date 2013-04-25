@@ -2,19 +2,25 @@
   (:use org.uncomplicate.redcat.jvm
         org.uncomplicate.redcat.core
         midje.sweet)
-  (:require [clojure.string :as s]))
+  (:require [clojure.string :as s]
+            [clojure.core.reducers :as r]))
 
 (defn scaffold [iface]
-  (doseq [[iface methods] (->> iface .getMethods
-                            (map #(vector (.getName (.getDeclaringClass %))
-                                    (symbol (.getName %))
-                                    (count (.getParameterTypes %))))
-                            (group-by first))]
-    ( (str "  " iface))
+  (doseq [[iface methods]
+          (->> iface .getMethods
+               (map #(vector
+                      (.getName (.getDeclaringClass %))
+                      (symbol (.getName %))
+                      (count (.getParameterTypes %))))
+               (group-by first))]
+    ((str "  " iface))
     (doseq [[_ name argcount] methods]
       (println
-        (str "    "
-          (list name (into ['this] (take argcount (repeatedly gensym)))))))))
+       (str "    "
+            (list name
+                  (into ['this]
+                        (take argcount
+                              (repeatedly gensym)))))))))
 
 (defn check-eq [expected]
   (cond
@@ -59,7 +65,8 @@
 ;; as the type of the input object. The result type
 ;; depends on the function that is being applied.
 ;; However, keeping the type is not required by any
-;; Functor law, so keeping the type is convenient
+;; Functor law (in the sense of clojure types),
+;; so keeping the exact type is convenient
 ;; but not mandatory.
 
 (functor-law2 inc (partial * 100) 101)
@@ -198,7 +205,8 @@
 ;;--------------- Atom ---------------
 (functor-law2 inc (partial * 100) (atom 34))
 
-(functor-law2 inc (partial * 100) (atom 35) (atom 5))
+(functor-law2 inc (partial * 100)
+              (atom 35) (atom 5))
 
 (fmap-keeps-type  inc (atom 36))
 
@@ -209,7 +217,9 @@
  (functor-law2 inc (partial * 100) (ref 44)))
 
 (dosync
- (functor-law2 inc (partial * 100) (ref 45) (atom 3) (ref 7)))
+ (functor-law2 inc
+               (partial * 100) (ref 45)
+               (atom 3) (ref 7)))
 
 (dosync
  (fmap-keeps-type inc (ref 46)))
@@ -402,7 +412,8 @@
 ;;-------------- Seq ----------------
 (applicative-law1 inc (seq (list 3 9 0)))
 
-(applicative-law1 + (seq (list 3 9 0))
+(applicative-law1 +
+                  (seq (list 3 9 0))
                   (seq (list -5 4 6)))
 
 (applicative-law2-identity (seq (list 3 -79 29)))
@@ -432,7 +443,8 @@
 ;;-------------- Lazy Seq ----------------
 (applicative-law1 inc (lazy-seq (list 3 9 0)))
 
-(applicative-law1 + (lazy-seq (list 3 9 0))
+(applicative-law1 +
+                  (lazy-seq (list 3 9 0))
                   (lazy-seq (list -4 -5)))
 
 (applicative-law2-identity (lazy-seq (list 3 -79 29)))
@@ -492,7 +504,8 @@
 ;;-------------- MapEntry -----------
 (applicative-law1 inc (first {5 5}))
 
-(applicative-law1 + (first {5 5})
+(applicative-law1 +
+                  (first {5 5})
                   (first {5 6}))
 
 (applicative-law2-identity (first {5 5}))
@@ -506,18 +519,28 @@
                               (first {5 5})
                               (first {5 6}))
 
-(applicative-law4-homomorphism (first {57 57}) inc 5)
+(applicative-law4-homomorphism (first {57 57})
+                               inc
+                               5)
 
-(applicative-law4-homomorphism (first {57 57}) + 5 -4 5)
+(applicative-law4-homomorphism (first {57 57})
+                               +
+                               5 -4 5)
 
-(applicative-law5-interchange (first {58 58}) inc 5)
+(applicative-law5-interchange (first {58 58})
+                              inc
+                              5)
 
-(applicative-law5-interchange (first {58 58}) + 5 3 4 5)
+(applicative-law5-interchange (first {58 58})
+                              +
+                              5 3 4 5)
 
 ;;-------------- Map ----------------
 (fact (pure {} 2) => {nil 2})
 
-(fact (fapply {:a inc :b dec nil (partial * 2)} {:a 1 :b 5})
+(fact (fapply {:a inc :b dec
+               nil (partial * 2)}
+              {:a 1 :b 5})
       => {:a 2 :b 4})
 
 (fact (fapply {:a inc :b dec} {:a 1 :c 2})
@@ -577,7 +600,11 @@
 ;;-------------- Atom -----------
 (applicative-law1 inc (atom 6))
 
-(applicative-law1 + (atom 6) (atom 9) (atom -77) (atom -1))
+(applicative-law1 +
+                  (atom 6)
+                  (atom 9)
+                  (atom -77)
+                  (atom -1))
 
 (applicative-law2-identity (atom 6))
 
@@ -603,7 +630,11 @@
  (applicative-law1 inc (ref 6)))
 
 (dosync
- (applicative-law1 + (ref 6) (ref 9) (ref -77) (ref -1)))
+ (applicative-law1 +
+                   (ref 6)
+                   (ref 9)
+                   (ref -77)
+                   (ref -1)))
 
 (dosync
  (applicative-law2-identity (ref 6)))
@@ -1123,3 +1154,11 @@
          => ((op (c+ 2) (op (cdiv 3) (c* 5))) 7 9))
 
   (monoid-identity-law c+))
+
+;;===================== Foldable =====================
+(facts "How Foldable Collections work."
+       (fold [1 2 3 4 5]) => 15
+       (fold (list 1 2 3 4 5))= > 15
+       (into [] (fmap inc (r/map inc [1 2 3 4 5]))) => [3 4 5 6 7]
+       (fold (r/map inc [1 2 3 4 5])) => 20
+       )

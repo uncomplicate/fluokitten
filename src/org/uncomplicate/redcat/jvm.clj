@@ -10,12 +10,15 @@
 (defn reducible? [x]
   (instance? clojure.core.protocols.CollReduce x))
 
-;; TODO see whether it is necessary
 (defn arg-counts [f]
   (map alength (map (fn [^java.lang.reflect.Method m]
                       ( .getParameterTypes m))
                     (.getDeclaredMethods
                      ^java.lang.Class (class f)))))
+
+(defn ^:private monoidf*
+  ([ide] ide)
+  ([ide e1 e2] (op e1 e2)))
 
 (extend-type nil
   Functor
@@ -36,9 +39,13 @@
   (op
     ([_ _] nil)
     ([_ _ _] nil))
-  Monoid
-  (id [_] nil)
   Semigroup)
+
+(let [nmf (partial monoidf* nil)]
+  (extend nil
+    Monoid
+    {:id (fn [_] nil)
+     :monoidf (fn [_] nmf)}))
 
 (extend-type Object
   Functor
@@ -47,19 +54,6 @@
       (f o))
     ([o f os]
        (apply f o os))))
-
-(defn op-fun
-  ([e op]
-     (r/monoid op (constantly e)))
-  ([x]
-     (op-fun (id x) op)))
-
-(defn monoidalf
-  ([e]
-     (let [ide (id e)]
-       (fn
-         ([] ide)
-         ([e1 e2] (op e1 e2))))))
 
 (defn reducible [c]
   (r/map identity c))
@@ -165,7 +159,8 @@
       (r/remove
        nil?
        (r/map (fn [[kg vg]]
-                (if-let [vs (seq (into [] (group-entries kg (cons mv mvs))))]
+                (if-let [vs (seq (into [] (group-entries
+                                           kg (cons mv mvs))))]
                   [kg (apply vg vs)]))
               mg)))))
 
@@ -206,7 +201,7 @@
   ([cr g]
      (r/mapcat g cr))
   ([cr g ss]
-     (throw (java.lang.UnsupportedOperationException.
+     (throw (UnsupportedOperationException.
              "Bind for reducibles does not support varargs."))))
 
 (defn default-bind
@@ -276,7 +271,8 @@
      (mapcat g c))
   ([c g ss]
      (apply mapcat g c ss)))
-;;================== Semigroup implementations ==================
+
+;;======== Algebraic structures implementations ==================
 (defn coll-op
   ([x y]
      (into x y))
@@ -295,6 +291,21 @@
   ([x y ys]
      (apply list (seq-op x y ys))))
 
+(let [cmf (partial monoidf* nil)]
+  (defn collection-monoidf [_] cmf))
+
+;;================== Foldable ===================================
+(defn collection-fold [c]
+  (r/fold (monoidalf (first c)) c))
+
+(defn collection-foldmap [c g]
+  (fold (r/map g c)))
+
+(defn collfold-fold [c]
+  (r/fold (monoidf
+           (first (into [] (r/take 1 c))))
+          c))
+
 ;;================== Collections Extensions =====================
 (extend clojure.lang.IPersistentCollection
   Functor
@@ -305,10 +316,14 @@
   Monad
   {:join coll-join
    :bind coll-bind}
+  Foldable
+  {:fold collection-fold
+   :foldmap collection-foldmap}
   Magma
   {:op coll-op}
   Monoid
-  {:id empty}
+  {:id empty
+   :monoidf collection-monoidf}
   Semigroup)
 
 (extend clojure.lang.APersistentVector
@@ -399,6 +414,11 @@
   {:join collreduce-join
    :bind collreduce-bind})
 
+(extend clojure.core.reducers.CollFold
+  Foldable
+  {:fold collfold-fold
+   :foldmap collection-foldmap})
+
 (defn create-mapentry [k v]
   (clojure.lang.MapEntry. k v))
 
@@ -455,13 +475,6 @@
   {:op mapentry-op}
   Semigroup);;TODO Maybe mapentry could be monoid once maybe is implemented?...
 
-(extend-type clojure.lang.IPersistentCollection
-  Foldable
-  (fold [c]
-    (r/fold (monoidalf (first c)) c))
-  (foldmap [c g]
-    (fold (fmap c g))))
-
 ;;===================== Literals Extensions ================
 (extend-type String
   Functor
@@ -476,9 +489,13 @@
        (str x y))
     ([x y ys]
        (apply str x y ys)))
-  Monoid
-  (id [s] "")
   Semigroup)
+
+(let [smf (partial monoidf* "")]
+  (extend String
+    Monoid
+    {:id (fn [_] "")
+     :monoidf (fn [_] smf)}))
 
 (extend-type Number
   Magma
@@ -487,9 +504,13 @@
        (+ x y))
     ([x y ys]
        (apply + x y ys)))
-  Monoid
-  (id [x] 0)
   Semigroup)
+
+(let [nmf (partial monoidf* 0)]
+  (extend Number
+    Monoid
+    {:id (fn [_] 0)
+     :monoidf (fn [_] nmf)}))
 
 (extend-type clojure.lang.Keyword
   Functor
@@ -508,9 +529,15 @@
                        (name x)
                        (name y)
                        (map name ys)))))
-  Monoid
-  (id [x] (keyword ""))
   Semigroup)
+
+(let [kmf (partial monoidf* :x)]
+  (defn keyword-monoidf [_] kmf))
+
+(extend clojure.lang.Keyword
+  Monoid
+  {:id (fn [_] (keyword ""))
+   :monoidf keyword-monoidf})
 
 ;;===================== Function ===========================
 ;;--------------------- Curried ----------------------------
@@ -580,6 +607,9 @@
   ([x y ys]
      (reduce function-op x (cons y ys))))
 
+(defn function-identity [_]
+  identity)
+
 ;;-------------------- CurriedFn --------------------------
 (defn curried-fmap
   ([cf g]
@@ -629,7 +659,13 @@
   ([x y ys]
      (reduce curried-op x (cons y ys))))
 
+(defn curried-identity [_]
+  cidentity)
+
 ;;---------------------------------------------------------
+
+(let [fmf (partial monoidf* identity)]
+  (defn function-monoidf [_] fmf))
 
 (extend clojure.lang.AFunction
   Functor
@@ -637,8 +673,12 @@
   Magma
   {:op function-op}
   Monoid
-  {:id (fn [_] identity)}
+  {:id function-identity
+   :monoidf function-monoidf}
   Semigroup)
+
+(let [cmf (partial monoidf* cidentity)]
+  (defn curried-monoidf [_] cmf))
 
 (extend CurriedFn
   Functor
@@ -652,7 +692,8 @@
   Magma
   {:op curried-op}
   Monoid
-  {:id (fn [_] cidentity)}
+  {:id curried-identity
+   :monoidf curried-monoidf}
   Semigroup)
 
 ;;====================== References =======================
@@ -705,7 +746,8 @@
   {:join reference-join
    :bind default-bind}
   Magma
-  {:op reference-op})
+  {:op reference-op}
+  Semigroup)
 
 (extend clojure.lang.Ref
   Functor
@@ -717,4 +759,5 @@
   {:join reference-join
    :bind default-bind}
   Magma
-  {:op reference-op})
+  {:op reference-op}
+  Semigroup)
