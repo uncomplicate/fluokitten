@@ -250,8 +250,7 @@
  ((((fmap (curry +) (curry +)) 1) 2) 3) => 6
 
  ((((fmap (comp #(partial % 1) (curry + 2))
-          (curry + 2)) 1) 2) 3)
- => 7
+          (curry + 2)) 1) 2) 3) => 7
 
  ((((fmap #(partial % 1)
           (fmap (curry + 2) (curry + 2))) 1) 2) 3)
@@ -1175,3 +1174,118 @@
        (foldmap inc (seq (list 1 2 3 4 5))) => 20
        (foldmap val {:a 1 :b 2 :c 3}) => 6
        (foldmap inc #{1 2 3 4 5}) => 20)
+
+;;=============== Metadata ==========================
+(defmacro data-structures-should-preserve-metadata
+  [f1 f2 builder x y]
+  `(facts  "All data structures should preserve metadata."
+           (meta (fmap ~f1 (with-meta ~x
+                            {:test true})))
+           => {:test true}
+           (meta (fmap ~f2 (with-meta ~x
+                            {:test true}) ~y))
+           => {:test true}
+           (meta (fmap ~f1 (with-meta (empty ~x)
+                            {:test true})))
+           => {:test true}
+
+           (meta (fapply (pure ~x ~f1)
+                         (with-meta ~x
+                           {:test true})))
+           => {:test true}
+           (meta (fapply (pure ~x ~f2)
+                         (with-meta ~x
+                           {:test true}) ~y))
+           => {:test true}
+           (meta (fapply (pure ~x ~f1)
+                         (with-meta (empty ~x)
+                           {:test true})))
+           => {:test true}
+
+           (meta (bind (with-meta ~x {:test true})
+                      #(~builder (~f1 %))))
+           => {:test true}
+           (meta (bind (with-meta ~x
+                         {:test true})
+                       #(~builder (~f2 %1 %2))
+                       ~y))
+           => {:test true}
+           (meta (bind (with-meta (empty ~x)
+                           {:test true})
+                         #(~builder (~f1 %))))
+           => {:test true}
+
+           (meta (join (with-meta ~x
+                         {:test true})))
+           => {:test true}
+           (meta (join (with-meta (empty ~x)
+                         {:test true})))
+           => {:test true}))
+
+(data-structures-should-preserve-metadata
+ inc + vector [1 2 3] [4 5 6])
+
+(data-structures-should-preserve-metadata
+ inc + list (list 1 2 3) (list 4 5 6))
+
+(data-structures-should-preserve-metadata
+ inc + (comp seq list)
+ (seq [1 2 3]) (seq [4 5 6]))
+
+(data-structures-should-preserve-metadata
+ inc + #(lazy-seq (list %))
+ (lazy-seq (list 1 2 3)) (lazy-seq (list 4 5 6)))
+
+(data-structures-should-preserve-metadata
+ inc + hash-set #{1 2 3} #{4 5 6})
+
+(data-structures-should-preserve-metadata
+ inc + #(hash-map nil %) {:a 2 :b 4} {:a 5 :b 7})
+
+(let [a1 (atom 1 :meta {:test true})
+      a2 (atom 2 :meta {:test true})]
+  (facts  "All atoms should preserve metadata."
+          (meta (fmap inc a1)) => {:test true}
+          (meta (fmap + a1 a2)) => {:test true}
+
+          (meta (fapply (pure a1 inc) a1))
+          => {:test true}
+          (meta (fapply (pure a1 +) a1 a2))
+          => {:test true}
+
+          (meta (bind a1 #(atom (inc %))))
+          => {:test true}
+          (meta (bind a1 #(atom (+ %1 %2)) a2))
+          => {:test true}
+
+          (meta (join (atom (atom 1) :meta {:test true})))
+          => {:test true}))
+
+(let [r1 (ref 1 :meta {:test true})
+      r2 (ref 2 :meta {:test true})]
+  (facts  "All atoms should preserve metadata."
+          (dosync
+           (meta (fmap inc r1))) => {:test true}
+          (dosync
+           (meta (fmap + r1 r2)) => {:test true})
+
+          (dosync
+           (meta (fapply (pure r1 inc) r1)))
+          => {:test true}
+          (dosync
+           (meta (fapply (pure r1 +) r1 r2)))
+          => {:test true}
+
+          (dosync
+           (meta (bind r1 #(ref (inc %)))))
+          => {:test true}
+          (dosync
+           (meta (bind r1 #(ref (+ %1 %2)) r2)))
+          => {:test true}
+
+          (dosync
+           (meta (join (ref (ref 1) :meta {:test true}))))
+          => {:test true}))
+
+
+;; Reducers and MapEntry do not support metadata.

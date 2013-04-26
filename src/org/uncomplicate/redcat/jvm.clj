@@ -101,16 +101,22 @@
      (into (empty m) (map-fmap-r m g ms))))
 
 (defn list-fmap
-  ([s g]
-     (apply list (map g s)))
-  ([s g ss]
-     (apply list (apply map g s ss))))
+  ([l g]
+     (with-meta
+       (apply list (map g l))
+       (meta l)))
+  ([l g ss]
+     (with-meta
+       (apply list (apply map g l ss))
+       (meta l))))
 
 (defn seq-fmap
   ([s g]
-     (map g s))
+     (with-meta (map g s) (meta s)))
   ([s g ss]
-     (apply map g s ss)))
+     (with-meta
+       (apply map g s ss)
+       (meta s))))
 
 (defn coll-fmap
   ([c g]
@@ -166,15 +172,23 @@
 
 (defn list-fapply
   ([cv sg]
-     (apply list (mapcat #(map % cv) sg)))
+     (with-meta
+       (apply list (mapcat #(map % cv) sg))
+       (meta cv)))
   ([cv sg svs]
-     (apply list (mapcat #(apply map % cv svs) sg))))
+     (with-meta
+       (apply list (mapcat #(apply map % cv svs) sg))
+       (meta cv))))
 
 (defn seq-fapply
   ([cv sg]
-     (mapcat #(map % cv) sg))
+     (with-meta
+       (mapcat #(map % cv) sg)
+       (meta cv)))
   ([cv sg svs]
-     (mapcat #(apply map % cv svs) sg)))
+     (with-meta
+       (mapcat #(apply map % cv svs) sg)
+       (meta cv))))
 
 (defn coll-fapply
   ([cv sg]
@@ -258,19 +272,32 @@
            (apply mapcat g c ss))))
 
 (defn list-join [c]
-  (apply list (flatten c)))
+  (with-meta
+    (apply list (flatten c))
+    (meta c)))
 
 (defn list-bind
   ([c g]
-     (apply list (mapcat g c)))
+     (with-meta
+       (apply list (mapcat g c))
+       (meta c)))
   ([c g ss]
-     (apply list (apply mapcat g c ss))))
+     (with-meta
+       (apply list (apply mapcat g c ss))
+       (meta c))))
+
+(defn seq-join [c]
+  (with-meta (flatten c) (meta c)))
 
 (defn seq-bind
   ([c g]
-     (mapcat g c))
+     (with-meta
+       (mapcat g c)
+       (meta c)))
   ([c g ss]
-     (apply mapcat g c ss)))
+     (with-meta
+       (apply mapcat g c ss)
+       (meta c))))
 
 ;;======== Algebraic structures implementations ==================
 (defn coll-op
@@ -373,7 +400,7 @@
   {:pure coll-pure
    :fapply seq-fapply}
   Monad
-  {:join flatten
+  {:join seq-join
    :bind seq-bind}
   Magma
   {:op seq-op})
@@ -385,7 +412,7 @@
   {:pure lazyseq-pure
    :fapply seq-fapply}
   Monad
-  {:join flatten
+  {:join seq-join
    :bind seq-bind}
   Magma
   {:op seq-op})
