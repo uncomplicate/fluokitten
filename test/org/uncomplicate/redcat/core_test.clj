@@ -1,7 +1,6 @@
 (ns org.uncomplicate.redcat.core-test
-  (:use org.uncomplicate.redcat.jvm
-        org.uncomplicate.redcat.core
-        midje.sweet)
+  (:use [org.uncomplicate.redcat algo jvm core])
+  (:use midje.sweet)
   (:require [clojure.string :as s]
             [clojure.core.reducers :as r]))
 
