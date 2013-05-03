@@ -39,10 +39,15 @@
     ([_ _] nil)
     ([_ _ _] nil))
   (join [_] nil)
+  Foldable
+  (fold [_] nil)
+  (foldmap [_ _] nil)
   Magma
   (op
     ([_ _] nil)
     ([_ _ _] nil))
+  Monoid
+  (id [_] nil)
   Semigroup)
 
 (let [nmf (partial monoidf* nil)]
@@ -316,6 +321,9 @@
   ([x y ys]
      (apply list (seq-op x y ys))))
 
+;;TODO This is a bug! nil is not a collection id,
+;; and all collections have to have specific ids
+;; [] for vectors, () for lists, etc...
 (let [cmf (partial monoidf* nil)]
   (defn collection-monoidf [_] cmf))
 
@@ -353,8 +361,7 @@
   {:fold collfold-fold
    :foldmap collection-foldmap})
 
-(defn create-mapentry [k v]
-  (clojure.lang.MapEntry. k v))
+(declare create-mapentry)
 
 (defn mapentry-fmap
   ([[ke ve] g]

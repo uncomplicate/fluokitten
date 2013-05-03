@@ -3,6 +3,12 @@
 
 (set! *warn-on-reflection* true)
 
+(ns org.uncomplicate.redcat.algo)
+(defn create-mapentry [k v]
+  (clojure.lang.MapEntry. k v))
+
+(ns org.uncomplicate.redcat.jvm)
+
 ;;================== Collections Extensions =====================
 (extend clojure.lang.IPersistentCollection
   Functor
@@ -136,7 +142,7 @@
                        (map name ys)))))
   Semigroup)
 
-(let [kmf (partial monoidf* :x)]
+(let [kmf (partial monoidf* (keyword ""))]
   (defn keyword-monoidf [_] kmf))
 
 (extend clojure.lang.Keyword
@@ -301,3 +307,4 @@
   Magma
   {:op reference-op}
   Semigroup)
+:w
