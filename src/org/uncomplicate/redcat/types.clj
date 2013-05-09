@@ -23,10 +23,16 @@
   Applicative
   (pure [_ v]
     (Just. v))
-  (fapply [jv jg]
-    (fmap nil nil))
+  (fapply [jg jv]
+    (fmap jv v))
+  (fapply [jg jv jvs]
+    (fmap jv v jvs))
   Monad
-  (bind [jv g] (if jv (g (.v jv)) nil))
-  (join [mmv] v)  )
+  (bind [jv g]
+    (g v))
+  (bind [jv g jvs]
+    (g v (map deref jvs)))
+  (join [jjv]
+    (if (instance? Just v) v jjv)))
 
-(defn just [v] (Just. v))
+(defn just [v] (->Just v))

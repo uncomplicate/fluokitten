@@ -142,9 +142,9 @@
      (fn [av & avs]
        (apply fapply af av avs)))
   ([af av]
-     (p/fapply av af))
+     (p/fapply af av))
   ([af av & avs]
-     (p/fapply av af avs)))
+     (p/fapply af av avs)))
 
 (defn <*>
   "Performs a Haskell-style left-associative fapply

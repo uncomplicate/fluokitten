@@ -129,19 +129,19 @@
 
 ;;================ Applicative implementations ==================
 ;;-------------- fapply implementations ----------------
-(defn collreduce-fapply [crv crg]
+(defn collreduce-fapply [crg crv]
   (r/mapcat #(r/map % crv) crg))
 
 (defn collreduce-pure [_ v]
   (r/map identity  [v]))
 
 (defn reducible-fapply
-  ([cv sg]
+  ([cg cv]
      (into (empty cv)
-           (r/mapcat #(r/map % cv) sg)))
-  ([cv sg svs]
+           (collreduce-fapply cg cv)))
+  ([cg cv cvs]
      (into (empty cv)
-           (r/mapcat #(apply map % cv svs) sg))))
+           (r/mapcat #(apply map % cv cvs) cg))))
 
 (defn- apply-universal-f [mf m]
   (if-let [f (mf nil)]
@@ -149,7 +149,7 @@
     m))
 
 (defn map-fapply
-  ([mv mg]
+  ([mg mv]
      (into
       (if-let [f (mg nil)]
         (map-fmap mv f)
@@ -160,7 +160,7 @@
                 (if-let [[kv vv] (find mv kg)]
                   [kv (vg vv)]))
               mg))))
-  ([mv mg mvs]
+  ([mg mv mvs]
      (into
       (if-let [f (mg nil)]
         (map-fmap mv f mvs)
@@ -174,32 +174,32 @@
               mg)))))
 
 (defn list-fapply
-  ([cv sg]
+  ([cg cv]
      (with-meta
-       (apply list (mapcat #(map % cv) sg))
+       (apply list (mapcat #(map % cv) cg))
        (meta cv)))
-  ([cv sg svs]
+  ([cg cv cvs]
      (with-meta
-       (apply list (mapcat #(apply map % cv svs) sg))
+       (apply list (mapcat #(apply map % cv cvs) cg))
        (meta cv))))
 
 (defn seq-fapply
-  ([cv sg]
+  ([cg cv]
      (with-meta
-       (mapcat #(map % cv) sg)
+       (mapcat #(map % cv) cg)
        (meta cv)))
-  ([cv sg svs]
+  ([cg cv cvs]
      (with-meta
-       (mapcat #(apply map % cv svs) sg)
+       (mapcat #(apply map % cv cvs) cg)
        (meta cv))))
 
 (defn coll-fapply
-  ([cv sg]
+  ([cg cv]
      (into (empty cv)
-           (mapcat #(map % cv) sg)))
-  ([cv sg svs]
+           (mapcat #(map % cv) cg)))
+  ([cg cv cvs]
      (into (empty cv)
-           (mapcat #(apply map % cv svs) sg))))
+           (mapcat #(apply map % cv cvs) cg))))
 
 (defn coll-pure [cv v]
   (conj (empty cv) v))
@@ -375,11 +375,11 @@
   (create-mapentry nil v))
 
 (defn mapentry-fapply
-  ([[ke ve :as e] [kg vg]]
+  ([[kg vg] [ke ve :as e]]
      (if (or (nil? kg) (= ke kg))
        (create-mapentry ke (vg ve))
        e))
-  ([[ke ve :as e] [kg vg] es]
+  ([[kg vg] [ke ve :as e] es]
      (if (or (nil? kg)
              (not (some (fn [[k _]]
                           (not= k kg))
@@ -469,9 +469,9 @@
 ;;====================== References =======================
 ;;----------------- Universal ------------------
 (defn reference-fapply
-  ([rv rg]
+  ([rg rv]
      (fmap rv (deref rg)))
-  ([rv rg rvs]
+  ([rg rv rvs]
      (fmap rv (deref rg) rvs)))
 
 (defn reference-join [r]

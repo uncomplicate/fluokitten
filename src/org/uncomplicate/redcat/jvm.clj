@@ -213,16 +213,15 @@
   (curry* (fn [& _] x) 0))
 
 (defn curried-fapply
-  ([cf cg]
+  ([cg cf]
      (curry (fn
               ([x]
                  ((cg x) (cf x)))
               ([x & xs]
                  ((apply cg x xs) (apply cf x xs))))
             1))
-  ([cf cg hs]
-     (reduce #(curried-fapply %2 %1)
-             (into [cg cf] hs))))
+  ([cg cf hs]
+     (reduce curried-fapply cg (cons cf hs))))
 
 (defn curried-bind
   ([cf cg]
@@ -307,4 +306,3 @@
   Magma
   {:op reference-op}
   Semigroup)
-:w

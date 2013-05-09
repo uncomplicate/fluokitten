@@ -294,8 +294,8 @@
 
 (applicative-law2-identity (reducible [1 445 -4]))
 
-(applicative-law3-composition [inc]
-                              [(partial * 10)]
+(applicative-law3-composition (reducible [inc])
+                              (reducible [(partial * 10)])
                               (reducible [1 -34343444]))
 
 (applicative-law4-homomorphism (reducible []) inc 1)

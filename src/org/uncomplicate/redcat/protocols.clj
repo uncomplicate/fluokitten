@@ -25,7 +25,7 @@
                           (fapply (pure a #(% y)) u))
   "
   (pure [av v] "TODO documentation")
-  (fapply [av ag] [av ag avs] "TODO documentaion"))
+  (fapply [ag av] [ag av avs] "TODO documentaion"))
 
 (defprotocol Monad
   "TODO documentation"
