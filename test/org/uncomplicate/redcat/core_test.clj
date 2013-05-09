@@ -4,13 +4,10 @@
   (:require [clojure.string :as s]
             [clojure.core.reducers :as r]))
 
-
-
 ;;=============== Curried tests ========================
 (facts
  ((curry + 3) 1 2 3) => 6
  (((curry + 2) 1) 2) => 3)
-
 
 (fact "First functor law."
       (fmap identity) => identity)

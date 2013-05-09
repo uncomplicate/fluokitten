@@ -14,7 +14,7 @@
 
    fmap can be thought of in two ways:
    1. As a function that takes a function f and functor and then maps
-      the function over functor value.
+      the function over the functor value.
    2. As a function that takes a function f so it can operate on functor
       values instead on plain values.
 
