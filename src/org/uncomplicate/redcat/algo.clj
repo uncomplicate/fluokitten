@@ -312,8 +312,7 @@
   ([x y ys]
      (apply list (seq-op x y ys))))
 
-(defn collection-monoidf [c]
-  (partial monoidf* (empty c)))
+(defn collection-monoidf [c] (partial monoidf* (empty c)))
 
 (def vector-monoidf (partial monoidf* []))
 
@@ -378,7 +377,7 @@
       :bind reducible-bind}
      Monoid
      {:id empty
-      :monoidf vector-monoidf}))
+      :monoidf (fn [~'_] vector-monoidf)}))
 
 (defmacro extend-list [t]
   `(extend ~t
@@ -394,7 +393,7 @@
      {:op list-op}
      Monoid
      {:id empty
-      :monoidf list-monoidf}))
+      :monoidf (fn [~'_] list-monoidf)}))
 
 (defmacro extend-seq [t]
   `(extend ~t
@@ -410,7 +409,7 @@
      {:op seq-op}
      Monoid
      {:id empty
-      :monoidf seq-monoidf}))
+      :monoidf (fn [~'_] seq-monoidf)}))
 
 (defmacro extend-lazyseq [t]
   `(extend ~t
@@ -426,7 +425,7 @@
      {:op seq-op}
      Monoid
      {:id empty
-      :monoidf lazyseq-monoidf}))
+      :monoidf (fn [~'_] lazyseq-monoidf)}))
 
 (defmacro extend-set [t]
   `(extend ~t
@@ -440,7 +439,7 @@
       :bind reducible-bind}
      Monoid
      {:id empty
-      :monoidf set-monoidf}))
+      :monoidf (fn [~'_] set-monoidf)}))
 
 (defmacro extend-map [t]
   `(extend ~t
@@ -457,7 +456,7 @@
       :foldmap map-foldmap}
      Monoid
      {:id empty
-      :monoidf map-monoidf}))
+      :monoidf (fn [~'_] map-monoidf)}))
 
 (defmacro extend-mapentry [t]
   `(extend ~t

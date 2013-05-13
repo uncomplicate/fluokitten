@@ -901,6 +901,17 @@
 
 (monoid-identity-law (seq (list 1 2)))
 
+;;----------------------- Set --------------------------
+(magma-op-keeps-type #{1 2} #{3 4})
+
+(magma-op-keeps-type #{1 2} #{3 4} #{5 6})
+
+(semigroup-op-associativity #{1 2} #{3 4})
+
+(semigroup-op-associativity #{1 2} #{3 4} #{5 6})
+
+(monoid-identity-law #{1 2})
+
 ;;----------------------- Map --------------------------
 (magma-op-keeps-type {:a 1} {:b 2})
 
@@ -1041,6 +1052,19 @@
          => ((op (c+ 2) (op (cdiv 3) (c* 5))) 7 9))
 
   (monoid-identity-law c+))
+
+;;----------------- monoidf -------------------------
+(facts "monoidf is used by fold."
+       (fold [[1] [2]]) => [1 2]
+       (fold [(list 1) (list 2)]) => (list 1 2)
+       (fold [(seq (list 1)) (seq (list 2))]) => (seq (list 1 2))
+       (fold [(lazy-seq (list 1)) (lazy-seq (list 2))])
+       => (lazy-seq (list 1 2))
+       (fold [#{1} #{2}]) => #{1 2}
+       (fold [{:a 1} {:b 2}]) => {:a 1 :b 2}
+       (fold [:a :b :c]) => :abc
+       (fold ["a" "b" "c"]) => "abc"
+       (fold [1 2 3]) => 6)
 
 ;;===================== Foldable =====================
 (facts "How Foldable Collections work."
