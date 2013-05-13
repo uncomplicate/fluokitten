@@ -2,7 +2,7 @@
   (:use [org.uncomplicate.redcat core types test])
   (:use [midje.sweet :exclude [just]]))
 
-;;--------------- Just ---------------
+;;--------------- Just ---------------------------------
 (functor-law2 inc + (just 5))
 
 (functor-law2 inc + (just 6) (just 99) (just 0))
@@ -48,4 +48,4 @@
       (join (just 5)) => (just 5)
       (join (just (just (just (just 5))))) => (just 5))
 
-;;---------------- State -------------
+;;---------------- State --------------------------------

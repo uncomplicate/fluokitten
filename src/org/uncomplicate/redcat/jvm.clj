@@ -3,138 +3,50 @@
 
 (set! *warn-on-reflection* true)
 
+;;======== Set appropriate platform specific vars in algo. ======
 (ns org.uncomplicate.redcat.algo)
+
+(defn deref? [x]
+  (instance? clojure.lang.IDeref x))
+
 (defn create-mapentry [k v]
   (clojure.lang.MapEntry. k v))
 
 (ns org.uncomplicate.redcat.jvm)
 
-;;================== Collections Extensions =====================
-(extend clojure.lang.IPersistentCollection
-  Functor
-  {:fmap coll-fmap}
-  Applicative
-  {:pure coll-pure
-   :fapply coll-fapply}
-  Monad
-  {:join coll-join
-   :bind coll-bind}
-  Foldable
-  {:fold collection-fold
-   :foldmap collection-foldmap}
-  Magma
-  {:op coll-op}
-  Monoid
-  {:id empty
-   :monoidf collection-monoidf}
-  Semigroup)
+;;================== Clojure JVM-specific Extensions =====================
+(extend-collection clojure.lang.IPersistentCollection)
 
-(extend clojure.lang.APersistentVector
-  Functor
-  {:fmap reducible-fmap}
-  Applicative
-  {:pure coll-pure
-   :fapply reducible-fapply}
-  Monad
-  {:join reducible-join
-   :bind reducible-bind})
+(extend-seq clojure.lang.ASeq)
 
-(extend clojure.lang.IPersistentList
-  Functor
-  {:fmap list-fmap}
-  Applicative
-  {:pure coll-pure
-   :fapply list-fapply}
-  Monad
-  {:join list-join
-   :bind list-bind}
-  Magma
-  {:op list-op})
+(extend-lazyseq clojure.lang.LazySeq)
 
-(extend clojure.lang.PersistentList
-  Functor
-  {:fmap list-fmap}
-  Applicative
-  {:pure coll-pure
-   :fapply list-fapply}
-  Monad
-  {:join list-join
-   :bind list-bind}
-  Magma
-  {:op list-op})
+(extend-vector clojure.lang.APersistentVector)
 
-(extend clojure.lang.ASeq
-  Functor
-  {:fmap seq-fmap}
-  Applicative
-  {:pure coll-pure
-   :fapply seq-fapply}
-  Monad
-  {:join seq-join
-   :bind seq-bind}
-  Magma
-  {:op seq-op})
+(extend-list clojure.lang.IPersistentList)
 
-(extend clojure.lang.LazySeq
-  Functor
-  {:fmap seq-fmap}
-  Applicative
-  {:pure lazyseq-pure
-   :fapply seq-fapply}
-  Monad
-  {:join seq-join
-   :bind seq-bind}
-  Magma
-  {:op seq-op})
+(extend-list clojure.lang.PersistentList)
 
-(extend clojure.lang.APersistentSet
-  Functor
-  {:fmap reducible-fmap}
-  Applicative
-  {:pure coll-pure
-   :fapply reducible-fapply}
-  Monad
-  {:join reducible-join
-   :bind reducible-bind})
+(extend-set clojure.lang.APersistentSet)
 
-(extend clojure.lang.APersistentMap
-  Functor
-  {:fmap map-fmap}
-  Applicative
-  {:pure map-pure
-   :fapply map-fapply}
-  Monad
-  {:join map-join
-   :bind map-bind}
-  Foldable
-  {:fold map-fold
-   :foldmap map-foldmap})
+(extend-map clojure.lang.APersistentMap)
 
-(extend clojure.lang.MapEntry
-  Functor
-  {:fmap mapentry-fmap}
-  Applicative
-  {:pure mapentry-pure
-   :fapply mapentry-fapply}
-  Monad
-  {:join mapentry-join
-   :bind default-bind}
-  Magma
-  {:op mapentry-op}
-  Semigroup);;TODO Maybe mapentry could be monoid once maybe is implemented?...
+(extend-mapentry clojure.lang.MapEntry)
 
+(extend-keyword clojure.lang.Keyword)
 
-(extend clojure.lang.Keyword
-  Functor
-  {:fmap keyword-fmap}
-  Magma
-  {:op keyword-op}
-  Monoid
-  {:id (fn [_] (keyword ""))
-   :monoidf keyword-monoidf})
+(extend-function clojure.lang.AFunction)
 
-;;===================== Function ===========================
-;;--------------------- CurriedFn ----------------------------
+(extend-atom clojure.lang.Atom)
+
+(extend-ref clojure.lang.Ref)
+
+;;===================== CurriedFn ===========================
+(defn ^:private arg-counts [f]
+  (map alength (map (fn [^java.lang.reflect.Method m]
+                      ( .getParameterTypes m))
+                    (.getDeclaredMethods
+                     ^java.lang.Class (class f)))))
 
 (defn ^:private  gen-invoke [^clojure.lang.IFn f arity n]
   (let [args (map #(symbol (str "a" %)) (range arity))]
@@ -227,43 +139,5 @@
 (def curried (CurriedFn. identity 1))
 (def cidentity curried)
 
-(def curriedfn-monoidf
+(def ^:private curriedfn-monoidf
   (partial monoidf* cidentity))
-
-
-(extend clojure.lang.AFunction
-  Functor
-  {:fmap function-fmap}
-  Magma
-  {:op function-op}
-  Monoid
-  {:id function-identity
-   :monoidf function-monoidf}
-  Semigroup)
-
-;;====================== References =======================
-(extend clojure.lang.Atom
-  Functor
-  {:fmap agent-fmap}
-  Applicative
-  {:pure agent-pure
-   :fapply reference-fapply}
-  Monad
-  {:join reference-join
-   :bind default-bind}
-  Magma
-  {:op reference-op}
-  Semigroup)
-
-(extend clojure.lang.Ref
-  Functor
-  {:fmap ref-fmap}
-  Applicative
-  {:pure ref-pure
-   :fapply reference-fapply}
-  Monad
-  {:join reference-join
-   :bind default-bind}
-  Magma
-  {:op reference-op}
-  Semigroup)

@@ -2,8 +2,7 @@
   (:use org.uncomplicate.redcat.protocols)
   (:require [clojure.core.reducers :as r]))
 
-(defn deref? [x]
-  (instance? clojure.lang.IDeref x))
+(declare deref?)
 
 (defn reducible? [x]
   (instance? clojure.core.protocols.CollReduce x))
@@ -14,49 +13,39 @@
 (defn realize [c cr]
   (into (empty c) cr))
 
-(defn arg-counts [f]
-  (map alength (map (fn [^java.lang.reflect.Method m]
-                      ( .getParameterTypes m))
-                    (.getDeclaredMethods
-                     ^java.lang.Class (class f)))))
-
 (defn monoidf*
   ([ide] ide)
   ([ide e1 e2] (op e1 e2)))
 
-(extend-type nil
-  Failure
-  (details [_] nil)
-  Functor
-  (fmap
-    ([_ _] nil)
-    ([_ _ _] nil))
-  Applicative
-  (pure [_ _] nil)
-  (fapply
-    ([_ _] nil)
-    ([_ _ _] nil))
-  Monad
-  (bind
-    ([_ _] nil)
-    ([_ _ _] nil))
-  (join [_] nil)
-  Foldable
-  (fold [_] nil)
-  (foldmap [_ _] nil)
-  Magma
-  (op
-    ([_ _] nil)
-    ([_ _ _] nil))
-  Monoid
-  (id [_] nil)
-  Semigroup)
-
 (let [nmf (partial monoidf* nil)]
-  (extend nil
+  (extend-type nil
+    Failure
+    (details [_] nil)
+    Functor
+    (fmap
+      ([_ _] nil)
+      ([_ _ _] nil))
+    Applicative
+    (pure [_ _] nil)
+    (fapply
+      ([_ _] nil)
+      ([_ _ _] nil))
+    Monad
+    (bind
+      ([_ _] nil)
+      ([_ _ _] nil))
+    (join [_] nil)
+    Foldable
+    (fold [_] nil)
+    (foldmap [_ _] nil)
+    Magma
+    (op
+      ([_ _] nil)
+      ([_ _ _] nil))
     Monoid
-    {:id (fn [_] nil)
-     :monoidf (fn [_] nmf)}))
+    (id [_] nil)
+    (monoidf [_] nmf)
+    Semigroup))
 
 (extend-type Object
   Functor
@@ -73,7 +62,7 @@
      (r/map g cr))
   ([_ _ _]
      (throw (java.lang.UnsupportedOperationException.
-             "Fmap for reducibles does not support varargs."))))
+             "fmap for reducibles does not support varargs."))))
 
 (defn reducible-fmap
   ([c g]
@@ -220,7 +209,7 @@
   ([cr g]
      (r/mapcat g cr))
   ([cr g ss]
-     (throw (ex-info "Bind for reducibles does not support varargs."
+     (throw (ex-info "bind for reducibles does not support varargs."
                      {:exception-type :unsupported-operation}))))
 
 (defn default-bind
@@ -323,11 +312,20 @@
   ([x y ys]
      (apply list (seq-op x y ys))))
 
-;;TODO This is a bug! nil is not a collection id,
-;; and all collections have to have specific ids
-;; [] for vectors, () for lists, etc...
-(let [cmf (partial monoidf* nil)]
-  (defn collection-monoidf [_] cmf))
+(defn collection-monoidf [c]
+  (partial monoidf* (empty c)))
+
+(def vector-monoidf (partial monoidf* []))
+
+(def list-monoidf (partial monoidf* (list)))
+
+(def seq-monoidf (partial monoidf* (empty (seq (list nil)))))
+
+(def lazyseq-monoidf (partial monoidf* (empty (lazy-seq (list nil)))))
+
+(def set-monoidf (partial monoidf* #{}))
+
+(def map-monoidf (partial monoidf* {}))
 
 ;;================== Foldable ===================================
 (defn collection-fold [c]
@@ -348,6 +346,134 @@
           c))
 
 ;;================== Collections Extensions =====================
+(defmacro extend-collection [t]
+  `(extend ~t
+       Functor
+       {:fmap coll-fmap}
+       Applicative
+       {:pure coll-pure
+        :fapply coll-fapply}
+       Monad
+       {:join coll-join
+        :bind coll-bind}
+       Foldable
+       {:fold collection-fold
+        :foldmap collection-foldmap}
+       Magma
+       {:op coll-op}
+       Monoid
+       {:id empty
+        :monoidf collection-monoidf}
+       Semigroup))
+
+(defmacro extend-vector [t]
+  `(extend ~t
+     Functor
+     {:fmap reducible-fmap}
+     Applicative
+     {:pure coll-pure
+      :fapply reducible-fapply}
+     Monad
+     {:join reducible-join
+      :bind reducible-bind}
+     Monoid
+     {:id empty
+      :monoidf vector-monoidf}))
+
+(defmacro extend-list [t]
+  `(extend ~t
+     Functor
+     {:fmap list-fmap}
+     Applicative
+     {:pure coll-pure
+      :fapply list-fapply}
+     Monad
+     {:join list-join
+      :bind list-bind}
+     Magma
+     {:op list-op}
+     Monoid
+     {:id empty
+      :monoidf list-monoidf}))
+
+(defmacro extend-seq [t]
+  `(extend ~t
+     Functor
+     {:fmap seq-fmap}
+     Applicative
+     {:pure coll-pure
+      :fapply seq-fapply}
+     Monad
+     {:join seq-join
+      :bind seq-bind}
+     Magma
+     {:op seq-op}
+     Monoid
+     {:id empty
+      :monoidf seq-monoidf}))
+
+(defmacro extend-lazyseq [t]
+  `(extend ~t
+     Functor
+     {:fmap seq-fmap}
+     Applicative
+     {:pure lazyseq-pure
+      :fapply seq-fapply}
+     Monad
+     {:join seq-join
+      :bind seq-bind}
+     Magma
+     {:op seq-op}
+     Monoid
+     {:id empty
+      :monoidf lazyseq-monoidf}))
+
+(defmacro extend-set [t]
+  `(extend ~t
+     Functor
+     {:fmap reducible-fmap}
+     Applicative
+     {:pure coll-pure
+      :fapply reducible-fapply}
+     Monad
+     {:join reducible-join
+      :bind reducible-bind}
+     Monoid
+     {:id empty
+      :monoidf set-monoidf}))
+
+(defmacro extend-map [t]
+  `(extend ~t
+     Functor
+     {:fmap map-fmap}
+     Applicative
+     {:pure map-pure
+      :fapply map-fapply}
+     Monad
+     {:join map-join
+      :bind map-bind}
+     Foldable
+     {:fold map-fold
+      :foldmap map-foldmap}
+     Monoid
+     {:id empty
+      :monoidf map-monoidf}))
+
+(defmacro extend-mapentry [t]
+  `(extend ~t
+     Functor
+     {:fmap mapentry-fmap}
+     Applicative
+     {:pure mapentry-pure
+      :fapply mapentry-fapply}
+     Monad
+     {:join mapentry-join
+      :bind default-bind}
+     Magma
+     {:op mapentry-op}
+     Semigroup))
+
+;;TODO Maybe this should be a Monoid
 (extend clojure.core.protocols.CollReduce
   Functor
   {:fmap collreduce-fmap}
@@ -461,6 +587,16 @@
 (let [kmf (partial monoidf* (keyword ""))]
   (defn keyword-monoidf [_] kmf))
 
+(defmacro extend-keyword [t]
+  `(extend ~t
+     Functor
+     {:fmap keyword-fmap}
+     Magma
+     {:op keyword-op}
+     Monoid
+     {:id (fn [~'_] (keyword ""))
+      :monoidf keyword-monoidf}))
+
 ;;===================== Function ===========================
 ;;-------------------- clojure.lang.IFn -------------------
 (defn function-fmap
@@ -486,6 +622,16 @@
 (let [fmf (partial monoidf* identity)]
   (defn function-monoidf [_] fmf))
 
+(defmacro extend-function [t]
+  `(extend ~t
+     Functor
+     {:fmap function-fmap}
+     Magma
+     {:op function-op}
+     Monoid
+     {:id function-identity
+      :monoidf function-monoidf}
+     Semigroup))
 
 ;;====================== References =======================
 ;;----------------- Universal ------------------
@@ -526,3 +672,31 @@
 
 (defn ref-pure [a v]
   (ref v))
+
+(defmacro extend-atom [t]
+  `(extend ~t
+     Functor
+     {:fmap agent-fmap}
+     Applicative
+     {:pure agent-pure
+      :fapply reference-fapply}
+     Monad
+     {:join reference-join
+      :bind default-bind}
+     Magma
+     {:op reference-op}
+     Semigroup))
+
+(defmacro extend-ref [t]
+  `(extend ~t
+     Functor
+     {:fmap ref-fmap}
+     Applicative
+     {:pure ref-pure
+      :fapply reference-fapply}
+     Monad
+     {:join reference-join
+      :bind default-bind}
+     Magma
+     {:op reference-op}
+     Semigroup))

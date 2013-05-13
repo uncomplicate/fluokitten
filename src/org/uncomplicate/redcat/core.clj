@@ -113,7 +113,7 @@
    the applicative functor's context and return the result
    of applying the original context af.
 
-   fapply can be thought of as fapply that, instead of
+   fapply can be thought of as fmap that, instead of
    plain function f receives one or many functions inside
    the context af, extracts those functions from the context
    and applies them to the values inside the context av.
@@ -159,9 +159,9 @@
      (fn [a & as]
        (apply <*> af a as) ))
   ([af av]
-     (p/fapply av af))
+     (p/fapply af av))
   ([af av & avs]
-     (reduce fapply af (cons av avs))))
+     (reduce p/fapply af (cons av avs))))
 
 (defn join [x]
   "Flattens multiple nested monads into a single monadic value.

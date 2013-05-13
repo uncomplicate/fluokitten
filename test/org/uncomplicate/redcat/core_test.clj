@@ -833,7 +833,6 @@
          => ((bind (c* 3) (fn [x] (bind (c* x) c+))) 2 3 4)))
 
 ;;============= Magmas, Semigroups and Monoids =======================
-
 ;;----------------------- Vector --------------------------
 (magma-op-keeps-type [1 2] [3 4])
 
