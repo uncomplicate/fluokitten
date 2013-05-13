@@ -25,6 +25,8 @@
   ([ide e1 e2] (op e1 e2)))
 
 (extend-type nil
+  Failure
+  (details [_] nil)
   Functor
   (fmap
     ([_ _] nil)
@@ -439,6 +441,25 @@
     Monoid
     {:id (fn [_] 0)
      :monoidf (fn [_] nmf)}))
+
+(defn keyword-fmap
+  ([k g]
+     (keyword (fmap (name k) g)))
+  ([k g ks]
+     (keyword (fmap (name k) g
+                    (map name ks)))))
+
+(defn keyword-op
+  ([x y]
+     (keyword (str (name x) (name y))))
+  ([x y ys]
+     (keyword (apply str
+                     (name x)
+                     (name y)
+                     (map name ys)))))
+
+(let [kmf (partial monoidf* (keyword ""))]
+  (defn keyword-monoidf [_] kmf))
 
 ;;===================== Function ===========================
 ;;-------------------- clojure.lang.IFn -------------------

@@ -123,55 +123,41 @@
   {:op mapentry-op}
   Semigroup);;TODO Maybe mapentry could be monoid once maybe is implemented?...
 
-(extend-type clojure.lang.Keyword
-  Functor
-  (fmap
-    ([k g]
-       (keyword (fmap (name k) g)))
-    ([k g ks]
-       (keyword (fmap (name k) g
-                      (map name ks)))))
-  Magma
-  (op
-    ([x y]
-       (keyword (str (name x) (name y))))
-    ([x y ys]
-       (keyword (apply str
-                       (name x)
-                       (name y)
-                       (map name ys)))))
-  Semigroup)
-
-(let [kmf (partial monoidf* (keyword ""))]
-  (defn keyword-monoidf [_] kmf))
 
 (extend clojure.lang.Keyword
+  Functor
+  {:fmap keyword-fmap}
+  Magma
+  {:op keyword-op}
   Monoid
   {:id (fn [_] (keyword ""))
    :monoidf keyword-monoidf})
 
 ;;===================== Function ===========================
 ;;--------------------- CurriedFn ----------------------------
-(declare curry*)
 
 (defn ^:private  gen-invoke [^clojure.lang.IFn f arity n]
   (let [args (map #(symbol (str "a" %)) (range arity))]
         `(invoke [~'_ ~@args]
                  (if (> ~n ~arity)
-                   (curry* (partial ~f ~@args) (- ~n ~arity))
+                   (CurriedFn. (partial ~f ~@args) (- ~n ~arity))
                    (.invoke ~f ~@args)))))
 
 (defn ^:private  gen-applyto [^clojure.lang.IFn f n]
   `(applyTo [~'_ ~'args]
             (let [as# (- ~n (count ~'args))]
               (if (pos? as#)
-                (curry* (apply partial ~f ~'args) as#)
+                (CurriedFn. (apply partial ~f ~'args) as#)
                 (.applyTo ~f ~'args)))))
+
+(declare curriedfn-monoidf
+         cidentity)
 
 (defmacro ^:private deftype-curried-fn []
   `(deftype ~'CurriedFn ~'[^clojure.lang.IFn f n]
+     clojure.lang.IDeref
+     ~'(deref [_] f)
      Curried
-     ~'(original [_] f)
      ~'(arity [_] n)
      clojure.lang.IFn
      ~@(map #(gen-invoke 'f % 'n) (range 22))
@@ -181,12 +167,53 @@
          (if (pos? n) f (.call f)))
      java.lang.Runnable
      ~'(run [_]
-         (if (pos? n) f (.run f)))))
+         (if (pos? n) f (.run f)))
+     Functor
+     ~'(fmap [_ g]
+         (CurriedFn. (comp g f) n))
+     ~'(fmap [cf g cfs]
+         (reduce fmap (into (list cf g) (seq cfs))))
+     Applicative
+     ~'(pure [_ x]
+         (CurriedFn. (fn [& _] x) 0))
+     ~'(fapply [cg cf]
+         (CurriedFn.
+          (fn
+            ([x]
+               ((cg x) (cf x)))
+            ([x & xs]
+               ((apply cg x xs) (apply cf x xs))))
+          1))
+     ~'(fapply [cg cf hs]
+         (reduce fapply cg (cons cf hs)))
+     Monad
+     ~'(bind [cf cg]
+         (CurriedFn.
+          (fn
+            ([x]
+               ((cg (cf x)) x))
+            ([x & xs]
+               (apply (cg (apply cf x xs)) x xs)))
+          1))
+     ~'(bind [cf cg hs]
+         (reduce #(bind %2 %1)
+                 (into [cg cf] hs)))
+     ~'(join [cf] (bind cf identity))
+     Magma
+     ~'(op [x y]
+         (if (= identity f)
+           y
+           (if (= identity (deref y))
+             x
+             (fmap x y))))
+     ~'(op [x y ys]
+         (reduce op x (cons y ys)))
+     Monoid
+     ~'(id [_] cidentity)
+     ~'(monoidf [_] curriedfn-monoidf)
+     Semigroup))
 
 (deftype-curried-fn)
-
-(defn ^:private curry* [f n]
-  (CurriedFn. f n))
 
 (def curried? (partial instance? CurriedFn))
 
@@ -194,81 +221,15 @@
   ([f] (curry f (min 2 (apply max (arg-counts f)))))
   ([f n]
      (if (and (fn? f) (pos? n))
-       (curry* f n)
+       (->CurriedFn f n)
        f)))
 
-(def curried (curry identity 1))
+(def curried (CurriedFn. identity 1))
 (def cidentity curried)
 
-;;-------------------- CurriedFn --------------------------
-(defn curried-fmap
-  ([cf g]
-     (curry (comp g (original cf))
-            (arity cf)))
-  ([cf g cfs]
-     (reduce curried-fmap
-             (into (list cf g) (seq cfs)))))
+(def curriedfn-monoidf
+  (partial monoidf* cidentity))
 
-(defn curried-pure [cf x]
-  (curry* (fn [& _] x) 0))
-
-(defn curried-fapply
-  ([cg cf]
-     (curry (fn
-              ([x]
-                 ((cg x) (cf x)))
-              ([x & xs]
-                 ((apply cg x xs) (apply cf x xs))))
-            1))
-  ([cg cf hs]
-     (reduce curried-fapply cg (cons cf hs))))
-
-(defn curried-bind
-  ([cf cg]
-     (curry (fn
-              ([x]
-                 ((cg (cf x)) x))
-              ([x & xs]
-                 (apply (cg (apply cf x xs)) x xs)))
-            1))
-  ([cf cg hs]
-     (reduce #(curried-bind %2 %1)
-             (into [cg cf] hs))))
-
-(defn curried-join [cf]
-  (bind cf identity))
-
-(defn curried-op
-  ([x y]
-       (if (= identity (original x))
-         y
-         (if (= identity (original y))
-           x
-           (curried-fmap x y))))
-  ([x y ys]
-     (reduce curried-op x (cons y ys))))
-
-(defn curried-identity [_]
-  cidentity)
-
-(let [cmf (partial monoidf* cidentity)]
-  (defn curried-monoidf [_] cmf))
-
-(extend CurriedFn
-  Functor
-  {:fmap curried-fmap}
-  Applicative
-  {:pure curried-pure
-   :fapply curried-fapply}
-  Monad
-  {:join curried-join
-   :bind curried-bind}
-  Magma
-  {:op curried-op}
-  Monoid
-  {:id curried-identity
-   :monoidf curried-monoidf}
-  Semigroup)
 
 (extend clojure.lang.AFunction
   Functor

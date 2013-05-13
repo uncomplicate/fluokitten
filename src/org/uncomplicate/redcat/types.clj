@@ -1,38 +1,38 @@
 (ns org.uncomplicate.redcat.types
   (:use [org.uncomplicate.redcat.protocols]))
 
-(comment
-  (deftype Identity [v]
-    Functor
-    (fmap [fv g] (pure fv (g v)))
-    Applicative
-    (pure [_ v] (Identity. v))
-    (fapply [fg fv] (pure fg (v (deref fv))))
-    Monad
-    (bind [mv g] (g (.v mv)))
-    (join [mmv] v)))
-
 (deftype Just [v]
   clojure.lang.IDeref
-  (deref [j] (.v j))
+  (deref [_] v)
+  Object
+  (hashCode [_]
+    (.hashCode v))
+  (equals [this that]
+    (or (identical? this that)
+        (and (instance? Just that)
+             (= v @that))))
   Functor
-  (fmap [jv g]
+  (fmap [_ g]
     (Just. (g v)))
-  (fmap [jv g jvs]
-    (Just. (apply g v (map deref jvs))))
+  (fmap [_ g jvs]
+    (if (some nil? jvs)
+      nil
+      (Just. (apply g v (map deref jvs)))))
   Applicative
-  (pure [_ v]
-    (Just. v))
-  (fapply [jg jv]
+  (pure [_ x]
+    (Just. x))
+  (fapply [_ jv]
     (fmap jv v))
-  (fapply [jg jv jvs]
+  (fapply [_ jv jvs]
     (fmap jv v jvs))
   Monad
-  (bind [jv g]
+  (bind [_ g]
     (g v))
-  (bind [jv g jvs]
-    (g v (map deref jvs)))
+  (bind [_ g jvs]
+    (if (some nil? jvs)
+      nil
+      (apply g v (map deref jvs))))
   (join [jjv]
-    (if (instance? Just v) v jjv)))
+    (if (instance? Just v) (join v) jjv)))
 
-(defn just [v] (->Just v))
+(def just ->Just)

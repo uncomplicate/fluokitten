@@ -1,8 +1,10 @@
 (ns org.uncomplicate.redcat.protocols)
 
 (defprotocol Curried
-  (original [f])
   (arity [f]))
+
+(defprotocol Failure
+  (source [f]))
 
 (defprotocol Functor
   "1. (= (fmap identity) identity) ,
