@@ -699,3 +699,38 @@
      Magma
      {:op reference-op}
      Semigroup))
+
+;;================== Maybe Just ===========================
+(deftype Just [v]
+  Context
+  (extract [_] v)
+  Object
+  (hashCode [_]
+    (hash v))
+  (equals [this that]
+    (or (identical? this that)
+        (and (instance? Just that)
+             (= v (extract that)))))
+  Functor
+  (fmap [_ g]
+    (Just. (g v)))
+  (fmap [_ g jvs]
+    (if (some nil? jvs)
+      nil
+      (Just. (apply g v (map extract jvs)))))
+  Applicative
+  (pure [_ x]
+    (Just. x))
+  (fapply [_ jv]
+    (fmap jv v))
+  (fapply [_ jv jvs]
+    (fmap jv v jvs))
+  Monad
+  (bind [_ g]
+    (g v))
+  (bind [_ g jvs]
+    (if (some nil? jvs)
+      nil
+      (apply g v (map extract jvs))))
+  (join [jjv]
+    (if (instance? Just v) (join v) jjv)))

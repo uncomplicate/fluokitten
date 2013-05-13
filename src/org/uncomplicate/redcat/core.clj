@@ -1,5 +1,6 @@
 (ns org.uncomplicate.redcat.core
-  (:require [org.uncomplicate.redcat.protocols :as p]))
+  (:require [org.uncomplicate.redcat.protocols :as p])
+  (:require [org.uncomplicate.redcat.algo :as algo]))
 
 (defn fmap
   "Applies a function f to the value(s) inside functor's context
@@ -323,3 +324,5 @@
   "
   [x]
   (p/id x))
+
+(def just algo/->Just)

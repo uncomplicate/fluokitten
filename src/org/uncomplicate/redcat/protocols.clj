@@ -6,6 +6,9 @@
 (defprotocol Failure
   (source [f]))
 
+(defprotocol Context
+  (extract [c]))
+
 (defprotocol Functor
   "1. (= (fmap identity) identity) ,
       that is (= (fmap identity x) (identity x))

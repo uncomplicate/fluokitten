@@ -1,23 +1,6 @@
 (ns org.uncomplicate.redcat.test
-  (:use [org.uncomplicate.redcat core utils])
-  (:use midje.sweet))
-
-(defn scaffold [iface]
-  (doseq [[iface methods]
-          (->> iface .getMethods
-               (map #(vector
-                      (.getName (.getDeclaringClass %))
-                      (symbol (.getName %))
-                      (count (.getParameterTypes %))))
-               (group-by first))]
-    ((str "  " iface))
-    (doseq [[_ name argcount] methods]
-      (println
-       (str "    "
-            (list name
-                  (into ['this]
-                        (take argcount
-                              (repeatedly gensym)))))))))
+  (:use [org.uncomplicate.redcat core algo])
+  (:use [midje.sweet :exclude [just]]))
 
 (defn check-eq [expected]
   (cond

@@ -14,7 +14,7 @@
 
 (ns org.uncomplicate.redcat.jvm)
 
-;;================== Clojure JVM-specific Extensions =====================
+;;======== Clojure JVM-specific Extensions =====================
 (extend-collection clojure.lang.IPersistentCollection)
 
 (extend-seq clojure.lang.ASeq)
