@@ -1054,7 +1054,7 @@
   (monoid-identity-law c+))
 
 ;;----------------- monoidf -------------------------
-(facts "monoidf is used by fold."
+(facts "Monoids are used by collection fold."
        (fold [[1] [2]]) => [1 2]
        (fold [(list 1) (list 2)]) => (list 1 2)
        (fold [(seq (list 1)) (seq (list 2))])
@@ -1065,10 +1065,17 @@
        (fold [{:a 1} {:b 2}]) => {:a 1 :b 2}
        (fold [:a :b :c]) => :abc
        (fold ["a" "b" "c"]) => "abc"
-       (fold [1 2 3]) => 6)
-
+       (fold [1 2 3]) => 6
+       (fold [(just 1) (just 2) (just 3)]) => (just 6)
+       (fold [(atom 1) (atom 2) (atom 3)])
+       => (check-eq (atom 6))
+       (fold [(ref 1) (ref 2) (ref 3)])
+       => (check-eq (ref 6))
+       (fold [(first {:a 1}) (first {:a 2}) (first {:b 3})])
+       => (check-eq (first {:aab 6}))
+)
 ;;===================== Foldable =====================
-(facts "How Foldable Collections work."
+(facts "How Foldable collections work."
        (fold [1 2 3 4 5]) => 15
        (fold []) => nil
        (fold (list 1 2 3 4 5))= > 15
@@ -1087,6 +1094,12 @@
        (foldmap inc (seq (list 1 2 3 4 5))) => 20
        (foldmap val {:a 1 :b 2 :c 3}) => 6
        (foldmap inc #{1 2 3 4 5}) => 20)
+
+(fact "fold extract the value from the reference context."
+      (fold (atom :something)) => :something
+      (foldmap inc (atom 5)) => 6
+      (fold (ref :something)) => :something
+      (foldmap inc (ref 5)) => 6)
 
 ;;=============== Metadata ==========================
 (data-structures-should-preserve-metadata
@@ -1203,10 +1216,32 @@
                           (comp just (partial * 10))
                           (just 5))
 
+(magma-op-keeps-type (just :something)
+                     (just :else))
+
+(magma-op-keeps-type (just :something)
+                     (just :else)
+                     (just :even)
+                     (just :more))
+
+(semigroup-op-associativity (just :something)
+                            (just :else))
+
+(semigroup-op-associativity (just :something)
+                            (just :else)
+                            (just :even)
+                            (just :more))
+
+(monoid-identity-law (just :something))
+
 (fact "Just's fmap and bind should return nil if any of the arguments is nil"
       (fmap + (just 1) (just 2) (just 3) nil) => nil
       (bind (just 2) + nil (just 3)) => nil)
 
-(fact "Join should remove nesting contexts."
+(fact "join should remove nesting contexts."
       (join (just 5)) => (just 5)
       (join (just (just (just (just 5))))) => (just 5))
+
+(fact "fold extract the value from the Just context."
+      (fold (just :something)) => :something
+      (foldmap inc (just 5)) => 6)

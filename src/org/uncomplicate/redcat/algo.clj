@@ -13,39 +13,31 @@
 (defn realize [c cr]
   (into (empty c) cr))
 
-(defn monoidf*
-  ([ide] ide)
-  ([ide e1 e2] (op e1 e2)))
-
-(let [nmf (partial monoidf* nil)]
-  (extend-type nil
-    Failure
-    (details [_] nil)
-    Functor
-    (fmap
-      ([_ _] nil)
-      ([_ _ _] nil))
-    Applicative
-    (pure [_ _] nil)
-    (fapply
-      ([_ _] nil)
-      ([_ _ _] nil))
-    Monad
-    (bind
-      ([_ _] nil)
-      ([_ _ _] nil))
-    (join [_] nil)
-    Foldable
-    (fold [_] nil)
-    (foldmap [_ _] nil)
-    Magma
-    (op
-      ([_ _] nil)
-      ([_ _ _] nil))
-    Monoid
-    (id [_] nil)
-    (monoidf [_] nmf)
-    Semigroup))
+(extend-type nil
+  Functor
+  (fmap
+    ([_ _] nil)
+    ([_ _ _] nil))
+  Applicative
+  (pure [_ _] nil)
+  (fapply
+    ([_ _] nil)
+    ([_ _ _] nil))
+  Monad
+  (bind
+    ([_ _] nil)
+    ([_ _ _] nil))
+  (join [_] nil)
+  Foldable
+  (fold [_] nil)
+  (foldmap [_ _] nil)
+  Magma
+  (op
+    ([_ _] nil)
+    ([_ _ _] nil))
+  Monoid
+  (id [_] nil)
+  Semigroup)
 
 (extend-type Object
   Functor
@@ -53,7 +45,10 @@
     ([o f]
       (f o))
     ([o f os]
-       (apply f o os))))
+       (apply f o os)))
+  Foldable
+  (fold [o] o)
+  (foldmap [o g] (g o)))
 
 ;=============== Functor implementations =========================
 ;;--------------- fmap implementations ---------------
@@ -312,23 +307,10 @@
   ([x y ys]
      (apply list (seq-op x y ys))))
 
-(defn collection-monoidf [c] (partial monoidf* (empty c)))
-
-(def vector-monoidf (partial monoidf* []))
-
-(def list-monoidf (partial monoidf* (list)))
-
-(def seq-monoidf (partial monoidf* (empty (seq (list nil)))))
-
-(def lazyseq-monoidf (partial monoidf* (empty (lazy-seq (list nil)))))
-
-(def set-monoidf (partial monoidf* #{}))
-
-(def map-monoidf (partial monoidf* {}))
-
 ;;================== Foldable ===================================
 (defn collection-fold [c]
-  (r/fold (monoidf (first c)) c))
+  (let [ide (id (first c))]
+    (r/fold (fn [] ide) op c)))
 
 (defn collection-foldmap [c g]
   (fold (r/map g c)))
@@ -340,9 +322,8 @@
   (collection-foldmap (seq m) g))
 
 (defn collfold-fold [c]
-  (r/fold (monoidf
-           (first (into [] (r/take 1 c))))
-          c))
+  (let [ide (id (first (into [] (r/take 1 c))))]
+    (r/fold (fn [] ide) op c)))
 
 ;;================== Collections Extensions =====================
 (defmacro extend-collection [t]
@@ -361,8 +342,7 @@
        Magma
        {:op coll-op}
        Monoid
-       {:id empty
-        :monoidf collection-monoidf}
+       {:id empty}
        Semigroup))
 
 (defmacro extend-vector [t]
@@ -374,10 +354,7 @@
       :fapply reducible-fapply}
      Monad
      {:join reducible-join
-      :bind reducible-bind}
-     Monoid
-     {:id empty
-      :monoidf (fn [~'_] vector-monoidf)}))
+      :bind reducible-bind}))
 
 (defmacro extend-list [t]
   `(extend ~t
@@ -390,10 +367,7 @@
      {:join list-join
       :bind list-bind}
      Magma
-     {:op list-op}
-     Monoid
-     {:id empty
-      :monoidf (fn [~'_] list-monoidf)}))
+     {:op list-op}))
 
 (defmacro extend-seq [t]
   `(extend ~t
@@ -406,10 +380,7 @@
      {:join seq-join
       :bind seq-bind}
      Magma
-     {:op seq-op}
-     Monoid
-     {:id empty
-      :monoidf (fn [~'_] seq-monoidf)}))
+     {:op seq-op}))
 
 (defmacro extend-lazyseq [t]
   `(extend ~t
@@ -422,10 +393,7 @@
      {:join seq-join
       :bind seq-bind}
      Magma
-     {:op seq-op}
-     Monoid
-     {:id empty
-      :monoidf (fn [~'_] lazyseq-monoidf)}))
+     {:op seq-op}))
 
 (defmacro extend-set [t]
   `(extend ~t
@@ -436,10 +404,7 @@
       :fapply reducible-fapply}
      Monad
      {:join reducible-join
-      :bind reducible-bind}
-     Monoid
-     {:id empty
-      :monoidf (fn [~'_] set-monoidf)}))
+      :bind reducible-bind}))
 
 (defmacro extend-map [t]
   `(extend ~t
@@ -453,26 +418,8 @@
       :bind map-bind}
      Foldable
      {:fold map-fold
-      :foldmap map-foldmap}
-     Monoid
-     {:id empty
-      :monoidf (fn [~'_] map-monoidf)}))
+      :foldmap map-foldmap}))
 
-(defmacro extend-mapentry [t]
-  `(extend ~t
-     Functor
-     {:fmap mapentry-fmap}
-     Applicative
-     {:pure mapentry-pure
-      :fapply mapentry-fapply}
-     Monad
-     {:join mapentry-join
-      :bind default-bind}
-     Magma
-     {:op mapentry-op}
-     Semigroup))
-
-;;TODO Maybe this should be a Monoid
 (extend clojure.core.protocols.CollReduce
   Functor
   {:fmap collreduce-fmap}
@@ -523,12 +470,31 @@
                               vx))
     e))
 
+(defn mapentry-id [[kx vx]]
+  (create-mapentry (id kx) (id vx)))
+
 (defn mapentry-op
   ([[kx vx] [ky vy]]
      (create-mapentry (op kx ky) (op vx vy)))
   ([[kx vx] [ky vy] es]
      (create-mapentry (op kx ky (map key es))
                       (op vx vy (map val es)))))
+
+(defmacro extend-mapentry [t]
+  `(extend ~t
+     Functor
+     {:fmap mapentry-fmap}
+     Applicative
+     {:pure mapentry-pure
+      :fapply mapentry-fapply}
+     Monad
+     {:join mapentry-join
+      :bind default-bind}
+     Magma
+     {:op mapentry-op}
+     Monoid
+     {:id mapentry-id}
+     Semigroup))
 
 ;;===================== Literals Extensions ================
 (extend-type String
@@ -544,13 +510,9 @@
        (str x y))
     ([x y ys]
        (apply str x y ys)))
+  Monoid
+  (id [s] "")
   Semigroup)
-
-(let [smf (partial monoidf* "")]
-  (extend String
-    Monoid
-    {:id (fn [_] "")
-     :monoidf (fn [_] smf)}))
 
 (extend-type Number
   Magma
@@ -559,13 +521,9 @@
        (+ x y))
     ([x y ys]
        (apply + x y ys)))
+  Monoid
+  (id [x] 0)
   Semigroup)
-
-(let [nmf (partial monoidf* 0)]
-  (extend Number
-    Monoid
-    {:id (fn [_] 0)
-     :monoidf (fn [_] nmf)}))
 
 (defn keyword-fmap
   ([k g]
@@ -574,7 +532,12 @@
      (keyword (fmap (name k) g
                     (map name ks)))))
 
+(let [empty-keyword (keyword "")]
+  (defn keyword-id [_]
+    empty-keyword))
+
 (defn keyword-op
+  ([_] keyword-id)
   ([x y]
      (keyword (str (name x) (name y))))
   ([x y ys]
@@ -583,9 +546,6 @@
                      (name y)
                      (map name ys)))))
 
-(let [kmf (partial monoidf* (keyword ""))]
-  (defn keyword-monoidf [_] kmf))
-
 (defmacro extend-keyword [t]
   `(extend ~t
      Functor
@@ -593,8 +553,7 @@
      Magma
      {:op keyword-op}
      Monoid
-     {:id (fn [~'_] (keyword ""))
-      :monoidf keyword-monoidf}))
+     {:id keyword-id}))
 
 ;;===================== Function ===========================
 ;;-------------------- clojure.lang.IFn -------------------
@@ -603,6 +562,9 @@
      (comp g f))
   ([f g gs]
      (apply comp g f gs)))
+
+(defn function-id [_]
+  identity)
 
 (defn function-op
   ([x y]
@@ -614,13 +576,6 @@
   ([x y ys]
      (reduce function-op x (cons y ys))))
 
-(defn function-identity [_]
-  identity)
-;;---------------------------------------------------------
-
-(let [fmf (partial monoidf* identity)]
-  (defn function-monoidf [_] fmf))
-
 (defmacro extend-function [t]
   `(extend ~t
      Functor
@@ -628,8 +583,7 @@
      Magma
      {:op function-op}
      Monoid
-     {:id function-identity
-      :monoidf function-monoidf}
+     {:id function-id}
      Semigroup))
 
 ;;====================== References =======================
@@ -652,6 +606,10 @@
                (deref ry)
                (map deref rys)))))
 
+(defn reference-fold [r] @r)
+
+(defn reference-foldmap [r g] (g @r))
+
 ;;----------------- Agent -----------------------
 (defn agent-fmap
   ([a g]
@@ -659,8 +617,11 @@
   ([a g as]
      (do (apply swap! a g (map deref as)) a)))
 
-(defn agent-pure [a v]
+(defn agent-pure [_ v]
   (atom v))
+
+(defn atom-id [a]
+  (atom (id @a)))
 
 ;;------------------- Ref --------------------------
 (defn ref-fmap
@@ -669,9 +630,13 @@
   ([r g rs]
      (do (apply alter r g (map deref rs)) r)))
 
-(defn ref-pure [a v]
+(defn ref-pure [_ v]
   (ref v))
 
+(defn ref-id [r]
+  (ref (id @r)))
+
+;;------------------ Extensions --------------------
 (defmacro extend-atom [t]
   `(extend ~t
      Functor
@@ -682,8 +647,13 @@
      Monad
      {:join reference-join
       :bind default-bind}
+     Foldable
+     {:fold reference-fold
+      :foldmap reference-foldmap}
      Magma
      {:op reference-op}
+     Monoid
+     {:id atom-id}
      Semigroup))
 
 (defmacro extend-ref [t]
@@ -696,28 +666,31 @@
      Monad
      {:join reference-join
       :bind default-bind}
+     Foldable
+     {:fold reference-fold
+      :foldmap reference-foldmap}
      Magma
      {:op reference-op}
+     Monoid
+     {:id ref-id}
      Semigroup))
 
 ;;================== Maybe Just ===========================
 (deftype Just [v]
-  Context
-  (extract [_] v)
   Object
   (hashCode [_]
     (hash v))
   (equals [this that]
     (or (identical? this that)
         (and (instance? Just that)
-             (= v (extract that)))))
+             (= v (fold that)))))
   Functor
   (fmap [_ g]
     (Just. (g v)))
   (fmap [_ g jvs]
     (if (some nil? jvs)
       nil
-      (Just. (apply g v (map extract jvs)))))
+      (Just. (apply g v (map fold jvs)))))
   Applicative
   (pure [_ x]
     (Just. x))
@@ -731,6 +704,18 @@
   (bind [_ g jvs]
     (if (some nil? jvs)
       nil
-      (apply g v (map extract jvs))))
+      (apply g v (map fold jvs))))
   (join [jjv]
-    (if (instance? Just v) (join v) jjv)))
+    (if (instance? Just v) (join v) jjv))
+  Foldable
+  (fold [_] v)
+  (foldmap [_ g] (g v))
+  Magma
+  (op [_ y]
+    (Just. (op v (fold y))))
+  (op [_ y ys]
+    (Just. (op v (fold y) (map fold ys))))
+  Monoid
+  (id [jv]
+    (Just. (id (fold jv))))
+  Semigroup)

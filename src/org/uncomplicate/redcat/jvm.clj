@@ -67,8 +67,6 @@
 
 (defmacro ^:private deftype-curried-fn []
   `(deftype ~'CurriedFn ~'[^clojure.lang.IFn f n]
-     clojure.lang.IDeref
-     ~'(deref [_] f)
      Curried
      ~'(arity [_] n)
      clojure.lang.IFn
@@ -111,18 +109,20 @@
          (reduce #(bind %2 %1)
                  (into [cg cf] hs)))
      ~'(join [cf] (bind cf identity))
+     Foldable
+     ~'(fold [_] f)
+     ~'(foldmap [_ g] (g f))
      Magma
      ~'(op [x y]
          (if (= identity f)
            y
-           (if (= identity (deref y))
+           (if (= identity (fold y))
              x
              (fmap x y))))
      ~'(op [x y ys]
          (reduce op x (cons y ys)))
      Monoid
      ~'(id [_] cidentity)
-     ~'(monoidf [_] curriedfn-monoidf)
      Semigroup))
 
 (deftype-curried-fn)
@@ -138,6 +138,3 @@
 
 (def curried (CurriedFn. identity 1))
 (def cidentity curried)
-
-(def ^:private curriedfn-monoidf
-  (partial monoidf* cidentity))

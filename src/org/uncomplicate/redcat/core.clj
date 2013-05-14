@@ -4,7 +4,8 @@
 
 (defn fmap
   "Applies a function f to the value(s) inside functor's context
-   while preserving the context.
+   while preserving the context. More about Functors can be found
+   in the doc for org.uncomplicate.redcat.protocols/Functor.
 
    Returns a functor instance consisting of the result of applying f
    to the value(s) inside the functor's context. Vararg version applies
@@ -15,14 +16,17 @@
 
    fmap can be thought of in two ways:
    1. As a function that takes a function f and functor and then maps
-      the function over the functor value.
+      the function over the functor value. In this sense, it is similar
+      to ubiquitous map function, with the difference that fmap works
+      on any Functor instance and it preserves the context type (while
+      map always converts its source to a sequence).
    2. As a function that takes a function f so it can operate on functor
       values instead on plain values.
 
    Function f should work on plain values without regard to the functor.
    Functor must be an extension of Functor protocol and MUST satisfy
-   the functor laws (see the doc
-   for org.uncomplicate.redcat.protocols/Functor)
+   the functor laws
+   (see the doc for org.uncomplicate.redcat.protocols/Functor)
 
    Some common Clojure constructs that are Functors:
    - persistent collections
@@ -164,8 +168,9 @@
   ([af av & avs]
      (reduce p/fapply af (cons av avs))))
 
-(defn join [x]
-  "Flattens multiple nested monads into a single monadic value.
+(defn join [monadic]
+  "Flattens multiple monads nested in monadic into a single
+   flat monad that contains ordinary, non-monadic value.
 
    ---- Example with collections:
    (join [[1 2] [3 4]])
@@ -175,7 +180,7 @@
    (join (atom (atom (atom 1))))
    => #<Atom: 1>
   "
-  (p/join x))
+  (p/join monadic))
 
 (defn bind
   "Takes a value inside the context of a monad (monadic value)
@@ -248,6 +253,8 @@
    - reducibles
    - nil
    - atoms, refs
+   - all objects are foldable in a sense that
+     (fold o) => o if there is no specific implementation
 
    Some common Clojure constructs that are Monoids:
    - persistent collections
@@ -310,7 +317,7 @@
   ([x y & ys]
      (p/op x y ys)))
 
-(defn id
+(defn id [x]
   "Returns the identity element of the monoid that x is
    an element of.
 
@@ -322,7 +329,6 @@
    (id \"something\")
    => \"\"
   "
-  [x]
   (p/id x))
 
 (def just algo/->Just)

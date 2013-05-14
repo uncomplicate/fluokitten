@@ -25,9 +25,6 @@
             as the functor argument."
          (type (fmap ~f ~x ~@xs)) => #(isa? % (type ~x))))
 
-(fact "First functor law."
-      (fmap identity) => identity)
-
 ;;================ Applicative tests ==========================
 (defmacro applicative-law1 [f x & xs]
   `(fact "First applicative law."
@@ -48,13 +45,13 @@
 (defmacro applicative-law4-homomorphism [ap f x & xs]
   `(fact "Homomorphism applicative law."
          (apply fapply (pure ~ap ~f) (pure ~ap ~x)
-                (map (partial pure ~ap) '~xs))
+                (map (pure ~ap) '~xs))
          => (check-eq (pure ~ap (~f ~x ~@xs)))))
 
 (defmacro applicative-law5-interchange [ap f x & xs]
   `(fact "Interchange applicative law."
          (apply fapply (pure ~ap ~f) (pure ~ap ~x)
-                (map (partial pure ~ap) '~xs))
+                (map (pure ~ap) '~xs))
          => (check-eq (fapply (pure ~ap #(% ~x ~@xs))
                  (pure ~ap ~f)))))
 
@@ -68,12 +65,12 @@
 (defmacro monad-law1-left-identity [m g x & xs]
   `(fact "Left Identity Monad Law"
          (apply bind (pure ~m ~x) ~g
-                (map (partial pure ~m) '~xs))
+                (map (pure ~m) '~xs))
          => (check-eq (~g ~x ~@xs))))
 
 (defmacro monad-law2-right-identity [m]
   `(fact "Right Identity Monad Law"
-         (bind ~m (partial pure ~m))
+         (bind ~m (pure ~m))
          => (check-eq ~m)))
 
 (defmacro monad-law3-associativity [f g m & ms]
