@@ -38,7 +38,8 @@
   (fmap [fv g] [fv g fvs]
     "Applies function g to the value(s) inside the context
      of the functor fv. The result is a functor of the same
-     type as fv.
+     type as fv. If more functor values are supplied in a
+     sequence fvs, uses them as arguments for a vararg g.
      This method is intended to be used by redcat core's
      fmap, not directly by clients. The first two arguments
      are reversed compared to core's fmap because protocol's
@@ -97,6 +98,9 @@
      inside av's context while preserving the context. Both contexts
      should be of the same (or compatible) type, and the type of
      the resulting context is determined by av's type.
+     If more applicative functor values are supplied in a
+     sequence avs, uses them as arguments for vararg
+     function(s) inside the context ag.
      This method is intended to be used by redcat core's
      fapply, not directly by clients. The third argument, avs,
      contains a sequence of all additional arguments, normally
@@ -134,7 +138,8 @@
     "Applies the function g to the value(s) inside mv's context.
      Function g produces the result inside with the context,
      in contrast to fmap where function g is expect to produce
-     normal values.
+     normal values. If more monadic values are supplied in a
+     sequence mvs, uses them as arguments for a vararg g.
      This method is intended to be used by redcat core's
      bind, not directly by clients. The third argument, mvs,
      contains a sequence of all additional arguments, normally
@@ -146,13 +151,84 @@
      flat monad that contains ordinary, non-monadic value."))
 
 (defprotocol Magma
-  (op [x y] [x y ys]))
+  "Magma is an abstraction of elements that have an operation op,
+   which combines its arguments into an element of the same
+   type (op is closed on the set of all objects that have that type).
+   If the operation op is also associative, then that magma
+   is also a semigroup.
 
-(defprotocol Semigroup)
+   You create a new magma type by extending the Magma protocol
+   and implementing op method while observing the following laws:
+
+   1. op is closed: (instance? (type x) (op x y)) => true
+
+   2. associativity (only for semigroups):
+      (op (op a b)) => (op a (op b c))
+
+   Redcat's test library contains macros that generate
+   tests for checking whether op is closed and/or associative.
+
+   The op method is not intended to be used
+   directly by the caller, although you should use it directly
+   from the implementation of this protocol if needed from
+   other methods.
+  "
+  (op [x y] [x y ys]
+    "Operation that combines elements x and y into an element
+     of the same type. If more elements are supplied in
+     a sequence ys, combines them all."))
 
 (defprotocol Monoid
+  "Monoid is an abstraction of elements that are magmas whose
+   op has an identity element. (op x (id x)) => x. Every Monoid
+   should also implement Magma protocols, although this can not be
+   automatically forced by Clojure compiler.
+
+   You create a new monoid type by extending the Monoid protocol
+   and implementing id method, while observing monoid law:
+
+   1. identity element for op exists:
+      (op x (id x)) => x
+      (op (id x) x) => x
+
+   Redcat's test library contains macros that generate
+   monoid tests.
+
+   The id method is not intended to be used
+   directly by the caller, although you should use it directly
+   from the implementation of this protocol if needed from
+   other methods.
+  "
   (id [m]))
 
 (defprotocol Foldable
-  (fold [tm])
-  (foldmap [ta f]))
+  "Foldable is an abstraction for a context (box, container,
+   computation) along with the ability to extract the summary
+   value of its contents. Foldable implementations  do not
+   have to implement other categorical protocols, although
+   it is conveinent to view fold as an oposite of the function
+   pure: pure puts values in minimal context, while fold
+   gets the value outside of the context. With some Foldables,
+   (such as Atom) context contains a single value that can be
+   accessed by fold, while some (such as PersistentColection)
+   contain many values, so they can only extract it as some
+   summary value.
+
+   You create a new foldable type by extending the Foldable
+   protocol and implementing fold and foldmap methods.
+
+   The fold and foldmap methods are not intended to be used
+   directly by the caller, although you should use them directly
+   from the implementation of this protocol if needed from
+   other methods.
+  "
+  (fold [foldable]
+    "Extracts the value(s) from the context and returns it
+     as one single value. Contexts that contain multiple values
+     typically require that values are Monoids and use op
+     to combine them.")
+  (foldmap [foldable g]
+    "Similar to fold, but before returning the sole value
+     from the context or combining multiple values into
+     a summary, applies the function g to transform it
+     (to a Monoid if needed)."))

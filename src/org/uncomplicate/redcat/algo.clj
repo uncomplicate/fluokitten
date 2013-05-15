@@ -36,8 +36,7 @@
     ([_ _] nil)
     ([_ _ _] nil))
   Monoid
-  (id [_] nil)
-  Semigroup)
+  (id [_] nil))
 
 (extend-type Object
   Functor
@@ -342,8 +341,7 @@
        Magma
        {:op coll-op}
        Monoid
-       {:id empty}
-       Semigroup))
+       {:id empty}))
 
 (defmacro extend-vector [t]
   `(extend ~t
@@ -493,8 +491,7 @@
      Magma
      {:op mapentry-op}
      Monoid
-     {:id mapentry-id}
-     Semigroup))
+     {:id mapentry-id}))
 
 ;;===================== Literals Extensions ================
 (extend-type String
@@ -511,8 +508,7 @@
     ([x y ys]
        (apply str x y ys)))
   Monoid
-  (id [s] "")
-  Semigroup)
+  (id [s] ""))
 
 (extend-type Number
   Magma
@@ -522,8 +518,7 @@
     ([x y ys]
        (apply + x y ys)))
   Monoid
-  (id [x] 0)
-  Semigroup)
+  (id [x] 0))
 
 (defn keyword-fmap
   ([k g]
@@ -583,8 +578,7 @@
      Magma
      {:op function-op}
      Monoid
-     {:id function-id}
-     Semigroup))
+     {:id function-id}))
 
 ;;====================== References =======================
 ;;----------------- Universal ------------------
@@ -653,8 +647,7 @@
      Magma
      {:op reference-op}
      Monoid
-     {:id atom-id}
-     Semigroup))
+     {:id atom-id}))
 
 (defmacro extend-ref [t]
   `(extend ~t
@@ -672,8 +665,7 @@
      Magma
      {:op reference-op}
      Monoid
-     {:id ref-id}
-     Semigroup))
+     {:id ref-id}))
 
 ;;================== Maybe Just ===========================
 (deftype Just [v]
@@ -717,5 +709,4 @@
     (Just. (op v (fold y) (map fold ys))))
   Monoid
   (id [jv]
-    (Just. (id (fold jv))))
-  Semigroup)
+    (Just. (id (fold jv)))))

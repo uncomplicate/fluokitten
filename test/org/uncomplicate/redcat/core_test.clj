@@ -947,6 +947,7 @@
                             (first {:d 5})
                             (first {:e 6}))
 
+(monoid-identity-law (first {:a 1}))
 ;;----------------------- String --------------------------
 (magma-op-keeps-type "something"
                      "else")
@@ -966,7 +967,7 @@
 
 (monoid-identity-law "something")
 
-;;----------------------- String --------------------------
+;;----------------------- Number --------------------------
 (magma-op-keeps-type 1 2)
 
 (magma-op-keeps-type 1 2 3 4)
@@ -1011,6 +1012,7 @@
                             (atom 8)
                             (atom 9))
 
+(monoid-identity-law (atom 4))
  ;;----------------------- Ref --------------------------
 (dosync
  (magma-op-keeps-type (ref 1)
@@ -1026,6 +1028,8 @@
  (semigroup-op-associativity (ref 7)
                              (ref 8)
                              (ref 9)))
+(dosync
+ (monoid-identity-law (ref 5)))
 
 ;;------------------- Functions --------------------------
 (facts "Magma op keeps type"
@@ -1053,7 +1057,7 @@
 
   (monoid-identity-law c+))
 
-;;----------------- monoidf -------------------------
+;;----------------- monoid fold -------------------------
 (facts "Monoids are used by collection fold."
        (fold [[1] [2]]) => [1 2]
        (fold [(list 1) (list 2)]) => (list 1 2)

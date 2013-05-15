@@ -243,10 +243,13 @@
      (reduce p/bind monadic (cons f fs))))
 
 (defn fold [foldable]
-  "Folds all the contents of a foldable context by combining
-   all its elements, that have to be of the same Monoid type
-   into a single aggregate value. How exactly these elements
-   are combined depends on the operation op in that monoid.
+  "Folds all the contents of a foldable context by either
+   getting the single element or if there are more than one
+   elements in the context by combining them all in the one
+   aggregate value. How exactly these elements
+   are combined depends on the actual context. Collections,
+   that are often used as contexts, require that the elements
+   are monoids, so they can be easily combined using op.
 
    Some common Clojure constructs that are Foldable:
    - persistent collections
@@ -265,7 +268,7 @@
    - keywords
    - numbers
 
-   ---- Example: vector is foldable and a set of real
+   ---- Example: vector is foldable, while a set of real
    numbers form a monoid with a binary operation + and identity
    element 0. Thus,
    (fold [1 2 3])
@@ -331,4 +334,7 @@
   "
   (p/id x))
 
-(def just algo/->Just)
+(def just
+  "Creates the context of Maybe monad and puts
+   the supplied value in it."
+  algo/->Just)

@@ -122,8 +122,7 @@
      ~'(op [x y ys]
          (reduce op x (cons y ys)))
      Monoid
-     ~'(id [_] cidentity)
-     Semigroup))
+     ~'(id [_] cidentity)))
 
 (deftype-curried-fn)
 
