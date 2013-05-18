@@ -1,6 +1,7 @@
-# cats
+# redcat
 
-A Clojure library designed to ... well, that part is up to you.
+A Clojure library that implements category theory concepts in
+idiomatic Clojure.
 
 ## Usage
 
@@ -8,6 +9,6 @@ FIXME
 
 ## License
 
-Copyright © 2012 FIXME
+Copyright © 2013 Dragan Djuric
 
 Distributed under the Eclipse Public License, the same as Clojure.
