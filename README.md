@@ -34,10 +34,10 @@ Reducers use java fork/join, so you have to run it on Java 7+ jdk, or Java 6 wit
 
 There are a couple of typical ways you would want to use Fluokitten:
 * Use the built-in integration that makes clojure core concepts (data structures, functions, etc.) categorical.
-* Build your own implementations of the categorical protocols
+* Build your own implementations of the categorical protocols for your specific data types.
 
 The place for detailed instructions is [Fluokitten Homepage](http://uncomplicate.github.io/fluokitten). I will try to build a comprehensive collection of links to various resources related to category theory in programming (usually related to monads and friends) as well as code examples and instructions on how to do the equivalent stuff in Clojure with Fluokitten.
-I assume that the first step for most users would be to just use the stuff built in the library and learn about category theory and related programming concepts. Therefore, most tutorials and literature will be written with that in mindfor now. Until specific tutorials on implementing fluokitten protocols appear, advanced users may find the documentation in the source code, tests, and the source code itself helpful (I really think it already is).
+I assume that the first step for most users would be to just use the stuff built in the library and learn about category theory and related programming concepts. Therefore, most tutorials and literature will be written with that in mind for now. Until specific tutorials on implementing fluokitten protocols appear, advanced users may find the documentation in the source code, tests, and the source code itself helpful (I really think it already is).
 
 ## Get Involved
 
@@ -46,11 +46,19 @@ I welcome anyone who is willing to contribute, no mather the level of experience
 * Contribute your example code (your own or the ports from Haskell tutorials) to be added to Fluokitten tests.
 * Contribute articles and tutorials.
 * Do code review of the Fluokitten code and suggest improvements.
-* If you find bugs, report them via [Github issue tracker]
+* If you find bugs, report them via [Fluokitten issue tracker](https://github.com/uncomplicate/fluokitten/issues).
 
 ## Documentation & Examples
 
+The project is documented in the following ways:
+* Documentation in the source code.
+* Learning resources on the [Fluokitten Homepage](http://uncomplicate.github.io/fluokitten)
+* Code examples that are parts of the test suite.
+
 ## Project Maturity
+
+While the project is in the 0.X.Y version it is considered in development, so the priority is adding the new features and enhancing the existing code as much as possible, rather that backward compatibility.
+Once it reaches version 1.0.0 it will be considered stable, and more consideration will be directed towards supporting backward compatibility.
 
 ## License
 
