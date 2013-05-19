@@ -1,11 +1,11 @@
-(ns org.uncomplicate.redcat.core
-  (:require [org.uncomplicate.redcat.protocols :as p])
-  (:require [org.uncomplicate.redcat.algo :as algo]))
+(ns uncomplicate.fluokitten.core
+  (:require [uncomplicate.fluokitten.protocols :as p])
+  (:require [uncomplicate.fluokitten.algo :as algo]))
 
 (defn fmap
   "Applies a function f to the value(s) inside functor's context
    while preserving the context. More about Functors can be found
-   in the doc for org.uncomplicate.redcat.protocols/Functor.
+   in the doc for uncomplicate.fluokitten.protocols/Functor.
 
    Returns a functor instance consisting of the result of applying f
    to the value(s) inside the functor's context. Vararg version applies
@@ -26,7 +26,7 @@
    Function f should work on plain values without regard to the functor.
    Functor must be an extension of Functor protocol and MUST satisfy
    the functor laws
-   (see the doc for org.uncomplicate.redcat.protocols/Functor)
+   (see the doc for uncomplicate.fluokitten.protocols/Functor)
 
    Some common Clojure constructs that are Functors:
    - persistent collections
@@ -85,7 +85,7 @@
    The behavior is largely constrained by the laws that should be
    satisfied by any applicative functor in regard to the behavior
    or fapply and pure (see the doc for
-   org.uncomplicate.redcat.protocols/Applicative)
+   uncomplicate.fluokitten.protocols/Applicative)
 
    ---- Example 1: putting a number in a pure vector context
    (pure [] 1)
@@ -126,7 +126,7 @@
    The behavior is largely constrained by the laws that should be
    satisfied by any applicative functor in regard to the behavior
    or fapply and pure (see the doc for
-   org.uncomplicate.redcat.protocols/Applicative)
+   uncomplicate.fluokitten.protocols/Applicative)
 
    Some common Clojure constructs that are Applicative functors:
    - persistent collections
@@ -200,7 +200,7 @@
    The behavior is largely constrained by the laws that should be
    satisfied by any monad in regard to the behavior
    or bind and pure (see the doc for
-   org.uncomplicate.redcat.protocols/Monad)
+   uncomplicate.fluokitten.protocols/Monad)
 
    Some common Clojure constructs that are Monads:
    - persistent collections

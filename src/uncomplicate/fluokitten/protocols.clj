@@ -1,4 +1,4 @@
-(ns org.uncomplicate.redcat.protocols)
+(ns uncomplicate.fluokitten.protocols)
 
 (defprotocol Curried
   (arity [f]))
@@ -27,7 +27,7 @@
    order of arguments has been used in these examples,
    as it would be used by clients)
 
-   Redcat's test library contains macros that generate
+   Fluokitten's test library contains macros that generate
    tests for functor laws.
 
    The fmap method is not intended to be used directly by
@@ -40,7 +40,7 @@
      of the functor fv. The result is a functor of the same
      type as fv. If more functor values are supplied in a
      sequence fvs, uses them as arguments for a vararg g.
-     This method is intended to be used by redcat core's
+     This method is intended to be used by fluokitten core's
      fmap, not directly by clients. The first two arguments
      are reversed compared to core's fmap because protocol's
      polymorphism is based on java-based dispatch. The third
@@ -79,7 +79,7 @@
    5. Interchange Law:
       (fapply u (pure a y)) => (fapply (pure a #(% y)) u)
 
-   Redcat's test library contains macros that generate
+   Fluokitten's test library contains macros that generate
    tests for applicative functor laws.
 
    The pure and fapply methods are not intended to be used
@@ -101,7 +101,7 @@
      If more applicative functor values are supplied in a
      sequence avs, uses them as arguments for vararg
      function(s) inside the context ag.
-     This method is intended to be used by redcat core's
+     This method is intended to be used by fluokitten core's
      fapply, not directly by clients. The third argument, avs,
      contains a sequence of all additional arguments, normally
      supplied by core fapply's varargs (protocol methods do not
@@ -111,7 +111,11 @@
   "Monad is an abstraction for a context (box, container,
    computation) along with the ability to apply a function
    that accepts the value without the context and produces
-   the result in a context. Every Monad should also implement
+   the result in a context. The resulting context may be
+   different than the starting context. While the main idea
+   with functors and applicatives is modifying the values
+   inside the context, monad is more oriented towards modifying
+   the context.  Every Monad should also implement
    Applicative and Functor protocols, although this can not be
    automatically forced by Clojure compiler.
 
@@ -126,7 +130,7 @@
    3. Associativity Law:
       (bind (bind m f) g) => (bind m (fn [x] (bind (f x) g)
 
-   Redcat's test library contains macros that generate
+   Fluokitten's test library contains macros that generate
    tests for monad laws.
 
    The bind and join methods are not intended to be used
@@ -140,7 +144,7 @@
      in contrast to fmap where function g is expect to produce
      normal values. If more monadic values are supplied in a
      sequence mvs, uses them as arguments for a vararg g.
-     This method is intended to be used by redcat core's
+     This method is intended to be used by fluokitten core's
      bind, not directly by clients. The third argument, mvs,
      contains a sequence of all additional arguments, normally
      supplied by core bind's varargs (protocol methods do not
@@ -165,7 +169,7 @@
    2. associativity (only for semigroups):
       (op (op a b)) => (op a (op b c))
 
-   Redcat's test library contains macros that generate
+   Fluokitten's test library contains macros that generate
    tests for checking whether op is closed and/or associative.
 
    The op method is not intended to be used
@@ -191,7 +195,7 @@
       (op x (id x)) => x
       (op (id x) x) => x
 
-   Redcat's test library contains macros that generate
+   Fluokitten's test library contains macros that generate
    monoid tests.
 
    The id method is not intended to be used

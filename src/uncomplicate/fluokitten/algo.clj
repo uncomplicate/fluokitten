@@ -1,5 +1,5 @@
-(ns org.uncomplicate.redcat.algo
-  (:use org.uncomplicate.redcat.protocols)
+(ns uncomplicate.fluokitten.algo
+  (:use uncomplicate.fluokitten.protocols)
   (:require [clojure.core.reducers :as r]))
 
 (declare deref?)

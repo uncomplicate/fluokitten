@@ -1,5 +1,5 @@
-(ns org.uncomplicate.redcat.test
-  (:use [org.uncomplicate.redcat core algo])
+(ns uncomplicate.fluokitten.test
+  (:use [uncomplicate.fluokitten core algo])
   (:use [midje.sweet :exclude [just]]))
 
 (defn check-eq [expected]

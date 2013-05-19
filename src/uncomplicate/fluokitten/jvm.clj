@@ -1,10 +1,10 @@
-(ns org.uncomplicate.redcat.jvm
-  (:use [org.uncomplicate.redcat protocols algo]))
+(ns uncomplicate.fluokitten.jvm
+  (:use [uncomplicate.fluokitten protocols algo]))
 
 (set! *warn-on-reflection* true)
 
 ;;======== Set appropriate platform specific vars in algo. ======
-(ns org.uncomplicate.redcat.algo)
+(ns uncomplicate.fluokitten.algo)
 
 (defn deref? [x]
   (instance? clojure.lang.IDeref x))
@@ -12,7 +12,7 @@
 (defn create-mapentry [k v]
   (clojure.lang.MapEntry. k v))
 
-(ns org.uncomplicate.redcat.jvm)
+(ns uncomplicate.fluokitten.jvm)
 
 ;;======== Clojure JVM-specific Extensions =====================
 (extend-collection clojure.lang.IPersistentCollection)

@@ -1,5 +1,5 @@
-(ns org.uncomplicate.redcat.core-test
-  (:use [org.uncomplicate.redcat algo jvm core test])
+(ns uncomplicate.fluokitten.core-test
+  (:use [uncomplicate.fluokitten algo jvm core test])
   (:use [midje.sweet :exclude [just]])
   (:require [clojure.string :as s]
             [clojure.core.reducers :as r]))
