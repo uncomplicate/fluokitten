@@ -7,10 +7,10 @@ Fluokitten is a Clojure library that implements category theory concepts, such a
 
 * Fit well into idiomatic Clojure - Clojure programmers should be able to use and understand Fluokitten like any regular Clojure library.
 * Fit well into Haskell monadic types conventions - programmers should be able to reuse existing widespread monadic programming know-how and easily translate it to Clojure code.
-* Be reasonably easy to learn - the code from the existing books, articles and tutorials for learning monadic programming, which is usually written in Haskell should be easily translatable to Clojure with Red Cat.
+* Be reasonably easy to learn - the code from the existing books, articles and tutorials for learning monadic programming, which is usually written in Haskell should be easily translatable to Clojure with Fluokitten.
 * Offer good performance.
 
-## Instalation & Requirements
+## Installation & Requirements
 FIXME - THIS FILE IS UNDER DEVELOPMENT. VERSION 0.1.0 HAS NOT BEEN RELEASED TO CLOJARS YET. CURRENTLY, YOU CAN ONLY USE FLUOKITTEN IF YOU BUILD THE SNAPSHOT FROM THE SOURCE.
 Add the following dependency to your `project.clj` file:
 ```clojure
@@ -36,7 +36,7 @@ There are a couple of typical ways you would want to use Fluokitten:
 * Use the built-in integration that makes clojure core concepts (data structures, functions, etc.) categorical.
 * Build your own implementations of the categorical protocols for your specific data types.
 
-The place for detailed instructions is [Fluokitten Homepage](http://uncomplicate.github.io/fluokitten). I will try to build a comprehensive collection of links to various resources related to category theory in programming (usually related to monads and friends) as well as code examples and instructions on how to do the equivalent stuff in Clojure with Fluokitten.
+The place for detailed instructions is [Fluokitten Homepage](http://uncomplicate.org/fluokitten). I will try to build a comprehensive collection of links to various resources related to category theory in programming (usually related to monads and friends) as well as code examples and instructions on how to do the equivalent stuff in Clojure with Fluokitten.
 I assume that the first step for most users would be to just use the stuff built in the library and learn about category theory and related programming concepts. Therefore, most tutorials and literature will be written with that in mind for now. Until specific tutorials on implementing fluokitten protocols appear, advanced users may find the documentation in the source code, tests, and the source code itself helpful (I really think it already is).
 
 ## Get Involved
@@ -52,7 +52,7 @@ I welcome anyone who is willing to contribute, no mather the level of experience
 
 The project is documented in the following ways:
 * Documentation in the source code.
-* Learning resources on the [Fluokitten Homepage](http://uncomplicate.github.io/fluokitten)
+* Learning resources on the [Fluokitten Homepage](http://uncomplicate.org/fluokitten)
 * Code examples that are parts of the test suite.
 
 ## Project Maturity
