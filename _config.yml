@@ -2,7 +2,7 @@ source:      .
 destination: ./_site
 plugins:     ./_plugins
 exclude: [bin, CNAME, Gemfile, Gemfile.lock, README.md]
-permalink: /fluokitten/:title
+permalink: /:title
 pygments: true
 markdown: redcarpet
 redcarpet:
