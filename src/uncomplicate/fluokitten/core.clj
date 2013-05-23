@@ -168,7 +168,7 @@
   ([af av & avs]
      (reduce p/fapply af (cons av avs))))
 
-(defn join [monadic]
+(defn join
   "Flattens multiple monads nested in monadic into a single
    flat monad that contains ordinary, non-monadic value.
 
@@ -180,6 +180,7 @@
    (join (atom (atom (atom 1))))
    => #<Atom: 1>
   "
+  [monadic]
   (p/join monadic))
 
 (defn bind
@@ -242,7 +243,7 @@
   ([monadic f & fs]
      (reduce p/bind monadic (cons f fs))))
 
-(defn fold [foldable]
+(defn fold
   "Folds all the contents of a foldable context by either
    getting the single element or if there are more than one
    elements in the context by combining them all in the one
@@ -274,6 +275,7 @@
    (fold [1 2 3])
    => 6
   "
+  [foldable]
   (p/fold foldable))
 
 (defn foldmap
@@ -320,7 +322,7 @@
   ([x y & ys]
      (p/op x y ys)))
 
-(defn id [x]
+(defn id
   "Returns the identity element of the monoid that x is
    an element of.
 
@@ -332,6 +334,7 @@
    (id \"something\")
    => \"\"
   "
+  [x]
   (p/id x))
 
 (def just

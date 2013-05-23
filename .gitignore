@@ -3,6 +3,7 @@
 /classes
 /checkouts
 pom.xml
+doc
 *.jar
 *.class
 .lein-deps-sum
