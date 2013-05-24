@@ -55,7 +55,7 @@ And then the dependency:
 Note that you should replace `0.1.0` with the latest version of uncomplicate that is available in Clojars at [this link](https://clojars.org/uncomplicate/fluokitten).
 If you are using other tools for dependency management, you can download Fluokitten jar file manually from Clojars.org, or build it from the source by running `lein jar`.
 
-## Requirements
+### Requirements
 
 Fluokitten requires at least Clojure `1.5`, since it uses its reducers library.
 Reducers use java fork/join, so you have to run it on Java 7+ jdk, or Java 6 with `jsr166y.jar` included in your project dependencies (see [Clojure's POM] (https://github.com/clojure/clojure/blob/master/pom.xml) for the dependency info). Fluokitten does not have other dependencies or requirements, except that it provides test helpers that require [midje](https://github.com/marick/Midje) testing library, wich you will have to include in your test dependencies if you would like to use it in your tests.
@@ -79,7 +79,7 @@ The basic categorical concepts deal with contexts in which your data might be pu
 
 ```clojure
 (map inc [1 2 3])
-=> (1 2 3)
+;=> (1 2 3)
 ```
 
 The only, usually minor, problem with `map` is that it converts the input into a lazy sequence, so our context is damaged a bit - we started with a vector and ended with a sequence.
@@ -88,47 +88,123 @@ Let's try an alternative - `fmap` function:
 
 ```clojure
 (fmap inc [1 2 3])
-=> [1 2 3])
+;=> [1 2 3])
 ```
 
 Similar to `map`, but the starting context is preserved. `fmap` is a function that can reach inside any context that implements `Functor` protocol (in this case, plain Clojure vector), apply some plain function (in this case, inc) to the data inside the context (here, numbers) and produce the result that is inside the same type of context.
-Fluokitten extends all Clojure collections with the `Functor` protocol, and provides specific implementations of fmap for each of them. Here are a couple of examples.
+Fluokitten extends all Clojure collections with the `Functor` protocol, and provides specific implementations of fmap for each of them. Here are a couple of examples. Note that, depending on how many arguments the function can accept, we may provide many contexts to `fmap`.
 
 ```clojure
 (fmap + [1 2 3] [1 2 3 4])
-=> [2 4 6]
+;=> [2 4 6]
 
 (fmap + (list 1 2 3) [1 2] #{1 2 3 4})
-=> (3 6)
+;=> (3 6)
 
 (fmap + {:a 1 :b 2} {:a 3 :c 4} {:d 5})
-=> {:a 4 :b 2 :c 4 :d 5}
+;=> {:a 4 :b 2 :c 4 :d 5}
 ```
 
-Of course, Clojure sequences are not the only implementations of the `Functor` protocol. Fluokitten extends most of the Clojure types with the appropriate implementations of `Functor` protocol, some of them are shown in the following code snippet.
+Of course, Clojure collections are not the only implementations of the `Functor` protocol. Fluokitten extends most of the Clojure types with the appropriate implementations of `Functor` protocol, some of them are shown in the following code snippet.
 
 ```clojure
 (fmap * (atom 2) (ref 3) (atom 4))
-=> (atom 24)
+;=> (atom 24)
 
 ((fmap inc *) 2 3)
-=> 7
+;=> 7
 ```
 
 Also, you can build your own implementations, which is covered in [detailed guides](/articles/guides.html).
 
-### Applicative Functors, pure and fapply
+### Applicative functors, pure and fapply
 
 Starting with the same idea of data inside a context, we can extend it to the function part: What if we want to apply a plain function or functions that are inside context with the data inside context? For example, a vector full of functions to data inside vector(s). There is a function for that in Fluokitten: `fapply`:
 
+```clojure
+(fapply [inc dec (partial * 10)] [1 2 3])
+;=> [2 3 4 0 1 2 10 20 30]
+```
 
+`fapply` is a function that can reach inside any context that implements `Applicative` protocol (in this case, Clojure vector), apply function(s) that are provided in the same type of context (vector) and produce the result inside the context (here, vector). In the case of vector as an `Applicative`, the resulting context contains all combinations of applying the provided functions and data.
+Here are some more simple examples:
 
-### Monads
+```clojure
+(fapply [+ -] [1 2] [3 4])
+;=> [4 6 -2 -2]
+
+(fapply {:a + :b *} {:a 1 :b 2} {:a 3 :b 3 :c 4} {:d 5})
+;=> {:a 4, :b 6, :c 4, :d 5}
+```
+
+`Applicative`s also support a function that puts any data into a minimal context of a certan type - `pure`.
+
+```clojure
+(pure [] 3)
+;=> [3]
+
+(pure (atom nil) 5)
+;=> (atom 5)
+```
+
+Could we have implemented any of these functions to do anything we wished? NO! All these functions have to satisfy certain laws, which ensures they fit in with the rest of the framework regardless of the details. This guide does not cover these laws, but you should keep in mind for now that they have been taken into account in Fluokitten implementations and that you should take them into account once you start implementing your own categorical implementations. The laws are covered in advanced guides.
+
+### Monads and bind
+
+Monads are the most popular concept inspired by category theory, at least when it comes to applications in programming. They also deal with data in contexts. However, in contrast to functors and applicative functors, which were concerned with applying plain functions to data inside the contexts and transforming the data in that process, Monads are calso able to transforme the context by applying a function that accepts plain data (without a context) and produces the result inside a context, to the data that is inside a context. Sounds confusing? Until you gain some practical experience, it is - that is why there are so many tutorials on monads written every day. However, if you take the step-by-step approach to learning and not try to swallow everything in one sitting, it shouldn't be hard at all. So, in this tutorial we will only show a few brief examples of monads in Clojure, while you are expected to check out advanced tutorials and guides later to understand what's is all about.
+The central function here is `bind`, and in the case of vector, it can be used as follows (remember, the example is rather trivial):
+
+```clojure
+(bind [1 2 3] #(vector (inc %) (dec %)))
+;=> [2 0 3 1 4 2]
+
+(bind (atom 1) (comp atom inc))
+;=> (atom 2)
+```
+
+Fluokitten implements `Monad` protocol for many Clojure core types. Please check out the tutorials and docs and be patient until it clicks for you.
 
 ### Monoids
 
-### Foldables
+`Monoid` is a protocol that offers a default operation `op` on some type, and an identity element, `id` for that operation. `op` has to be closed, meaning (op x y) must have the same type as x and y, and it has to be associative. For example, the default operation for numbers in Fluokitten is +, with the identity element 0, while for lists it is concat, with the default element empty list.
+
+```clojure
+(id 4)
+;=> 0
+
+(op 1 2)
+;=> 3
+
+(id [4 5 6])
+;=> []
+
+(op [1 2] [3])
+;=> [1 2 3]
+```
+
+### Foldables and fold
+
+The previous concepts manipulated with contexts and the data they hold. But, how do we take the data from the context in a generalized way, without using methods provided by functions created specifically for a particular context? If we implement the `Foldable` protocol, which Fluokitten does for many Clojure types, we can use `fold` function to get a summary of the things inside the context:
+
+```clojure
+(fold (atom 3))
+;=> 3
+```
+When there is a single value in a context, like in the previous example, usually it is enough to just return that value. But, when there is more than one thing in a context, or no things at all, as is the case with the vectors in the following examples, fold should return some aggregate summary value from the context. If the data consists of monoids, fold can use the polymorphic `op` to summarize it transparently.
+
+
+```clojure
+(fold [])
+;=> nil
+
+(fold [1 2 3])
+;=> 6
+```
+
+## Where to go next
+
+This should be enough to get you started and explore more tutorials on this site on your own. I expect to build a comprehensive base of articles and references for learning this stuff, so please check the More guides page from time to time. More importantly, I will post article with Clojure code for various interesting articles, tutorials and video lectures related to this stuff that are already available on the web. Of course, you should also check Fluokitten API for specific details, and while you are there, it should be a good idea to peek in the source code.
 
 ## Tell us what you think!
 
-TODO
+Please take your time to inform us on your experience with this library and the accompanying site. Let us know what is uncovered or not clear enough. If you are willing to contribute improvements, even better!
