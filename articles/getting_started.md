@@ -14,6 +14,7 @@ This is a brief introductory guide to Fluokitten that is aimed at giving you the
 ## Overview
 
 Fluokitten is a Clojure library that helps you use programming techniques inspired by category theory. It provides:
+
 * Protocols for categorical concepts;
 * Implementations of these protocols, which adds support to Clojure built-in constructs (collections, functions, etc.);
 * Macros and functions that help you write your own implementations of these protocols;
