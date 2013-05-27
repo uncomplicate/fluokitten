@@ -204,7 +204,6 @@
 (fact "Fmap keeps type - varargs." (fn? (fmap inc dec +)))
 
 ;;--------------- Curried Function ---------------
-
 (facts "How CurriedFn fmap works for fixed args."
  ((((fmap (curry +) (curry +)) 1) 2) 3) => 6
 
