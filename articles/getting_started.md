@@ -3,19 +3,21 @@ title: "Getting Started"
 layout: article
 ---
 # Get Started
-This is a brief introductory guide to Fluokitten that is aimed at giving you the basic technical information on how to start with Fluokitten. It should also give you an overview of the available resources that will help you learn category theory related concepts in programming and use them in Clojure with Fluokitten.
+This is a brief introductory guide to Fluokitten that is aimed at giving you the basic technical information on how to start. It should also give you a brief overview of the available resources that will help you learn category theory related concepts in programming and use them in Clojure with Fluokitten.
 
 ## How to get started
-* Walk through this guide and set up your development environment
-TODO OUTLINE THE NEXT STEPS
-
-## What this guide covers
-
-TODO
+* Walk through this guide, set up your development environment, and try the examples;
+* Read some of the introductory tutorials while trying the relevant code examples;
+* As you go, familiarize yourself with Fluokitten by reading detailed articles and API documentation;
+* Follow along with advanced tutorials and write your own implementations of Fluokitten protocols.
 
 ## Overview
 
-TODO
+Fluokitten is a Clojure library that helps you use programming techniques inspired by category theory. It provides:
+* Protocols for categorical concepts;
+* Implementations of these protocols, which adds support to Clojure built-in constructs (collections, functions, etc.);
+* Macros and functions that help you write your own implementations of these protocols;
+* Accompanying website with learning resources.
 
 ## Installation
 
