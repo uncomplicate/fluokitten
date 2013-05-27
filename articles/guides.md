@@ -1,13 +1,11 @@
 ---
-title: "Project Name: all documentation guides"
+title: "Fluokitten: all documentation guides"
 layout: article
 ---
 
 ## Guide list
 
-[Project Name documentation](https://github.com/clojurewerkz/) is organized as a number of guides, covering all kinds of topics.
-
-We recommend that you read these guides, if possible, in this order:
+[Fluokitten documentation](https://github.com/clojurewerkz/) is organized as a number of guides, articles and API docs.
 
 
 ###  [Getting started](/articles/getting_started.html)
