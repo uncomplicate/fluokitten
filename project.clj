@@ -2,7 +2,7 @@
   :description "Category theory concepts in Clojure - Functors, Applicatives, Monads, Monoids and more."
   :url "https://github.com/uncomplicate/fluokitten"
   :scm {:name "git"
-        :url "http://www.eclipse.org/legal/epl-v10.html"}
+        :url "https://github.com/uncomplicate/fluokitten"}
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.5.1"]]
