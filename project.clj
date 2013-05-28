@@ -10,7 +10,7 @@
           :src-linenum-anchor-prefix "L"
           :exclude [uncomplicate.fluokitten.algo]
           :output-dir "docs/codox"}
-  :profiles {:dev {:dependencies [[midje "1.5.0"]]
-                   :plugins [[lein-midje "3.0.0"]
+  :profiles {:dev {:dependencies [[midje "1.5.1"]]
+                   :plugins [[lein-midje "3.0.1"]
                              [codox "0.6.4"]
                              [lein-marginalia "0.7.1"]]}})

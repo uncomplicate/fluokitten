@@ -1,4 +1,4 @@
-# Fluokitten - category theory in idiomatic Clojure
+# [Fluokitten](http://fluokitten.uncomplicate.org) - category theory in idiomatic Clojure
 [![Build Status](https://secure.travis-ci.org/uncomplicate/fluokitten.png)](https://travis-ci.org/uncomplicate/fluokitten)
 
 Fluokitten is a Clojure library that implements category theory concepts, such as functors, applicative functors, monads, monoids etc. in idiomatic Clojure.
