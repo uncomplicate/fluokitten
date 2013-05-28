@@ -11,7 +11,7 @@ Fluokitten is a Clojure library that implements category theory concepts, such a
 * Offer good performance.
 
 ## Installation & Requirements
-FIXME - THIS FILE IS UNDER DEVELOPMENT. VERSION 0.1.0 HAS NOT BEEN RELEASED TO CLOJARS YET. CURRENTLY, YOU CAN ONLY USE FLUOKITTEN IF YOU BUILD THE SNAPSHOT FROM THE SOURCE.
+
 Add the following dependency to your `project.clj` file:
 
 ```clojure
