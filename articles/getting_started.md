@@ -15,14 +15,15 @@ This is a brief introductory guide to Fluokitten that is aimed at giving you the
 
 Fluokitten is a Clojure library that helps you use programming techniques inspired by category theory. It provides:
 
-* Protocols for categorical concepts;
-* Implementations of these protocols, which adds support to Clojure built-in constructs (collections, functions, etc.);
+* Core library with categorical functions `uncomplicate.fluokitten.core`;
+* Protocols for categorical concepts `uncomplicate.fluokitten.protocols`;
+* Implementations of these protocols, which adds support to Clojure built-in constructs (collections, functions, etc.) `uncomplicate.fluokitten.jvm`;
 * Macros and functions that help you write your own implementations of these protocols;
 * Accompanying website with learning resources.
 
 ## Installation
 
-Fluokitten is a Clojure library that is packaged in a `jar` file, which is distributed through Clojars. It follows [maven](http://www.maven.org) (and [leiningen](http://www.leiningen.org) naming conventions: `groupId` is `uncomplicate` and `artifactId` is `fluokitten`.
+Fluokitten is a Clojure library that is packaged in a `jar` file, which is distributed through Clojars. It follows [maven](http://www.maven.org) (and [leiningen](http://www.leiningen.org)) naming conventions: `groupId` is `uncomplicate` and `artifactId` is `fluokitten`.
 
 ### With Leiningen
 
