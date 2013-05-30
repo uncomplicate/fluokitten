@@ -1,13 +1,15 @@
 ---
-title: "Fluokitten: Functors, Applicatives and Monads in Pictures"
+title: "Fluokitten: Functors, Applicatives and Monads in Pictures - in Clojure"
 layout: article
 ---
 
 # Functors, Applicatives and Monads in Pictures - in Clojure
 
-This tutorial is a Clojure version of an article [Functors, Applicatives and Monads in Pictures](http://adit.io/posts/2013-04-17-functors,_applicatives,_and_monads_in_pictures.html). The original article was written in Haskell, and is an excellent introduction to the very basics of functors, applicatives, and monads. This article is not self-contained: it is ment to be read side-by-side with the [original article](http://adit.io/posts/2013-04-17-functors,_applicatives,_and_monads_in_pictures.html), and used as a commentary and reference for the Clojure version of the examples. Due to the differences in typing, data structures, support for varargs and currying, there are differences in how the concepts that the original article explains are implemented in Haskell and Clojure.
+This tutorial is a Clojure version of the article [Functors, Applicatives and Monads in Pictures](http://adit.io/posts/2013-04-17-functors,_applicatives,_and_monads_in_pictures.html). The original article was written in Haskell, and is an excellent introduction to the very basics of functors, applicatives, and monads. This article is not self-contained: it is ment to be read side-by-side with the [original article](http://adit.io/posts/2013-04-17-functors,_applicatives,_and_monads_in_pictures.html), and used as a commentary and reference for the Clojure version of the examples. Due to the differences in typing, data structures, support for varargs and currying, there are differences in how the concepts that the original article explains are implemented in Haskell and Clojure.
 
 To be able to follow this article, you'll have to have Clojure installed and Fluokitten library included as a dependency in your project, as described in [Getting Started Guide](/articles/getting_started.html). Obviously, you'll need a reasonable knowledge of Clojure (you don't have to be an expert, though), and being familiar with the basics of Haskell is helpful, but not a necessity. So, after checking out [Getting Started Guide](/articles/getting_started.html), start up Clojure REPL and open this article and the [original article](http://adit.io/posts/2013-04-17-functors,_applicatives,_and_monads_in_pictures.html) and we are ready to go.
+
+The complete source code of the examples used in this article is available [here](https://github.com/uncomplicate/fluokitten/blob/master/test/uncomplicate/fluokitten/articles/functors_applicatives_monads_pictures_test.clj) in the form of [midje](https://github.com/marick/Midje) tests.
 
 ## The concept of a box as a simple context
 
@@ -136,7 +138,7 @@ Vectors are also applicative, with an interesting twist that a vector can carry 
 
 ```
 
-The following example is relevant only for Haskell's `fmap`. The goal was to apply a function that takes two arguments to two boxed values. Haskell's `fmap` only accepts one boxed value at a time. Therefore, applicative is needed for the application for the second box, because the result of the first application is a curried `(+3)` function in a box. Clojure's `fmap` does not have such problems, since it can accept as many arguments as the function that is to be applied needs.
+The following example in the original article is relevant only for Haskell's `fmap`. The goal was to apply a function that takes two arguments to two boxed values. Haskell's `fmap` only accepts one boxed value at a time. Therefore, applicative is needed for the application for the second box, because the result of the first application is a curried `(+3)` function in a box. Clojure's `fmap` does not have such problems, since it can accept as many arguments as the function that is to be applied needs.
 
 ```clojure
 (fmap * (just 5) (just 3))

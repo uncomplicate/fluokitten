@@ -32,7 +32,7 @@ This guide explains in detail how various Clojure core artifacts (collections, f
 
 This guide explains how you can make your own implementations of Fluokitten protocols.
 
-## Tutorials on Category Theory in Programming
+## Tutorials on Category Theory in Programming - Clojure versions
 
 These are the learning resources available for free on the Web that we think are very good at explaining category theory concepts in programming. In these articles, we point to the original content and provide our comments on how to use them with Fluokitten. We also provide partial or complete source code in Clojure of the examples used in these resources (which are usually originally written in Haskell). These Guides are meant to be read in this particular order.
 
