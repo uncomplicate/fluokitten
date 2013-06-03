@@ -15,7 +15,7 @@ Fluokitten is a Clojure library that implements category theory concepts, such a
 Add the following dependency to your `project.clj` file:
 
 ```clojure
-[uncomplicate/fluokitten "0.1.0"]
+[uncomplicate/fluokitten "0.2.0"]
 ```
 
 Fluokitten artifacts are distributed through Clojars, so they will be downloaded by leiningen by default. If you are using other tools for dependency management, you can download Fluokitten from Clojars.org, or build it from the source by running `lein jar`.
