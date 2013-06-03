@@ -30,7 +30,7 @@ Fluokitten is a Clojure library that is packaged in a `jar` file, which is distr
 The most straightforward way to include Fluokitten in your project is with leiningen. Add the following dependency to your `project.clj`:
 
 ```clojure
-[uncomplicate/fluokitten "0.1.0"]
+[uncomplicate/fluokitten "0.2.0"]
 ```
 
 ### With Maven
@@ -50,13 +50,13 @@ And then the dependency:
 <dependency>
   <groupId>uncomplicate</groupId>
   <artifactId>fluokitten</artifactId>
-  <version>0.1.0</version>
+  <version>0.2.0</version>
 </dependency>
 ```
 
 ### Use up-to-date version
 
-Note that you should replace `0.1.0` with the latest version of uncomplicate that is available in Clojars at [this link](https://clojars.org/uncomplicate/fluokitten).
+Note that you should replace `0.2.0` with the latest version of uncomplicate that is available in Clojars at [this link](https://clojars.org/uncomplicate/fluokitten).
 If you are using other tools for dependency management, you can download Fluokitten jar file manually from Clojars.org, or build it from the source by running `lein jar`.
 
 ### Requirements

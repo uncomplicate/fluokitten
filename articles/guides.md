@@ -40,7 +40,7 @@ These are the learning resources available for free on the Web that we think are
 
 A Fluokitten version of an excellent visual introductory article [Functors, Applicatives and Monads in Pictures](http://adit.io/posts/2013-04-17-functors,_applicatives,_and_monads_in_pictures.html).
 
-### [Learn You A Haskell for Great Good](/articles/learnyouahaskell.html)
+### [Learn You a Haskell for Great Good](/articles/learnyouahaskell.html)
 
 A Fluokitten Clojure code version of the sections of [Learn You A Haskell for Great Good](http://learnyouahaskell.com) dedicated to Functors, Applicatives, Monads, etc. with comments and directions on how to use them together.
 
