@@ -1138,7 +1138,7 @@
 
           (meta (bind a1 #(atom (inc %))))
           => {:test true}
-          (meta (bind a1 #(atom (+ %1 %2)) a2))
+          (meta (bind a1 a2 #(atom (+ %1 %2))))
           => {:test true}
 
           (meta (join (atom (atom 1) :meta {:test true})))
@@ -1163,7 +1163,7 @@
            (meta (bind r1 #(ref (inc %)))))
           => {:test true}
           (dosync
-           (meta (bind r1 #(ref (+ %1 %2)) r2)))
+           (meta (bind r1 r2 #(ref (+ %1 %2)))))
           => {:test true}
 
           (dosync

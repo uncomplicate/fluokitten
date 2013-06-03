@@ -64,8 +64,9 @@
 ;;=============== Monad tests ============================
 (defmacro monad-law1-left-identity [m g x & xs]
   `(fact "Left Identity Monad Law"
-         (apply bind (pure ~m ~x) ~g
-                (map (pure ~m) '~xs))
+         (apply bind (pure ~m ~x)
+                (conj (vec (map (pure ~m) '~xs))
+                      ~g))
          => (check-eq (~g ~x ~@xs))))
 
 (defmacro monad-law2-right-identity [m]
@@ -75,10 +76,10 @@
 
 (defmacro monad-law3-associativity [f g m & ms]
   `(fact "Associativity Monad Law"
-         (-> (bind ~m ~f ~@ms) (bind ~g))
-         => (check-eq (bind ~m (fn [& xs#]
-                                 (bind (apply ~f xs#) ~g))
-                            ~@ms))))
+         (bind (bind ~m ~@ms ~f) ~g)
+         => (check-eq (bind ~m ~@ms
+                            (fn [& xs#]
+                              (bind (apply ~f xs#) ~g))))))
 
 ;;============= Magmas, Semigroups and Monoids =======================
 (defmacro magma-op-keeps-type [x y & ys]
@@ -105,9 +106,11 @@
            (meta (fmap ~f1 (with-meta ~x
                             {:test true})))
            => {:test true}
+
            (meta (fmap ~f2 (with-meta ~x
                             {:test true}) ~y))
            => {:test true}
+
            (meta (fmap ~f1 (with-meta (empty ~x)
                             {:test true})))
            => {:test true}
@@ -116,10 +119,12 @@
                          (with-meta ~x
                            {:test true})))
            => {:test true}
+
            (meta (fapply (pure ~x ~f2)
                          (with-meta ~x
                            {:test true}) ~y))
            => {:test true}
+
            (meta (fapply (pure ~x ~f1)
                          (with-meta (empty ~x)
                            {:test true})))
@@ -128,11 +133,13 @@
            (meta (bind (with-meta ~x {:test true})
                       #(~builder (~f1 %))))
            => {:test true}
+
            (meta (bind (with-meta ~x
                          {:test true})
-                       #(~builder (~f2 %1 %2))
-                       ~y))
+                       ~y
+                       #(~builder (~f2 %1 %2))))
            => {:test true}
+
            (meta (bind (with-meta (empty ~x)
                            {:test true})
                          #(~builder (~f1 %))))
@@ -141,6 +148,7 @@
            (meta (join (with-meta ~x
                          {:test true})))
            => {:test true}
+
            (meta (join (with-meta (empty ~x)
                          {:test true})))
            => {:test true}))

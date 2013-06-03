@@ -185,12 +185,13 @@
 
 (defn bind
   "Takes a value inside the context of a monad (monadic value)
-   and a function f that take a normal value (without the
+   and a function f that takes a normal value (without the
    context) and produces the result inside of a context
    of the monadic type.
 
-   If called with more arguments, the additional arguments,
-   monadics will be used as additional arguments to function
+   If called with more arguments, the last argument should be the
+   function f, and all previous arguments,
+   monadics will be used as arguments to the function
    f. When called with one argument only, produces a function
    with f fixed, so it just accepts monadic values and feeds
    them to f.
@@ -223,8 +224,9 @@
           (apply bind monadic f ms))))
   ([monadic f]
      (p/bind monadic f))
-  ([monadic f & monadics]
-     (p/bind monadic f monadics)))
+  ([monadic monadic2 & args]
+     (p/bind monadic (last args)
+             (cons monadic2 (butlast args)))));;TODO Optimize to avoid traversing args twice
 
 (defn >>=
   "Performs a Haskell-style left-associative bind
