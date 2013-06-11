@@ -231,7 +231,7 @@
                             (join [k kx])
                             (or k kx))
                           vx])
-                       x)
+                       (join x));;TODO non-TCO recursion
                 [e]))
             m))
 
@@ -286,6 +286,12 @@
      (with-meta
        (apply mapcat g c ss)
        (meta c))))
+
+(defn set-join [s]
+  (with-meta
+    (reduce #(if (set? %2) %1 (conj %1 %2)) #{}
+            (rest (tree-seq set? seq (set s))))
+    (meta s)))
 
 ;;======== Algebraic structures implementations ==================
 (defn coll-op
@@ -401,7 +407,7 @@
      {:pure coll-pure
       :fapply reducible-fapply}
      Monad
-     {:join reducible-join
+     {:join set-join
       :bind reducible-bind}))
 
 (defmacro extend-map [t]

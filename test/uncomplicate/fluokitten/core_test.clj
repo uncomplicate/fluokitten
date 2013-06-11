@@ -733,10 +733,12 @@
                           {:a 4 :b 3 :c 2}
                           {:a 12 :b 23 :c 9})
 
-(fact (let [f #(hash-map :increment (inc %))
-            m {:a 1 :b 2}]
-        (fapply (pure {} f) m)
-        => (bind (pure {} f) #(fmap % m))))
+;; TODO The following is true in haskell but not in clojure
+;;since clojure flattens many levels and haskell only one!
+(comment (fact (let [f #(hash-map :increment (inc %))
+                     m {:a 1 :b 2}]
+                 (fapply (pure {} f) m)
+                 => (bind (pure {} f) #(fmap % m)))))
 
 ;;--------------- MapEntry ----------------------------
 (facts
