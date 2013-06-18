@@ -484,6 +484,9 @@
      (create-mapentry (op kx ky (map key es))
                       (op vx vy (map val es)))))
 
+(defn mapentry-fold [[_ v]]
+  v)
+
 (defmacro extend-mapentry [t]
   `(extend ~t
      Functor
@@ -497,7 +500,9 @@
      Magma
      {:op mapentry-op}
      Monoid
-     {:id mapentry-id}))
+     {:id mapentry-id}
+     Foldable
+     {:fold mapentry-fold}))
 
 ;;===================== Literals Extensions ================
 (extend-type String

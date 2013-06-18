@@ -248,4 +248,81 @@
  (join #{#{1 2} #{3 #{4 5} 6}}) => #{1 2 3 4 5 6}
 
  (join {:a 1 :b {:c 2 :d {:e 3}}}) => {:a 1 [:b :c] 2 [:b :d :e] 3}
+
+ (join (first {:a (first {:b 1})})) => (first {[:a :b] 1})
  )
+
+(facts
+ "Data structures: Magma"
+
+ (op [1 2 3] [4 5 6]) => [1 2 3 4 5 6]
+
+ (op [1 2 3] [4 5 6] [7 8 9] [10 11 12])
+ => [1 2 3 4 5 6 7 8 9 10 11 12]
+
+ (op (list 1 2 3) (list 4 5 6)) => (list 1 2 3 4 5 6)
+
+ (op (list 1 2 3) (list 4 5 6) (list 7 8 9) (list 10 11 12))
+ => (list 1 2 3 4 5 6 7 8 9 10 11 12)
+
+ (op (lazy-seq [1 2 3]) (lazy-seq [4 5 6]))
+ => (lazy-seq [1 2 3 4 5 6])
+
+ (op (lazy-seq [1 2 3]) (lazy-seq [4 5 6])
+     (lazy-seq [7 8 9]) (lazy-seq [10 11 12]))
+ => (lazy-seq [1 2 3 4 5 6 7 8 9 10 11 12])
+
+ (op (seq [1 2 3]) (seq [4 5 6])) => (seq [1 2 3 4 5 6])
+
+ (op (seq [1 2 3]) (seq [4 5 6])
+     (seq [7 8 9]) (seq [10 11 12]))
+ => (seq [1 2 3 4 5 6 7 8 9 10 11 12])
+
+ (op #{1 2 3 6} #{4 5 6}) => #{1 2 3 4 5 6}
+
+ (op #{1 2 3 6} #{4 5 6} #{7 8 9} #{10 11 12})
+ => #{1 2 3 4 5 6 7 8 9 10 11 12}
+
+ (op {:a 1 :b 2} {:a 3 :c 4}) => {:a 3 :b 2 :c 4}
+
+ (op {:a 1 :b 2} {:a 3 :c 4} {:d 5} {:e 6})
+ => {:a 3 :b 2 :c 4 :d 5 :e 6}
+
+ (op (first {:a 1}) (first {:b 2})) => (first {:ab 3})
+
+ (op (first {:a 1}) (first {:b 2}) (first {:b 3}))
+ => (first {:abb 6}))
+
+(facts
+ "Data structures: id."
+
+ (id [2]) => []
+
+ (id (list 4 5 6)) => (list)
+
+ (id (seq [1 2])) => (empty (seq [2]))
+
+ (id (lazy-seq [1 23])) => (lazy-seq [])
+
+ (id #{2 3}) => #{}
+
+ (id {:1 2}) => {}
+
+ (id (first {:a 1})) => [(keyword "") 0])
+
+(facts
+ "Data structures: fold."
+
+ (fold [1 2 3 4 5 6]) => 21
+
+ (fold (list "a" "b" "c")) => "abc"
+
+ (fold (seq [:a :b :c])) => :abc
+
+ (fold (lazy-seq [[1] [2] [3]])) => [1 2 3]
+
+ (fold #{1 2 3}) => 6
+
+ (fold {:a 1 :b 2 :c 3}) => 6
+
+ (fold (first {:a 1})) => 1)
