@@ -3028,7 +3028,7 @@ net.brehaut.ClojureTools = (function (SH) {
     build_tree: build_tree
   };
 })(SyntaxHighlighter);
-</script><title>uncomplicate/fluokitten -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name">uncomplicate/fluokitten</h1><h2 class="project-version">0.1.0-SNAPSHOT</h2><br /><p>Category theory concepts in Clojure - Functors, Applicatives, Monads, Monoids and more.</p>
+</script><title>uncomplicate/fluokitten -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name">uncomplicate/fluokitten</h1><h2 class="project-version">0.2.0-SNAPSHOT</h2><br /><p>Category theory concepts in Clojure - Functors, Applicatives, Monads, Monoids and more.</p>
 </div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.5.1</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#uncomplicate.fluokitten.algo">uncomplicate.fluokitten.algo</a></li><li><a href="#uncomplicate.fluokitten.core">uncomplicate.fluokitten.core</a></li><li><a href="#uncomplicate.fluokitten.jvm">uncomplicate.fluokitten.jvm</a></li><li><a href="#uncomplicate.fluokitten.protocols">uncomplicate.fluokitten.protocols</a></li><li><a href="#uncomplicate.fluokitten.test">uncomplicate.fluokitten.test</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#uncomplicate.fluokitten.algo" name="uncomplicate.fluokitten.algo"><h1 class="project-name">uncomplicate.fluokitten.algo</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(ns uncomplicate.fluokitten.algo
   (:use uncomplicate.fluokitten.protocols)
@@ -3228,7 +3228,7 @@ net.brehaut.ClojureTools = (function (SH) {
                             (join [k kx])
                             (or k kx))
                           vx])
-                       x)
+                       (join x));;TODO non-TCO recursion
                 [e]))
             m))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn map-join [m]
@@ -3274,7 +3274,12 @@ net.brehaut.ClojureTools = (function (SH) {
   ([c g ss]
      (with-meta
        (apply mapcat g c ss)
-       (meta c))))</pre></td></tr><tr><td class="docs"><p>======== Algebraic structures implementations ==================</p>
+       (meta c))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn set-join [s]
+  (with-meta
+    (reduce #(if (set? %2) %1 (conj %1 %2)) #{}
+            (rest (tree-seq set? seq (set s))))
+    (meta s)))</pre></td></tr><tr><td class="docs"><p>======== Algebraic structures implementations ==================</p>
 </td><td class="codes"><pre class="brush: clojure">(defn coll-op
   ([x y]
      (into x y))
@@ -3373,7 +3378,7 @@ net.brehaut.ClojureTools = (function (SH) {
      {:pure coll-pure
       :fapply reducible-fapply}
      Monad
-     {:join reducible-join
+     {:join set-join
       :bind reducible-bind}))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defmacro extend-map [t]
   `(extend ~t
@@ -3440,6 +3445,8 @@ net.brehaut.ClojureTools = (function (SH) {
   ([[kx vx] [ky vy] es]
      (create-mapentry (op kx ky (map key es))
                       (op vx vy (map val es)))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn mapentry-fold [[_ v]]
+  v)</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defmacro extend-mapentry [t]
   `(extend ~t
      Functor
@@ -3453,7 +3460,9 @@ net.brehaut.ClojureTools = (function (SH) {
      Magma
      {:op mapentry-op}
      Monoid
-     {:id mapentry-id}))</pre></td></tr><tr><td class="docs"><p>===================== Literals Extensions ================</p>
+     {:id mapentry-id}
+     Foldable
+     {:fold mapentry-fold}))</pre></td></tr><tr><td class="docs"><p>===================== Literals Extensions ================</p>
 </td><td class="codes"><pre class="brush: clojure">(extend-type String
   Functor
   (fmap
@@ -3810,12 +3819,13 @@ net.brehaut.ClojureTools = (function (SH) {
 </td><td class="codes"><pre class="brush: clojure">(defn join
   [monadic]
   (p/join monadic))</pre></td></tr><tr><td class="docs"><p>Takes a value inside the context of a monad (monadic value)
-   and a function f that take a normal value (without the
+   and a function f that takes a normal value (without the
    context) and produces the result inside of a context
    of the monadic type.</p>
 
-<p>   If called with more arguments, the additional arguments,
-   monadics will be used as additional arguments to function
+<p>   If called with more arguments, the last argument should be the
+   function f, and all previous arguments,
+   monadics will be used as arguments to the function
    f. When called with one argument only, produces a function
    with f fixed, so it just accepts monadic values and feeds
    them to f.</p>
@@ -3848,8 +3858,10 @@ net.brehaut.ClojureTools = (function (SH) {
           (apply bind monadic f ms))))
   ([monadic f]
      (p/bind monadic f))
-  ([monadic f &amp; monadics]
-     (p/bind monadic f monadics)))</pre></td></tr><tr><td class="docs"><p>Performs a Haskell-style left-associative bind
+  ([monadic monadic2 &amp; args]
+     (p/bind monadic (last args)
+             (cons monadic2 (butlast args)))));;TODO Optimize to avoid traversing args twice</pre></td></tr><tr><td class="docs"><p>TODO Optimize to avoid traversing args twice</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Performs a Haskell-style left-associative bind
    on its arguments. (>>= f g h) is equivalent to
    (bind (bind f g) h). It always uses a two-argument bind.</p>
 
@@ -4332,8 +4344,9 @@ other methods.</p></li>
          =&gt; (type ~x)))</pre></td></tr><tr><td class="docs"><p>=============== Monad tests ============================</p>
 </td><td class="codes"><pre class="brush: clojure">(defmacro monad-law1-left-identity [m g x &amp; xs]
   `(fact &quot;Left Identity Monad Law&quot;
-         (apply bind (pure ~m ~x) ~g
-                (map (pure ~m) '~xs))
+         (apply bind (pure ~m ~x)
+                (conj (vec (map (pure ~m) '~xs))
+                      ~g))
          =&gt; (check-eq (~g ~x ~@xs))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defmacro monad-law2-right-identity [m]
   `(fact &quot;Right Identity Monad Law&quot;
@@ -4341,10 +4354,10 @@ other methods.</p></li>
          =&gt; (check-eq ~m)))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defmacro monad-law3-associativity [f g m &amp; ms]
   `(fact &quot;Associativity Monad Law&quot;
-         (-&gt; (bind ~m ~f ~@ms) (bind ~g))
-         =&gt; (check-eq (bind ~m (fn [&amp; xs#]
-                                 (bind (apply ~f xs#) ~g))
-                            ~@ms))))</pre></td></tr><tr><td class="docs"><p>============= Magmas, Semigroups and Monoids =======================</p>
+         (bind (bind ~m ~@ms ~f) ~g)
+         =&gt; (check-eq (bind ~m ~@ms
+                            (fn [&amp; xs#]
+                              (bind (apply ~f xs#) ~g))))))</pre></td></tr><tr><td class="docs"><p>============= Magmas, Semigroups and Monoids =======================</p>
 </td><td class="codes"><pre class="brush: clojure">(defmacro magma-op-keeps-type [x y &amp; ys]
   `(fact &quot;Magma - op should keep the type.&quot;
          (type (op ~x ~y ~@ys))
@@ -4388,8 +4401,8 @@ other methods.</p></li>
            =&gt; {:test true}
            (meta (bind (with-meta ~x
                          {:test true})
-                       #(~builder (~f2 %1 %2))
-                       ~y))
+                       ~y
+                       #(~builder (~f2 %1 %2))))
            =&gt; {:test true}
            (meta (bind (with-meta (empty ~x)
                            {:test true})

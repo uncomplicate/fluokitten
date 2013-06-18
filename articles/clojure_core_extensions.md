@@ -253,6 +253,8 @@ In the case of maps and map entries, it matches the functions and the data by ma
 
 ### Monad
 
+Similarily to the previous examples, `bind` behaves in a straightforward way for most core data structures, except maps and map entries that are a bit specific. It requires one or more data structures, and a function as the last parameter. That function should accept elements extracted from all provided data structures (one by one), and wrap the result(s) in the same type of structure. Here are typical examples of sequences and friends:
+
 ```clojure
 (bind [] (comp vector inc))
 ;=> []
@@ -273,7 +275,7 @@ In the case of maps and map entries, it matches the functions and the data by ma
 ;=> (list 5 7 9)
 
 (bind (empty (seq [2])) (comp seq vector inc))
-;=> (empty (seq [3]))
+;=> (emp ty (seq [3]))
 
 (bind (seq [1 2 3]) (comp seq vector inc))
 ;=> (seq [2 3 4])
@@ -306,11 +308,160 @@ In the case of maps and map entries, it matches the functions and the data by ma
 ;=> #{5 7 9}
 ```
 
+With maps and map entries, `bind` treats keys as parts of the context, and feeds only the values of the corresponding entries to the function. Since the function returns a map for each entry, the results have to be flattened, so the final result is a map. It is easier to understand what happens with a few examples:
+
+```clojure
+(bind {} #(hash-map :x %)) => {}
+
+(bind {:a 1} #(hash-map :increment (inc %)))
+;=> {[:a :increment] 2}
+
+(bind {:a 1  :b 2 :c 3} #(hash-map :increment (inc %)))
+;=> {[:a :increment] 2 [:b :increment] 3 [:c :increment] 4}
+
+(bind {:a 1} {:a 2 :b 3} {:b 4 :c 5} (fn [& args] {:sum (apply + args)}))
+;=> {[:a :sum] 3 [:b :sum] 7 [:c :sum] 5}
+```
+So, the function takes the corresponding values for each key from each map, feed it to the function, which returns the result wrapped in a context of a map. Then, all the resulting maps are joined by pairing the key of the input and the key of the output for a particular value.
+
+Map entries do not care about the keys when feeding the values to the function. Only the key of the first map entry is used as the key of the result:
+
+
+```clojure
+(bind (first {:a 1}) #(first {:increment (inc %)}))
+=> (first {[:a :increment] 2})
+
+(bind (first {:a 1}) (first {:a 2}) (first {:b 4}) (fn [& args] (first {:sum (apply + args)})))
+=> {[:a :sum] 8}
+```
+
+The `join` function flattens the data structure if it contains nested data structures of the same type, in a similar way as clojure's `flatten` function, for all collections except maps. For maps, it have to take account of the nesting of the map's keys as parts of the context, by creating a vector of all the keys that were flattened and using it as the key for the value of the flattened entry, as shown in the following examples:
+
+```clojure
+(join [[1 2] [3 [4 5] 6]])
+;=> [1 2 3 4 5 6]
+
+(join (list (list 1 2) (list 3 (list 4 5) 6)))
+;=> (list 1 2 3 4 5 6)
+
+(join (seq (list (list 1 2) (list 3 (list 4 5) 6))))
+;=> (seq (list 1 2 3 4 5 6))
+
+(join (lazy-seq (list (list 1 2) (list 3 (list 4 5) 6))))
+;=> (lazy-seq (list 1 2 3 4 5 6))
+
+(join #{#{1 2} #{3 #{4 5} 6}})
+;=> #{1 2 3 4 5 6}
+
+(join {:a 1 :b {:c 2 :d {:e 3}}})
+;=> {:a 1 [:b :c] 2 [:b :d :e] 3}
+
+(join (first {:a (first {:b 1})}))
+;=> (first {[:a :b] 1})
+```
+
 ### Magma
 
+`op` is a pretty straightforward for Clojure core data structures - it is similar to the `concat` function. The difference is that `concat` turns everything into lazy sequences while `op` preserves the type of the data structure. `op` is associative for all Clojure core data structures, so they form semigroups.
+
+```clojure
+(op [1 2 3] [4 5 6])
+;=> [1 2 3 4 5 6]
+
+(op [1 2 3] [4 5 6] [7 8 9] [10 11 12])
+;=> [1 2 3 4 5 6 7 8 9 10 11 12]
+
+(op (list 1 2 3) (list 4 5 6))
+;=> (list 1 2 3 4 5 6)
+
+(op (list 1 2 3) (list 4 5 6) (list 7 8 9) (list 10 11 12))
+;=> (list 1 2 3 4 5 6 7 8 9 10 11 12)
+
+(op (lazy-seq [1 2 3]) (lazy-seq [4 5 6]))
+;=> (lazy-seq [1 2 3 4 5 6])
+
+(op (lazy-seq [1 2 3]) (lazy-seq [4 5 6])
+    (lazy-seq [7 8 9]) (lazy-seq [10 11 12]))
+;=> (lazy-seq [1 2 3 4 5 6 7 8 9 10 11 12])
+
+(op (seq [1 2 3]) (seq [4 5 6]))
+;=> (seq [1 2 3 4 5 6])
+
+(op (seq [1 2 3]) (seq [4 5 6])
+    (seq [7 8 9]) (seq [10 11 12]))
+;=> (seq [1 2 3 4 5 6 7 8 9 10 11 12])
+
+(op #{1 2 3 6} #{4 5 6})
+;=> #{1 2 3 4 5 6}
+
+(op #{1 2 3 6} #{4 5 6} #{7 8 9} #{10 11 12})
+;=> #{1 2 3 4 5 6 7 8 9 10 11 12}
+
+(op {:a 1 :b 2} {:a 3 :c 4})
+;=> {:a 3 :b 2 :c 4}
+
+(op {:a 1 :b 2} {:a 3 :c 4} {:d 5} {:e 6})
+;=> {:a 3 :b 2 :c 4 :d 5 :e 6}
+
+(op (first {:a 1}) (first {:b 2}))
+;=> (first {:ab 3})
+
+(op (first {:a 1}) (first {:b 2}) (first {:b 3}))
+;=> (first {:abb 6})
+```
+
 ### Monoid
+`id` for Clojure's data structures' `op` is an empty structure of the same type as the `id`'s argument:
+
+```clojure
+(id [2])
+;=> []
+
+(id (list 4 5 6))
+;=> (list)
+
+(id (seq [1 2]))
+;=> (empty (seq [2]))
+
+(id (lazy-seq [1 23]))
+;=> (lazy-seq [])
+
+(id #{2 3})
+;=> #{}
+
+(id {:1 2})
+;=> {}
+
+(id (first {:a 1}))
+;=> [(keyword "") 0]
+```
 
 ### Foldable
+
+The `fold` function aggregates the content of the core data structures into one value. All elements in the data structure must belong to the same monoid, i.e. they have the same type that implementat Monoid protocol, or of types compatible with the first element's type for the Magma's `op` function.
+
+```clojure
+(fold [1 2 3 4 5 6])
+=> 21
+
+(fold (list "a" "b" "c"))
+;=> "abc"
+
+(fold (seq [:a :b :c]))
+;=> :abc
+
+(fold (lazy-seq [[1] (list 2) (seq [3]])))
+;=> [1 2 3]
+
+(fold #{1 2 3})
+;=> 6
+
+(fold {:a 1 :b 2 :c 3})
+;=> 6
+
+(fold (first {:a 1}))
+;=> 1
+```
 
 ## Objects
 
