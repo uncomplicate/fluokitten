@@ -2,15 +2,22 @@
   (:use [uncomplicate.fluokitten core algo])
   (:use [midje.sweet :exclude [just]]))
 
-(defn check-eq [expected]
-  (cond
-   (deref? expected)
-   (let [exp (deref expected)]
-     #(and (instance? (type expected) %)
-           (= exp (deref %))))
-   (reducible? expected)
-   #(= (into [] expected) (into [] %))
-   :else #(= expected %)))
+(defn check-eq
+  ([expected]
+     (fn [actual]
+       (check-eq expected actual)))
+  ([expected actual]
+     (cond
+      (nil? expected)
+      (nil? actual)
+      (and (instance? (type expected) actual)
+           (deref? expected) (deref? actual))
+      (let [e (deref expected)
+            a (deref actual)]
+        (check-eq e a))
+      (reducible? expected)
+      (= (into [] expected) (into [] actual))
+      :else (= expected actual))))
 
 ;;=============== Functor tests ========================
 (defmacro functor-law2

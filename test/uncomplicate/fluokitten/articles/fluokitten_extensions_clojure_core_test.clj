@@ -234,23 +234,22 @@
        (fn [& args] (first {:sum (apply + args)})))
  => (first {[:a :sum] 7})
 
- (join [[1 2] [3 [4 5] 6]]) => [1 2 3 4 5 6]
+ (join [[1 2] [3 [4 5] 6]]) => [1 2 3 [4 5] 6]
 
  (join (list (list 1 2) (list 3 (list 4 5) 6)))
- => (list 1 2 3 4 5 6)
+ => (list 1 2 3 (list 4 5) 6)
 
  (join (seq (list (list 1 2) (list 3 (list 4 5) 6))))
- => (seq (list 1 2 3 4 5 6))
+ => (seq (list 1 2 3 (list 4 5) 6))
 
  (join (lazy-seq (list (list 1 2) (list 3 (list 4 5) 6))))
- => (lazy-seq (list 1 2 3 4 5 6))
+ => (lazy-seq (list 1 2 3 (list 4 5) 6))
 
- (join #{#{1 2} #{3 #{4 5} 6}}) => #{1 2 3 4 5 6}
+ (join #{#{1 2} #{3 #{4 5} 6}}) => #{1 2 3 #{4 5} 6}
 
- (join {:a 1 :b {:c 2 :d {:e 3}}}) => {:a 1 [:b :c] 2 [:b :d :e] 3}
+ (join {:a 1 :b {:c 2 :d {:e 3}}}) => {:a 1 [:b :c] 2 [:b :d] {:e 3}}
 
- (join (first {:a (first {:b 1})})) => (first {[:a :b] 1})
- )
+ (join (first {:a (first {:b (first {:c 1})})})) => (first {[:a :b] (first {:c 1})}))
 
 (facts
  "Data structures: Magma"
@@ -319,10 +318,143 @@
 
  (fold (seq [:a :b :c])) => :abc
 
- (fold (lazy-seq [[1] [2] [3]])) => [1 2 3]
+ (fold (lazy-seq [[1] (list 2) (seq [3])])) => [1 2 3]
 
  (fold #{1 2 3}) => 6
 
  (fold {:a 1 :b 2 :c 3}) => 6
 
  (fold (first {:a 1})) => 1)
+
+(facts
+ "Object: Functor and Foldable."
+
+ (let [o (Object. )]
+
+   (fmap str o) => (str o)
+
+   (fold o) => o))
+
+(facts
+ "String: Functor, Magma, Monoid, Foldable."
+
+ (fmap reverse "loWercase") => "esacreWol"
+
+ (op "some" "thing" " " "else") => "something else"
+
+ (id "something") => ""
+
+ (fold "something") => "something")
+
+(facts
+ "Keyword: Functor, Magma, Monoid, Foldable."
+
+ (fmap reverse :something) => :gnihtemos
+
+ (op :some :thing :else) => :somethingelse
+
+ (id :something) => (keyword "")
+
+ (fold :something) => :something)
+
+(facts
+ "Numbers: Functor, Magma, Monoid, Foldable."
+
+ (fmap + 1 2 3) => 6
+
+ (op 1 2 3) => 6
+
+ (id 4) => 0
+
+ (fold 5) => 5)
+
+(facts
+ "Functions: Functor."
+
+ ((fmap inc +) 1 2 3) => ((comp inc +) 1 2 3)
+
+ (let [inc+ (fmap inc +)
+       cinc+ (fmap inc (curry +))]
+
+   (inc+ 1 2 3) => 7
+
+   (inc+ 1) => 2
+
+   (cinc+ 1 2 3) => 7
+
+   ((cinc+ 1) 2) => 4
+
+   ((inc+ 1) 2) => (throws ClassCastException))
+
+ (let [inc*3+2 (fmap inc (partial * 3) (partial + 2))
+       cinc*3+2 (fmap inc ((curry *) 3) ((curry +) 2))]
+
+   (inc*3+2 7 3 1) => 40
+
+   (cinc*3+2 7 3 1) => 40
+
+   ((inc*3+2) 2) => (throws ClassCastException)
+
+   ((cinc*3+2) 2) => 13))
+
+(facts
+ "Functions: Applicative."
+
+ (let [c+ (curry +)
+       c* (curry *)]
+
+   (((pure curried inc) 100) 1) => 2
+
+   ((fapply (fapply (pure curried c+) (c+ 3)) (c* 100)) 6) => 609
+
+   ((<*> (pure curried c+) (c+ 3) (c* 100)) 6) => 609))
+
+(facts
+ "Functions: Monad."
+
+ ((bind (curry +) (curry *)) 3 4) => 84)
+
+(facts
+ "References"
+
+ (fmap inc (atom 3)) => (check-eq (atom 4))
+
+ (dosync
+  (fmap inc (ref 5)) => (check-eq (ref 6)))
+
+ (fmap + (atom 3) (atom 4) (ref 5)) => (check-eq (atom 12))
+
+ (dosync
+  (fmap + (ref 5) (atom 6) (ref 7)) => (check-eq (ref 18)))
+
+ (pure (atom 8) 1) => (check-eq (atom 1))
+
+ (pure (ref 8) 2) => (check-eq (ref 2))
+
+ (fapply (atom inc) (atom 1)) => (check-eq (atom 2))
+
+ (dosync
+  (fapply (ref inc) (ref 2))) => check-eq (ref 3)
+
+ (fapply (atom +) (atom 1) (ref 2) (atom 3)) => (check-eq (atom 6))
+
+ (dosync
+  (fapply (ref +) (ref 1) (atom 2) (atom 3))) => (check-eq (ref 6))
+
+  (join (atom (ref (atom 33)))) => (check-eq (atom (atom 33)))
+
+ (dosync
+  (join (ref (ref (atom 33))))) => (check-eq (ref (atom 33)))
+
+ (bind (atom 8) (comp atom inc)) => (check-eq (atom 9))
+
+ (dosync
+  (bind (ref 8) (comp ref inc))) => (check-eq (ref 9))
+
+ (bind (atom 8) (ref 9) (atom 10) (comp atom +)) => (check-eq (atom 27))
+
+ (dosync
+  (bind (ref 18) (ref 19) (atom 20) (comp ref +))) => (check-eq (ref 57))
+
+
+)

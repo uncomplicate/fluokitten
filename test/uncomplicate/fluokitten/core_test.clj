@@ -1245,7 +1245,7 @@
 
 (fact "join should remove nesting contexts."
       (join (just 5)) => (just 5)
-      (join (just (just (just (just 5))))) => (just 5))
+      (join (just (just (just 5)))) => (just (just 5)))
 
 (fact "fold extract the value from the Just context."
       (fold (just :something)) => :something

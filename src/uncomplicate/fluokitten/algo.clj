@@ -196,9 +196,6 @@
   (coll-pure m [nil v]))
 
 ;;================== Monad Implementations ======================
-(defn collreduce-join [cr]
-  (r/flatten cr))
-
 (defn collreduce-bind
   ([cr g]
      (r/mapcat g cr))
@@ -211,9 +208,6 @@
      (join (fmap m g)))
   ([m g ms]
      (join (fmap m g ms))))
-
-(defn reducible-join [c]
-  (into (empty c) (r/flatten c)))
 
 (defn reducible-bind
   ([c g]
@@ -228,10 +222,10 @@
               (if (map? x)
                 (r/map (fn [[kx vx]]
                          [(if (and k kx)
-                            (join [k kx])
+                            (vec (flatten [k kx]))
                             (or k kx))
                           vx])
-                       (join x));;TODO non-TCO recursion
+                       x)
                 [e]))
             m))
 
@@ -248,9 +242,6 @@
            (map-join-r
             (map-fmap-r m g ms)))))
 
-(defn coll-join [c]
-  (into (empty c) (flatten c)))
-
 (defn coll-bind
   ([c g]
      (into (empty c)
@@ -259,10 +250,36 @@
      (into (empty c)
            (apply mapcat g c ss))))
 
+(defn ^:private join-op [c e]
+  (if (coll? e)
+    (op c e)
+    (conj c e)))
+
+(defn seq-join [c]
+  (with-meta
+    (reduce join-op [] c)
+    (meta c)))
+
+(defn coll-join [c]
+  (into (empty c) (seq-join c)))
+
 (defn list-join [c]
   (with-meta
-    (apply list (flatten c))
+    (apply list (seq-join c))
     (meta c)))
+
+(defn collreduce-join [c]
+  (let [combinef (fn [x y]
+                   (if (coll? x)
+                     (join-op x y)
+                     (if (coll? y)
+                       (conj y x)
+                       [x y])))]
+    (r/fold (fn [] []) combinef c)))
+
+(defn reducible-join [c]
+  (into (empty c)
+        (collreduce-join c)))
 
 (defn list-bind
   ([c g]
@@ -274,9 +291,6 @@
        (apply list (apply mapcat g c ss))
        (meta c))))
 
-(defn seq-join [c]
-  (with-meta (flatten c) (meta c)))
-
 (defn seq-bind
   ([c g]
      (with-meta
@@ -287,18 +301,26 @@
        (apply mapcat g c ss)
        (meta c))))
 
-(defn set-join [s]
-  (with-meta
-    (reduce #(if (set? %2) %1 (conj %1 %2)) #{}
-            (rest (tree-seq set? seq (set s))))
-    (meta s)))
-
 ;;======== Algebraic structures implementations ==================
 (defn coll-op
   ([x y]
      (into x y))
   ([x y ys]
-     (reduce #(into %1 %2) (into x y) ys)))
+     (reduce into (into x y) ys)))
+
+(defn collreduce-op
+  ([x y]
+     (if (instance? clojure.core.protocols.CollReduce y)
+       (r/cat x y)
+       (into x y)))
+  ([x y ys]
+     (r/reduce collreduce-op (collreduce-op x y) ys)))
+
+(defn reducible-op
+  ([x y]
+     (into (empty x) (collreduce-op x y)))
+  ([x y ys]
+     (into (empty x) (collreduce-op x y ys))))
 
 (defn seq-op
   ([x y]
@@ -358,7 +380,9 @@
       :fapply reducible-fapply}
      Monad
      {:join reducible-join
-      :bind reducible-bind}))
+      :bind reducible-bind}
+     Magma
+     {:op reducible-op}))
 
 (defmacro extend-list [t]
   `(extend ~t
@@ -407,7 +431,7 @@
      {:pure coll-pure
       :fapply reducible-fapply}
      Monad
-     {:join set-join
+     {:join coll-join
       :bind reducible-bind}))
 
 (defmacro extend-map [t]
@@ -469,9 +493,9 @@
   (if (vector? x)
     (let [[kx vx] x]
       (create-mapentry (if (and k kx)
-                                (join [k kx])
-                                (or k kx))
-                              vx))
+                         (vec (flatten [k kx]))
+                         (or k kx))
+                       vx))
     e))
 
 (defn mapentry-id [[kx vx]]
@@ -709,7 +733,7 @@
       nil
       (apply g v (map fold jvs))))
   (join [jjv]
-    (if (instance? Just v) (join v) jjv))
+    (if (or (nil? v) (instance? Just v)) v jjv))
   Foldable
   (fold [_] v)
   (foldmap [_ g] (g v))
