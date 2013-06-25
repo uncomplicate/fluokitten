@@ -335,29 +335,29 @@ Map entries do not care about the keys when feeding the values to the function. 
 => {[:a :sum] 8}
 ```
 
-The `join` function flattens the data structure if it contains nested data structures of the same type, in a similar way as clojure's `flatten` function, for all collections except maps. For maps, it have to take account of the nesting of the map's keys as parts of the context, by creating a vector of all the keys that were flattened and using it as the key for the value of the flattened entry, as shown in the following examples:
+The `join` function flattens one nesting level of the the data structure if it contains nested data structures of the same type, in a similar way as clojure's `flatten` function (but only one level deep), for all collections except maps. For maps, it have to take account of the nesting of the map's keys as parts of the context, by creating a vector of all the keys that were flattened and using it as the key for the value of the flattened entry, as shown in the following examples:
 
 ```clojure
 (join [[1 2] [3 [4 5] 6]])
-;=> [1 2 3 4 5 6]
+;=> [1 2 3 [4 5] 6]
 
 (join (list (list 1 2) (list 3 (list 4 5) 6)))
-;=> (list 1 2 3 4 5 6)
+;=> (list 1 2 3 (list 4 5) 6)
 
 (join (seq (list (list 1 2) (list 3 (list 4 5) 6))))
-;=> (seq (list 1 2 3 4 5 6))
+;=> (seq (list 1 2 3 (list 4 5) 6))
 
 (join (lazy-seq (list (list 1 2) (list 3 (list 4 5) 6))))
-;=> (lazy-seq (list 1 2 3 4 5 6))
+;=> (lazy-seq (list 1 2 3 (list 4 5) 6))
 
 (join #{#{1 2} #{3 #{4 5} 6}})
-;=> #{1 2 3 4 5 6}
+;=> #{1 2 3 #{4 5} 6}
 
 (join {:a 1 :b {:c 2 :d {:e 3}}})
-;=> {:a 1 [:b :c] 2 [:b :d :e] 3}
+;=> {:a 1 [:b :c] 2 [:b :d] {:e 3}}
 
 (join (first {:a (first {:b 1})}))
-;=> (first {[:a :b] 1})
+;=> (first {[:a :b] (first {:c 1})})
 ```
 
 ### Magma
@@ -465,79 +465,367 @@ The `fold` function aggregates the content of the core data structures into one 
 
 ## Objects
 
+Each Java object is a trivial implementation of `Functor` and `Foldable`, where the object is its own trivial context, unless there is a more specific implementation.
 
-### Applicative
+### Functor
 
-### Monad
+`fmap` simply applies the provided function to the object.
 
-### Magma
-
-### Monoid
+```clojure
+(fmap str (Object.))
+;=> (str (Object.))
+```
 
 ### Foldable
 
+`fold` returns the object itself:
+
+```clojure
+(fold (Object.)
+;=> (Object.)
+```
 
 ## String
 
+String is an implementation of several Fluokitten protocols. The implementations help with many string functions that treat strings as sequences, so they assume that the string is in the sequence context.
 
-### Applicative
+### Functor
 
-### Monad
+`fmap` applies the function on the string, and then makes sure that the result is converted to string.
+
+```clojure
+(fmap reverse "loWercase")
+;=> "esacreWol"
+```
 
 ### Magma
 
+`op` is equivalent to `str` function.
+
+```clojure
+(op "some" "thing" " " "else")
+;=> "something else"
+```
+
 ### Monoid
+
+`id` returns an empty string.
+
+```clojure
+(id "something")
+;=> ""
+```
 
 ### Foldable
 
+`fold` returns the string itself, as with any plain object.
+
+```clojure
+(fold "something")
+;=> "something"
+```
 
 ## Keyword
 
+Keywords are functors, magmas, monoids, and foldables.
 
-### Applicative
+### Functor
 
-### Monad
+`fmap` applies the function to the keyword's name, and then coerces the result to a keyword.
+
+```clojure
+(fmap reverse :something)
+;=> :gnihtemos
+```
 
 ### Magma
 
+`op` aggregates names of all its keyword arguments to a new keyword.
+
+```clojure
+(op :some :thing :else)
+;=> :somethingelse
+```
+
 ### Monoid
 
+`id` is an empty keyword.
+
+```clojure
+(id :something)
+;=> (keyword "")
+```
+
 ### Foldable
+
+`fold` returns the keyword itself, as with plain objects.
+
+```clojure
+(fold :something)
+;=> :something
+```
 
 ## Numbers
 
-### Applicative
+Numbers are functors, magmas, monoids and foldables.
 
-### Monad
+### Functor
+
+`fmap` works as with any plain object, by applying the function directly to the argument(s).
+
+```clojure
+(fmap + 1 2 3)
+;=> 6
+```
 
 ### Magma
 
+`op` for numbers is the addition (`+`) function.
+
+```clojure
+(op 1 2 3)
+;=> 6
+```
+
 ### Monoid
+
+`id` for addition is `0`.
+
+```clojure
+(id 4)
+;=> 0
+```
 
 ### Foldable
 
+`fold` simply returns its argument.
 
+```clojure
+(fold 5)
+;=> 5
+```
 
 ## Functions
 
+In Haskell, functions are functors, monads, and many other categorical types. However, with Clojure functions, there is one big caveat: ordinary Clojure functions are not automatically [curried](http://en.wikipedia.org/wiki/Currying), so the well known implementations of most categorical types, when translated to Clojure, do not obey the necessary laws that monads, applicatives, etc. have to observe. Fortunately, Fluokitten provides the `curried` function that creates a curried version of any Clojure function. Such curried functions implement all categorical protocols, while plain Clojure functions implement only some, which will be noted explicitly in the following text.
+
+### Functor
+
+Both plain and curried functions implement the `Functor` protocol. `fmap` composes its function arguments:
+
+```clojure
+((fmap inc +) 1 2 3)
+;=> ((comp inc +) 1 2 3)
+```
+
+Curried functions work in the following way, compared to plain functions:
+
+```clojure
+(inc)
+;=> clojure.lang.ArityException
+
+((curry inc))
+;=> a curried inc function
+```
+
+In the following example, we create two functions by using `fmap`. `inc+` is a plain Clojure function created by appling the `inc` function to the result of applying the `+` function, in context. It first sums its arguments and then increments the sum. `cinc+` does the same thing, but if called with insufficient number of arguments (two in this example, may be created with any arity) it fixes the provided arguments and creates a new curried function that expects the missing ones. This is in contrast with the plain function, which either accepts any number of arguments, or throws a Clojure compiler exception if called with less than minimal number of arguments.
+
+```clojure
+(let [inc+ (fmap inc +)
+      cinc+ (fmap inc (curry +))]
+
+   (inc+ 1 2 3)
+   ;=> 7
+
+   (inc+ 1)
+   ;=> 2
+
+   (cinc+ 1 2 3)
+   ;=> 7
+
+   ((cinc+ 1) 2)
+   ;=> 4
+
+   ((inc+ 1) 2)
+   ;=> (throws ClassCastException))
+```
+
+Called with multiple arguments, `fmap` creates appropriate compositions, depending of whether it is called with plain or curried argumens:
+
+```clojure
+(let [inc*3+2 (fmap inc (partial * 3) (partial + 2))
+      cinc*3+2 (fmap inc ((curry *) 3) ((curry +) 2))]
+
+   (inc*3+2 7 3 1)
+   ;=> 40
+
+   (cinc*3+2 7 3 1)
+   ;=> 40
+
+   ((inc*3+2) 2)
+   ;=> (throws ClassCastException)
+
+   ((cinc*3+2) 2)
+   ;=> 13
+```
+
 ### Applicative
+
+Plain functions are not applicative functors, but curried functions are. The behavior is a bit tricky to understand, so we give a simple example that is clear once you understand how `fapply` works with (curried) functions, but if this is the first time you are reading about this, we recommend that you check out a chapter 11 from [Learn You a Haskell for Great Good](/articles/learnyouahaskell.html), which is dedicated to this topic.
+
+```clojure
+(((pure curried inc) 100) 1)
+;=> 2
+
+((fapply (fapply (pure curried c+) (c+ 3)) (c* 100)) 6)
+;=> 609
+
+((<*> (pure curried c+) (c+ 3) (c* 100)) 6)
+;=> 609
+```
+
+`pure` creates a function that ignores its arguments and returns the content of its context.
+
+```clojure
+((pure curried c+) 13 2)
+;=> c+
+```
 
 ### Monad
 
+Plain functions are not monads, but curried functions are. As in the case of applicatives, the behavior of bind, you need some experience to understand how it works with (curried) functions, so we recommend that you check out [Learn You a Haskell for Great Good](/articles/learnyouahaskell.html), and just give an example here for the reference.
+
+```clojure
+((bind (curry +) (curry *)) 3 4)
+;=> 84
+```
+
 ### Magma
+
+Both plain and curried functions are magmas - `op` composes its arguments, just as fmap does.
 
 ### Monoid
 
+`id` for plain functions is the `identity` function, while for curried functions it is curried identity function `cidentity`.
+
 ### Foldable
+
+Plain functions are foldable just as any object is - `fold` returns its argument. With curried functions, `fold` returns the plain function that was curried by the `curry` function.
 
 ## References
 
+Clojure synchronous references (atoms and refs) implement all categorical protocols. The reference is the (mutable!) context that hold an imutable value. Keep in mind that in this case, the functions that work on the content are mutable, since they change the reference, instead of producing a new one.
+
+### Functor
+
+With refs and atoms, `fmap` is analoguous to `alter` and `swap!`. The main difference from these, reference specific methods is that it returns the updated reference (context) itself, not tne new value, consistently with other `fmap` implementations described earlier.
+
+```clojure
+(fmap inc (atom 3))
+;=> (atom 4)
+
+(dosync (fmap inc (ref 5)))
+;=> (ref 6)
+
+(fmap + (atom 3) (atom 4) (ref 5))
+;=> (atom 12)
+
+(dosync (fmap + (ref 5) (atom 6) (ref 7)))
+;=> (ref 18))
+
+```
+
 ### Applicative
+
+`pure` creates new minimal reference context:
+
+```clojure
+(pure (atom 8) 1)
+;=> (atom 1)
+
+(pure (ref 8) 2)
+;=> (ref 2)
+```
+
+`fapply` expects a function and its argument to be inside references, extracts thir contents, and updates the first value reference with the result of applying the function to the values.
+
+```clojure
+(fapply (atom inc) (atom 1))
+;=> (atom 2)
+
+(dosync (fapply (ref inc) (ref 2)))
+;=> (ref 3)
+
+(fapply (atom +) (atom 1) (ref 2) (atom 3))
+;=> (atom 6)
+
+(dosync (fapply (ref +) (ref 1) (atom 2) (atom 3)))
+;=> (check-eq (ref 6))
+```
 
 ### Monad
 
+`bind` accepts variable number of arguments of which all are references except the last, which is a function that takes plain values and produces a reference. `bind` updates the first reference using this function.
+
+```clojure
+(dosync (bind (ref 8) (comp ref inc)))
+;=> (ref 9)
+
+(bind (atom 8) (ref 9) (atom 10) (comp atom +))
+;=> (atom 27)
+
+(dosync (bind (ref 18) (ref 19) (atom 20) (comp ref +)))
+;=> (ref 57)
+```
+
+`join` flattens the nested reference one level deep.
+
+```clojure
+(join (atom (ref (atom 33))))
+;=> (atom (atom 33))
+
+(dosync (join (ref (ref (atom 33)))))
+;=> (ref (atom 33))
+```
+
 ### Magma
+
+Both refs and atoms form a semigroup with `op` working on their contents, as in the following example:
+
+```clojure
+(op (atom 3) (atom 4))
+;=> (atom 7)
+
+(op (ref "some") (ref "thing"))
+;=> (ref "something")
+
+(op (atom 1) (ref 2) (atom 3))
+;=> (atom 6)
+```
 
 ### Monoid
 
+`id` produces a reference that holds the identity element of the monoid provided in the prototype argument:
+
+```clojure
+(id (atom nil))
+;=> (atom nil)
+
+(id (ref 8))
+;=> (ref 0)
+
+(id (ref "something"))
+;=> (ref "")
+```
+
 ### Foldable
+
+`fold` extracts the content of the reference.
+
+```clojure
+(fold (atom "something"))
+;=> "something"
+
+(fold (ref 2))
+;=> 2
+```
