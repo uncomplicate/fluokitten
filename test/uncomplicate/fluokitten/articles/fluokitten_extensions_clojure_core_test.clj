@@ -433,28 +433,41 @@
 
  (fapply (atom inc) (atom 1)) => (check-eq (atom 2))
 
- (dosync
-  (fapply (ref inc) (ref 2))) => check-eq (ref 3)
+ (dosync (fapply (ref inc) (ref 2))) => (check-eq (ref 3))
 
  (fapply (atom +) (atom 1) (ref 2) (atom 3)) => (check-eq (atom 6))
 
- (dosync
-  (fapply (ref +) (ref 1) (atom 2) (atom 3))) => (check-eq (ref 6))
+ (dosync (fapply (ref +) (ref 1) (atom 2) (atom 3)))
+ => (check-eq (ref 6))
 
-  (join (atom (ref (atom 33)))) => (check-eq (atom (atom 33)))
+ (join (atom (ref (atom 33)))) => (check-eq (atom (atom 33)))
 
- (dosync
-  (join (ref (ref (atom 33))))) => (check-eq (ref (atom 33)))
+ (dosync (join (ref (ref (atom 33)))))
+ => (check-eq (ref (atom 33)))
 
  (bind (atom 8) (comp atom inc)) => (check-eq (atom 9))
 
- (dosync
-  (bind (ref 8) (comp ref inc))) => (check-eq (ref 9))
+ (dosync (bind (ref 8) (comp ref inc)))
+ => (check-eq (ref 9))
 
- (bind (atom 8) (ref 9) (atom 10) (comp atom +)) => (check-eq (atom 27))
+ (bind (atom 8) (ref 9) (atom 10) (comp atom +))
+ => (check-eq (atom 27))
 
- (dosync
-  (bind (ref 18) (ref 19) (atom 20) (comp ref +))) => (check-eq (ref 57))
+ (dosync (bind (ref 18) (ref 19) (atom 20) (comp ref +)))
+ => (check-eq (ref 57))
 
+ (op (atom 3) (atom 4)) => (check-eq (atom 7))
 
-)
+ (op (ref "some") (ref "thing")) => (check-eq (ref "something"))
+
+ (op (atom 1) (ref 2) (atom 3)) => (check-eq (atom 6))
+
+ (id (atom nil)) => (check-eq (atom nil))
+
+ (id (ref 8)) => (check-eq (ref 0))
+
+ (id (ref "something")) => (check-eq (ref ""))
+
+ (fold (atom "something")) => "something"
+
+ (fold (ref 2)) => 2)
