@@ -1,36 +1,43 @@
 ---
-title: "Project Name: Community"
+title: "Fluokitten: Community"
 layout: article
 ---
 
 ## Mailing List
 
-[Project has a mailing list](). Feel free to join it and ask any questions you may have.
+[Fluokitten has a mailing list](https://groups.google.com/forum/#!forum/uncomplicate). Feel free to join it and ask any questions you may have.
 
 
 ## News & Announcements on Twitter
 
-To subscribe for announcements of releases, important changes and so on, please follow [@ClojureWerkz](https://twitter.com/#!/clojurewerkz) on Twitter.
+To subscribe for announcements of releases, important changes and so on, please follow [@Uncomplicateorg](https://twitter.com/#!/uncomplicateorg) on Twitter.
 
 
-## What is ClojureWerkz?
+## What is Uncomplicate?
 
-Project Name is part of the group of libraries known as ClojureWerkz, together with
-[Monger](http://clojuremongodb.info), [Welle](http://clojureriak.info), [Quartzite](http://clojurequartz.info), [Neocons](https://github.com/michaelklishin/neocons), [Langohr](https://github.com/michaelklishin/langohr), [Elastisch](https://github.com/clojurewerkz/elastisch) and several others.
+Fluokitten is currently the only part of the future group of Uncomplicate libraries.
 
+# Get Involved
 
-## Reporting Issues
+I welcome anyone who is willing to contribute, no mather the level of experience. Please contact me through the [Uncomplicate mailing list](https://groups.google.com/forum/#!forum/uncomplicate).
+ Here are some ways in which you can help:
 
-If you find a bug, poor default, missing feature or find any part of the API inconvenient, please [file an issue](github.com/.../issues) on Github.
+## Help with the Technical Writing
+
+* If you are a native English speaker, i would really appreciate if you can help with correcting the English on the Fluokitten site and in the  documentation.
+* Contribute your example code (your own or the ports from Haskell tutorials) to be added to Fluokitten tests.
+* Contribute articles and tutorials.
+
+## Report Issues
+
+* Do code review of the Fluokitten code and suggest improvements.
+* If you find a bug, poor default, missing feature or find any part of the API inconvenient, please [file an issue](https://github.com/uncomplicate/fluokitten/issues) on Github.
 If possible, try to explain what behavior you expected and why. Bonus points for contributing failing test cases.
 
+## Contribute Code
 
-## Contributing
+Fluokitten uses [Leiningen 2](https://github.com/technomancy/leiningen/blob/master/doc/TUTORIAL.md). Make sure you have it installed and then run tests against supported Clojure versions using
 
-Project Name uses [Leiningen 2](https://github.com/technomancy/leiningen/blob/master/doc/TUTORIAL.md). Make sure you have it installed and then run tests against
-supported Clojure versions using
+    lein midje
 
-    lein2 all test
-
-Then create a branch and make your changes on it. Once you are done with your changes and all tests pass, submit a pull request
-on Github.
+Then create a branch and make your changes on it. Once you are done with your changes and all tests pass, submit a pull request on Github.

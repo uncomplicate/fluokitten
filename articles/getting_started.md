@@ -7,9 +7,9 @@ This is a brief introductory guide to Fluokitten that is aimed at giving you the
 
 ## How to get started
 * Walk through this guide, set up your development environment, and try the examples;
-* Read some of the introductory tutorials while trying the relevant code examples;
-* As you go, familiarize yourself with Fluokitten by reading detailed articles and API documentation;
-* Follow along with advanced tutorials and write your own implementations of Fluokitten protocols.
+* Read some of the [introductory tutorials](/articles/guides.html#tutorials_on_category_theory_in_programming)  while trying the relevant code examples;
+* As you go, familiarize yourself with Fluokitten by reading [detailed articles](/articles/guides.html#fluokitten_documentation_and_tutorials) and API documentation;
+* Follow along with advanced tutorials and [write your own implementations of Fluokitten protocols](/articles/guides.html).
 
 ## Overview
 
@@ -207,8 +207,8 @@ When there is a single value in a context, like in the previous example, usually
 
 ## Where to go next
 
-This should be enough to get you started and explore more tutorials on this site on your own. I expect to build a comprehensive base of articles and references for learning this stuff, so please check the More guides page from time to time. More importantly, I will post article with Clojure code for various interesting articles, tutorials and video lectures related to this stuff that are already available on the web. Of course, you should also check Fluokitten API for specific details, and while you are there, it should be a good idea to peek in the source code.
+This should be enough to get you started and explore more tutorials on this site on your own. I expect to build a comprehensive base of articles and references for learning this stuff, so please check the [All Guides](/articles/guides.html) page from time to time. More importantly, I will post article with Clojure code for various interesting articles, tutorials and video lectures related to this stuff that are already available on the web. Of course, you should also check Fluokitten API for specific details, and while you are there, it should be a good idea to peek in the source code.
 
 ## Tell us what you think!
 
-Please take your time to inform us on your experience with this library and the accompanying site. Let us know what is uncovered or not clear enough. If you are willing to contribute improvements, even better!
+Please take your time to inform us on your experience with this library and the accompanying site. [Let us know](/articles/community.html) what is uncovered or not clear enough. If you are willing to contribute improvements, even better!

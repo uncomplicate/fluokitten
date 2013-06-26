@@ -214,3 +214,9 @@ The last example in the original article (reading a file and printing) is not re
 
 To continue with the spirit of the original article, we continue by providing the [Clojure version](/articles/learnyouahaskell.html) of the [Learn you a Haskell for Great Good](http://learnyouahaskell.com) book. [Continue here](/articles/learnyouahaskell.html)
 Of course, while reading these guides, you should check [Fluokitten reference documentation and tutorials](/articles/guides.html#fluokitten_documentation_and_tutorials) out as needed.
+
+## Tell Us What You Think!
+
+Please take a moment to tell us what you think about this guide on Twitter or the [Fluokitten community resources](/articles/community)
+
+Let us know what was unclear or what has not been covered. Maybe you do not like the guide style or grammar or discover spelling mistakes. Reader feedback is key to making the documentation better.

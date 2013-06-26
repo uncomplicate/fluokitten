@@ -3,6 +3,8 @@ title: "Fluokitten: Learn You a Haskell for Great Good - in Clojure"
 layout: article
 ---
 
+FIXME - To be written
+
 # Learn You a Haskell for Great Good - in Clojure
 
 This tutorial is a Clojure version of the book [Learn You a Haskell for Great Good](http://learnyouahaskell.com). This article is not self-contained: it is ment to be read side-by-side with the [book](http://learnyouahaskell.com), and used as a commentary and reference for the Clojure version of the examples. Due to the differences in typing, data structures, support for varargs and currying, there are differences in how the concepts that the original article explains are implemented in Haskell and Clojure.
@@ -30,3 +32,9 @@ The complete source code of the examples used in this article is available [here
 ## Conclusion
 
 ## Where to Go Next
+
+## Tell Us What You Think!
+
+Please take a moment to tell us what you think about this guide on Twitter or the [Fluokitten community resources](/articles/community)
+
+Let us know what was unclear or what has not been covered. Maybe you do not like the guide style or grammar or discover spelling mistakes. Reader feedback is key to making the documentation better.
