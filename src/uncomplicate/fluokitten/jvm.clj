@@ -1,4 +1,9 @@
-(ns uncomplicate.fluokitten.jvm
+(ns ^{:doc "Extends Clojure core with the implementations of
+fluokitten protocols. Defines curried functions. Need to be
+used or required for enabling Fluokitten on projects that
+run on JVM platform."
+      :author "Dragan Djuric"}
+  uncomplicate.fluokitten.jvm
   (:use [uncomplicate.fluokitten protocols algo]))
 
 (set! *warn-on-reflection* true)
@@ -6,10 +11,17 @@
 ;;======== Set appropriate platform specific vars in algo. ======
 (ns uncomplicate.fluokitten.algo)
 
-(defn deref? [x]
+(defn deref?
+  "Checks whether x is dereferencible. On JVM it checks if it is
+   an instance of clojure.lang.IDeref, on other platforms it may
+   be implemented in a similar or a completely different way."
+  [x]
   (instance? clojure.lang.IDeref x))
 
-(defn create-mapentry [k v]
+(defn create-mapentry
+  "Creates a map entry with the supplied key and value. On JVM it
+   creates an instance of clojure.lang.MapEntry."
+  [k v]
   (clojure.lang.MapEntry. k v))
 
 (ns uncomplicate.fluokitten.jvm)
@@ -126,13 +138,31 @@
 
 (deftype-curried-fn)
 
-(def curried? (partial instance? CurriedFn))
+(def ^{:doc "Checks whether an object is a curried function."}
+  curried? (partial instance? CurriedFn))
 
 (defn curry
+  "Creates an automatically curried version of the function f.
+   If arity is supplied, the function will be automatically
+   curried when called with less arguments. If arity is not
+   supplied, the default arity will depend on the arity of f.
+   arity defaults to 2 if f can support it, otherwise it is
+   1.
+
+   ---- Example: currying +
+   (((curry +) 3) 5)
+   => 8
+
+   ((((curry + 3) 3) 5) 7)
+   => 15
+
+   ((curry +) 3 5 7)
+   => 15
+  "
   ([f] (curry f (min 2 (apply max (arg-counts f)))))
-  ([f n]
-     (if (and (fn? f) (pos? n))
-       (->CurriedFn f n)
+  ([f arity]
+     (if (and (fn? f) (pos? arity))
+       (->CurriedFn f arity)
        f)))
 
 (def curried (CurriedFn. identity 1))

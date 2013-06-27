@@ -1,4 +1,15 @@
-(ns uncomplicate.fluokitten.core
+(ns ^{:doc "Contains core Fluokitten categorical functions. This is the
+namespace that you want to use or require in your projects that use
+Fluokitten built-in functionality or the functionality of various other
+libraries that implement Fluokitten protocols.
+Intended use: use or require this namespace and other namespaces that
+contain the implementations of the protocols, by default jvm.
+
+---- Example:
+(ns test
+  (:use [uncomplicate.fluokitten core jvm]))"
+      :author "Dragan Djuric"}
+  uncomplicate.fluokitten.core
   (:require [uncomplicate.fluokitten.protocols :as p])
   (:require [uncomplicate.fluokitten.algo :as algo]))
 

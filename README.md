@@ -40,7 +40,7 @@ There are a couple of typical ways you would want to use Fluokitten:
 The place for detailed instructions is [Fluokitten Homepage](http://fluokitten.uncomplicate.org). I will try to build a comprehensive collection of links to various resources related to category theory in programming (usually related to monads and friends) as well as code examples and instructions on how to do the equivalent stuff in Clojure with Fluokitten.
 I assume that the first step for most users would be to just use the stuff built in the library and learn about category theory and related programming concepts. Therefore, most tutorials and literature will be written with that in mind for now. Until specific tutorials on implementing fluokitten protocols appear, advanced users may find the documentation in the source code, tests, and the source code itself helpful (I really think it already is).
 
-## Get Involved
+## [Get Involved](http://fluokitten.uncomplicate.org/articles/community.html)
 
 I welcome anyone who is willing to contribute, no mather the level of experience. Here are some ways in which you can help:
 * If you are a native English speaker, i would really appreciate if you can help with correcting the English on the Fluokitten site and in the  documentation.

@@ -1,4 +1,14 @@
-(ns uncomplicate.fluokitten.protocols)
+(ns ^{:doc "Defines Fluokitten protocols for various categorical concepts.
+You need to use or require this namespace and provide your implementations
+of these protocols if you want to extend Fluokitten with specific instances
+of categorical concepts beyond those from Clojure core that Fluokitten
+itself extends to be categorical. To use your own implementations, you need
+to use or require the namespace where you define the implementations
+from the calling code's namespace, as well as to use or require Fluokitten
+core. Your implemntations are normally not called directly from the client
+code. The clent code should call the generic functions from Fluokitten core."
+      :author "Dragan Djuric"}
+    uncomplicate.fluokitten.protocols)
 
 (defprotocol Curried
   (arity [f]))
