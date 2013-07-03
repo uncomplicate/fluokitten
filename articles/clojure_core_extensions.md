@@ -438,7 +438,7 @@ The `join` function flattens one nesting level of the the data structure if it c
 
 ### Foldable
 
-The `fold` function aggregates the content of the core data structures into one value. All elements in the data structure must belong to the same monoid, i.e. they have the same type that implementat Monoid protocol, or of types compatible with the first element's type for the Magma's `op` function.
+The `fold` function aggregates the content of the core data structures into one value. All elements in the data structure must belong to the same monoid, i.e. they have the same type that implements Monoid protocol, or of types compatible with the first element's type for the Magma's `op` function.
 
 ```clojure
 (fold [1 2 3 4 5 6])
@@ -481,7 +481,7 @@ Each Java object is a trivial implementation of `Functor` and `Foldable`, where 
 `fold` returns the object itself:
 
 ```clojure
-(fold (Object.)
+(fold (Object.))
 ;=> (Object.)
 ```
 
