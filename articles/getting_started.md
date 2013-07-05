@@ -1,5 +1,6 @@
 ---
 title: "Getting Started"
+Author: Dragan Djuric
 layout: article
 ---
 # Get Started
@@ -19,6 +20,7 @@ Fluokitten is a Clojure library that enables programming paradigms derived from 
 * Protocols for many CT concepts `uncomplicate.fluokitten.protocols`;
 * Implementations of these protocols for standard Clojure constructs (collections, functions, etc.) `uncomplicate.fluokitten.jvm`;
 * Macros and functions to help you write custom protocol implementations.
+* Accompanying website with learning resources.
 
 ## Installation
 
@@ -130,7 +132,7 @@ Starting with the same idea of data inside a context, we can extend it to the fu
 ;=> [2 3 4 0 1 2 10 20 30]
 ```
 
-`fapply` reaches inside any `Applicative` context (in this case, vector), applies function(s) wrapped in the same type of context (vector) and produces a similarly wrapped result. As an `Applicative`, vector produces a context wrapping results of applying all wrapped functions to al wrapped data.
+`fapply` reaches inside any `Applicative` context (in this case, vector), applies function(s) wrapped in the same type of context (vector) and produces a similarly wrapped result. As an `Applicative`, vector produces a context wrapping results of applying all wrapped functions to all wrapped data.
 More simple examples:
 
 ```clojure
@@ -170,7 +172,7 @@ Fluokitten implements the `Monad` protocol for many Clojure core types. Please c
 
 ### Monoids
 
-The `Monoid` protocol defines an accumulator, by requiring an `op` function to accumulate and an `id` function that is guaranteed not to accumulate. For example the addition monoid has `+` as its `op` and function returning 0 as its `id`. Similarly, multiplication has `*` and 1. Monoids need not be numeric, though: lists use `concat` as `op` and `()` as id. For example (the default monoid for numbers in Fluokitten is addition):
+`Monoid` is a protocol that offers a default operation `op` on some type, and an identity element, `id` for that operation. `op` has to be closed, meaning (op x y) must have the same type as x and y, and it has to be associative. For example, the default operation for numbers in Fluokitten is +, with the identity element 0, while for lists it is concat, with the default element empty list.
 
 ```clojure
 (id 4)
@@ -212,7 +214,7 @@ With more than one value though, fold aggregates. If the data are subject to a m
 
 ## Where to go next
 
-Hopefully this guide hot you started and now you'd like to learn more. I expect to build a comprehensive base of articles and references for exploring this daunting topic, so please check the [All Guides](/articles/guides.html) page from time to time. More importantly, I will post articles with Clojure code for related articles, tutorials and videos, which use another reference language (Haskell) to discuss category theory. Of course, you should also check Fluokitten API for specific details, and feel free to take a gander at the source while you are there.
+Hopefully this guide got you started and now you'd like to learn more. I expect to build a comprehensive base of articles and references for exploring this daunting topic, so please check the [All Guides](/articles/guides.html) page from time to time. More importantly, I will post articles with Clojure code for related articles, tutorials and videos, which use another reference language (Haskell) to discuss category theory. Of course, you should also check Fluokitten API for specific details, and feel free to take a gander at the source while you are there.
 
 ## Tell us what you think!
 

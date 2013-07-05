@@ -1,8 +1,10 @@
 # Project Name Documentation
 
-This is a documentation site for [Project Name](). Copy or clone me and adapt for your project
-that needs documentation guides similar to [rubyamqp.info](http://rubyamqp.info), [clojuremongodb.info](http://clojuremongodb.info) and so on.
+This is a documentation site for [Fluokitten](http://fluokitten.uncomplicate.org).
 
+# Contribute
+
+Copy or clone this repository, make the changes, and issue a pull request.
 
 ## Install Dependencies
 
@@ -23,6 +25,6 @@ then navigate to [localhost:4000](http://localhost:4000)
 
 ## License & Copyright
 
-Copyright (C) 2013 Alexander Petrov, Michael S. Klishin.
+Copyright (C) 2013 Dragan Djuric.
 
 Distributed under the Eclipse Public License, the same as Clojure.

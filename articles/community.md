@@ -7,11 +7,9 @@ layout: article
 
 [Fluokitten has a mailing list](https://groups.google.com/forum/#!forum/uncomplicate). Feel free to join it and ask any questions you may have.
 
-
 ## News & Announcements on Twitter
 
 To subscribe for announcements of releases, important changes and so on, please follow [@Uncomplicateorg](https://twitter.com/#!/uncomplicateorg) on Twitter.
-
 
 ## What is Uncomplicate?
 
@@ -20,13 +18,18 @@ Fluokitten is currently the only part of the future group of Uncomplicate librar
 # Get Involved
 
 I welcome anyone who is willing to contribute, no mather the level of experience. Please contact me through the [Uncomplicate mailing list](https://groups.google.com/forum/#!forum/uncomplicate).
- Here are some ways in which you can help:
+Here are some ways in which you can help:
 
 ## Help with the Technical Writing
 
 * If you are a native English speaker, i would really appreciate if you can help with correcting the English on the Fluokitten site and in the  documentation.
 * Contribute your example code (your own or the ports from Haskell tutorials) to be added to Fluokitten tests.
 * Contribute articles and tutorials.
+
+The source code of the site is [here](https://github.com/uncomplicate/fluokitten/tree/gh-pages). Please fork it on GitHub, make your changes, and issue a pull request, or simply contact us through the mailing list to see what is your preferred means of sending the changes.
+
+### Many thanks to the following people who helped with the technical writing:
+* [Chris Rooney](https://github.com/crooney)
 
 ## Report Issues
 
