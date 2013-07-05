@@ -46,6 +46,4 @@ A Fluokitten Clojure code version of the sections of [Learn You A Haskell for Gr
 
 ## Tell Us What You Think!
 
-Please take a moment to tell us what you think about this guide on Twitter or the [Fluokitten community resources](/articles/community)
-
-Let us know what was unclear or what has not been covered. Maybe you do not like the guide style or grammar or discover spelling mistakes. Reader feedback is key to making the documentation better.
+Please take some time to tell us about your experience with the library and this site. [Let us know](/articles/community.html) what we should be explaining or is not clear enough. If you are willing to contribute improvements, even better!
