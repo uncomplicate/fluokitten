@@ -173,7 +173,7 @@ contain the implementations of the protocols, by default jvm.
   "
   ([af]
      (fn [a & as]
-       (apply <*> af a as) ))
+       (apply <*> af a as)))
   ([af av]
      (p/fapply af av))
   ([af av & avs]
@@ -354,3 +354,14 @@ contain the implementations of the protocols, by default jvm.
   "Creates the context of Maybe monad and puts
    the supplied value in it."
   algo/->Just)
+
+(defmacro mdo* [bindings body]
+  "TODO"
+  (if (seq bindings)
+    (let [sym (get bindings 0)
+          monad (get bindings 1)]
+      `(bind ~monad (fn [~sym] (mdo ~(subvec bindings 2) ~body))))
+    body))
+
+(defmacro mdo [bindings body]
+ `(mdo* ~bindings ~(replace {'return `(pure ~(last bindings))} body)))

@@ -22,7 +22,6 @@
   protocols/Applicative
   (pure [_ v]
     (Prob. [[v, 1]]))
-
   protocols/Monad
   (join [_]
     (let [multi-all (fn [[innerxs p]]
@@ -32,11 +31,9 @@
       (Prob. (apply concat (map multi-all xs)))))
   (bind [p f]
     (join (fmap f p)))
-
   protocols/Foldable
   (fold [_]
-    (fold (fmap first xs)))
-  )
+    (fold (fmap first xs))))
 
 (defn prob [& xs]
   (if (= 1 (reduce (fn [sum [x p]] (+ sum p)) 0 xs))
@@ -70,5 +67,12 @@
  (bind (coin) (fn [b]
  (bind (loaded-coin) (fn [c]
  (pure (coin) (not (some #(= :heads %) [a b c])))))))))
+ => (prob [false 1/40] [false 9/40] [false 1/40] [false 9/40]
+          [false 1/40] [false 9/40] [false 1/40] [true 9/40])
+
+ (mdo [a (coin)
+       b (coin)
+       c (loaded-coin)]
+   (return (not (some #(= :heads %) [a b c]))))
  => (prob [false 1/40] [false 9/40] [false 1/40] [false 9/40]
           [false 1/40] [false 9/40] [false 1/40] [true 9/40]))

@@ -1250,3 +1250,21 @@
 (fact "fold extract the value from the Just context."
       (fold (just :something)) => :something
       (foldmap inc (just 5)) => 6)
+
+(fact
+ "Syntactic sugar for the bind function - mdo"
+
+ (mdo [] (+ 1 2)) => 3
+
+
+ (mdo [a [1 2 3]
+       b [4 5 6]
+       c [7 8 9]]
+      (pure [] (* a b c)))
+ => (bind [1 2 3] (fn [a]
+    (bind [4 5 6] (fn [b]
+    (bind [7 8 9] (fn [c]
+    (pure [] (* a b c))))))))
+
+
+ )
