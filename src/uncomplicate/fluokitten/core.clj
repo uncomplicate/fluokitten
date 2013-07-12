@@ -355,13 +355,48 @@ contain the implementations of the protocols, by default jvm.
    the supplied value in it."
   algo/->Just)
 
-(defmacro mdo* [bindings body]
-  "TODO"
+(defn ^:private gen-bind [bindings body]
   (if (seq bindings)
     (let [sym (get bindings 0)
           monad (get bindings 1)]
-      `(bind ~monad (fn [~sym] (mdo ~(subvec bindings 2) ~body))))
+      `(bind ~monad
+             (fn [~sym]
+              ~(gen-bind (subvec bindings 2) body))))
     body))
 
 (defmacro mdo [bindings body]
- `(mdo* ~bindings ~(replace {'return `(pure ~(last bindings))} body)))
+  "A syntactic sugar for gluing together chained bind calls.
+   The structure of mdo is similar to the structure of let.
+
+   bindings should be a vector of symbol - expression pairs
+   in the form [sym1 exp1 sym2 exp2 ...].
+   while the body should be an expression that uses these
+   symbols. Body is not wrapped in an implicit do block, so
+   if multiple forms are needed in the block, they have to
+   be explicitly wrapped with do. Body may use return instead
+   of (pure monadic-value).
+   If the bindings vector is empty, there are no bindings and
+   no bind function calls, mdo simply evaluates body in that
+   case.
+
+   (mdo [x some-monadic-value
+         y some-other-monadic-value]
+     some-expression)
+
+   expands to:
+
+   (bind some-monadic-value
+         (fn [x]
+           (bind some-other-monadic-value
+                 (fn [y]
+                   some-expression))))))
+
+   ---- Example:
+   (mdo [a [1 2]
+         b [4 5]
+         c [7]]
+     (return (* a b c)))
+
+   => [28 35 56 70]
+  "
+  (gen-bind bindings (replace {'return `(pure ~(last bindings))} body)))

@@ -1247,7 +1247,7 @@
       (join (just 5)) => (just 5)
       (join (just (just (just 5)))) => (just (just 5)))
 
-(fact "fold extract the value from the Just context."
+(fact "fold extracts the value from the Just context."
       (fold (just :something)) => :something
       (foldmap inc (just 5)) => 6)
 
@@ -1256,15 +1256,14 @@
 
  (mdo [] (+ 1 2)) => 3
 
-
  (mdo [a [1 2 3]
        b [4 5 6]
        c [7 8 9]]
-      (pure [] (* a b c)))
- => (bind [1 2 3] (fn [a]
-    (bind [4 5 6] (fn [b]
-    (bind [7 8 9] (fn [c]
-    (pure [] (* a b c))))))))
+      (return (* a b c)))
+=> (bind [1 2 3] (fn [a]
+   (bind [4 5 6] (fn [b]
+   (bind [7 8 9] (fn [c]
+   (pure [7 8 9] (* a b c))))))))
 
 
  )

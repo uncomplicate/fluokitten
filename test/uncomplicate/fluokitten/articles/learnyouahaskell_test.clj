@@ -63,16 +63,10 @@
 
  (defn loaded-coin [] (prob [:heads 1/10] [:tails 9/10]))
 
- (bind (coin) (fn [a]
- (bind (coin) (fn [b]
- (bind (loaded-coin) (fn [c]
- (pure (coin) (not (some #(= :heads %) [a b c])))))))))
- => (prob [false 1/40] [false 9/40] [false 1/40] [false 9/40]
-          [false 1/40] [false 9/40] [false 1/40] [true 9/40])
-
  (mdo [a (coin)
        b (coin)
        c (loaded-coin)]
-   (return (not (some #(= :heads %) [a b c]))))
+      (return (not (some #(= :heads %) [a b c]))))
+
  => (prob [false 1/40] [false 9/40] [false 1/40] [false 9/40]
           [false 1/40] [false 9/40] [false 1/40] [true 9/40]))
