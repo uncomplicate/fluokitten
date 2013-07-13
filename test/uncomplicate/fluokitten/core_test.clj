@@ -1183,7 +1183,7 @@
    (<*> (pure [] (curry comp)) [(c+ 2)] [(c* 2)] [1 2 3])
    => [4 6 8]))
 
-;;=================== Just ====================================
+;;=================== Just ===================================
 (functor-law2 inc + (just 5))
 
 (functor-law2 inc + (just 6) (just 99) (just 0))
@@ -1238,6 +1238,13 @@
                             (just :more))
 
 (monoid-identity-law (just :something))
+
+(facts "nil is the id for Maybe's op"
+       (op (just 3) nil) => (just 3)
+       (op (just 3) nil (just 5)) => (just 8)
+       (op (just 4) (just 6) nil nil) => (just 10)
+       (op nil (just 6)) => (just 6)
+       (op nil (just 7) (just 8) (just 9)) => (just 24))
 
 (fact "Just's fmap and bind should return nil if any of the arguments is nil"
       (fmap + (just 1) (just 2) (just 3) nil) => nil

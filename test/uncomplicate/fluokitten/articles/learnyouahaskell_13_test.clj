@@ -1,4 +1,4 @@
-(ns uncomplicate.fluokitten.articles.learnyouahaskell-test
+(ns uncomplicate.fluokitten.articles.learnyouahaskell-13-test
   "These expressions are used as examples in the
     Larn You a Haskell for Great Good
     article at the Fluokitten web site."

@@ -33,8 +33,9 @@
   (foldmap [_ _] nil)
   Magma
   (op
-    ([_ _] nil)
-    ([_ _ _] nil))
+    ([_ y] y)
+    ([_ y ys]
+       (reduce op y ys)))
   Monoid
   (id [_] nil))
 
@@ -738,10 +739,13 @@
   (fold [_] v)
   (foldmap [_ g] (g v))
   Magma
-  (op [_ y]
-    (Just. (op v (fold y))))
-  (op [_ y ys]
-    (Just. (op v (fold y) (map fold ys))))
+  (op [x y]
+    (if-not (nil? y)
+      (Just. (op v (fold y)))
+      x))
+  (op [x y ys]
+    (if-let [ys* (map fold (remove nil? (cons y ys)))]
+      (Just. (op v (first ys*) (rest ys*)))
+      x))
   Monoid
-  (id [jv]
-    (Just. (id (fold jv)))))
+  (id [_] nil))
