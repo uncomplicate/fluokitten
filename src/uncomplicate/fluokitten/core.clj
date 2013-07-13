@@ -207,6 +207,9 @@ contain the implementations of the protocols, by default jvm.
    with f fixed, so it just accepts monadic values and feeds
    them to f.
 
+   For nested bind calls, there is a syntactic sugar, the
+   mdo macro.
+
    bind can be also thought of as a function that combines
    two computations into one large computation.
 
@@ -373,8 +376,11 @@ contain the implementations of the protocols, by default jvm.
    while the body should be an expression that uses these
    symbols. Body is not wrapped in an implicit do block, so
    if multiple forms are needed in the block, they have to
-   be explicitly wrapped with do. Body may use return instead
-   of (pure monadic-value).
+   be explicitly wrapped with do.
+   Body may use return or unit
+   symbols instead of (pure monadic-value), since mdo will
+   track and replace those symbols with appropriate calls
+   to the pure function.
    If the bindings vector is empty, there are no bindings and
    no bind function calls, mdo simply evaluates body in that
    case.
@@ -399,4 +405,6 @@ contain the implementations of the protocols, by default jvm.
 
    => [28 35 56 70]
   "
-  (gen-bind bindings (replace {'return `(pure ~(last bindings))} body)))
+  (gen-bind bindings (replace {'return `(pure ~(last bindings))
+                               'unit `(pure ~(last bindings))}
+                              body)))

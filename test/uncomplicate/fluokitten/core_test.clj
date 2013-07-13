@@ -1260,10 +1260,19 @@
        b [4 5 6]
        c [7 8 9]]
       (return (* a b c)))
-=> (bind [1 2 3] (fn [a]
-   (bind [4 5 6] (fn [b]
-   (bind [7 8 9] (fn [c]
-   (pure [7 8 9] (* a b c))))))))
+ => (bind [1 2 3] (fn [a]
+    (bind [4 5 6] (fn [b]
+    (bind [7 8 9] (fn [c]
+    (pure [7 8 9] (* a b c))))))))
+
+ (mdo [a [1 2 3]
+       b [4 5 6]
+       c [7 8 9]]
+      (unit (* a b c)))
+ => (bind [1 2 3] (fn [a]
+    (bind [4 5 6] (fn [b]
+    (bind [7 8 9] (fn [c]
+    (pure [7 8 9] (* a b c))))))))
 
 
  )
