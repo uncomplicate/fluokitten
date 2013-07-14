@@ -1,17 +1,8 @@
 (ns uncomplicate.fluokitten.algo
-  (:use uncomplicate.fluokitten.protocols)
+  (:use [uncomplicate.fluokitten protocols utils])
   (:require [clojure.core.reducers :as r]))
 
 (declare deref?)
-
-(defn reducible? [x]
-  (instance? clojure.core.protocols.CollReduce x))
-
-(defn reducible [c]
-  (r/map identity c))
-
-(defn realize [c cr]
-  (into (empty c) cr))
 
 (extend-type nil
   Functor
@@ -302,6 +293,12 @@
        (apply mapcat g c ss)
        (meta c))))
 
+(defn lazyseq-bind
+  ([c g]
+     (seq-bind c (with-current-context g)))
+  ([c g ss]
+     (seq-bind c (with-current-context g) ss)))
+
 ;;======== Algebraic structures implementations ==================
 (defn coll-op
   ([x y]
@@ -420,7 +417,7 @@
       :fapply seq-fapply}
      Monad
      {:join seq-join
-      :bind seq-bind}
+      :bind lazyseq-bind}
      Magma
      {:op seq-op}))
 

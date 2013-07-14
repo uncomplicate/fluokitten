@@ -2,7 +2,7 @@
   "These expressions are used as examples in the
     Larn You a Haskell for Great Good
     article at the Fluokitten web site."
-  (:use [uncomplicate.fluokitten jvm core test])
+  (:use [uncomplicate.fluokitten jvm core test utils])
   (:require [uncomplicate.fluokitten.protocols :as protocols])
   (:use [midje.sweet :exclude [just]]))
 
@@ -187,14 +187,14 @@
  (defn guard [b]
    (if b (return []) (id *pure-context*)))
 
- (binding [*pure-context* (just nil)]
+ (with-context (just nil)
    (guard (> 5 2))
    => (just [])
 
    (guard (> 1 2))
    => nil)
 
- (binding [*pure-context* []]
+ (with-context []
    (guard (> 5 2))
    => [[]]
 
@@ -207,7 +207,7 @@
    (>> (guard (> 1 2)) (return "cool"))
    => [])
 
- (>>= (vec (range 1 50)) (fn [x] (>> (guard (some (partial = \7) (str x))) (return x))))
+ (>>= (range 1 50) (fn [x] (>> (guard (some (partial = \7) (str x))) (return x))))
  => [7 17 27 37 47]
 
 

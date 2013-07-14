@@ -3,7 +3,7 @@ categorical concepts have to satisfy. You should use these tests
 to check if your implementations of clojure protocols are valid
 beyond what the compiler can assert."
       :author "Dragan Djuric"} uncomplicate.fluokitten.test
-  (:use [uncomplicate.fluokitten core algo])
+  (:use [uncomplicate.fluokitten core algo utils])
   (:use [midje.sweet :exclude [just]]))
 
 (defn check-eq

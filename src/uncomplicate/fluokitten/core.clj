@@ -11,7 +11,8 @@ contain the implementations of the protocols, by default jvm.
       :author "Dragan Djuric"}
   uncomplicate.fluokitten.core
   (:require [uncomplicate.fluokitten.protocols :as p])
-  (:require [uncomplicate.fluokitten.algo :as algo]))
+  (:require [uncomplicate.fluokitten.algo :as algo])
+  (:require [uncomplicate.fluokitten.utils :as utils]))
 
 (defn fmap
   "Applies a function f to the value(s) inside functor's context
@@ -194,11 +195,9 @@ contain the implementations of the protocols, by default jvm.
   [monadic]
   (p/join monadic))
 
-(def ^:dynamic *pure-context* nil)
-
 (defn return [x]
   "TODO"
-  (p/pure *pure-context* x))
+  (p/pure (utils/get-context) x))
 
 (def unit
   "TODO"
@@ -247,10 +246,10 @@ contain the implementations of the protocols, by default jvm.
        ([monadic & ms]
           (apply bind monadic f ms))))
   ([monadic f]
-     (binding [*pure-context* monadic] ;; TODO move *pure-context* to protocols, so it can be used in lazy-seq implementation
+     (utils/with-context monadic
        (p/bind monadic f)))
   ([monadic monadic2 & args]
-     (binding [*pure-context* monadic]
+     (utils/with-context monadic
        (p/bind monadic (last args)
                (cons monadic2 (butlast args))))));;TODO Optimize to avoid traversing args twice
 
@@ -417,4 +416,4 @@ contain the implementations of the protocols, by default jvm.
 
    => [28 35 56 70]
   "
-  (gen-bind bindings body))
+  (gen-bind bindings body));;TODO gen-bind is probably no longer necessary since bind handles return and unit

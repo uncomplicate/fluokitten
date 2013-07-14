@@ -1,5 +1,5 @@
 (ns uncomplicate.fluokitten.core-test
-  (:use [uncomplicate.fluokitten algo jvm core test])
+  (:use [uncomplicate.fluokitten algo jvm core test utils])
   (:use [midje.sweet :exclude [just]])
   (:require [clojure.string :as s]
             [clojure.core.reducers :as r]))
@@ -1257,6 +1257,81 @@
 (fact "fold extracts the value from the Just context."
       (fold (just :something)) => :something
       (foldmap inc (just 5)) => 6)
+
+(facts
+ "Automatic binding of context for return and unit"
+
+ (let [returning-f (fn ([x]
+                         (return (inc x)))
+                     ([x & ys]
+                        (return (apply + x ys))))]
+
+   (bind (vec (range 1 500)) returning-f)
+   => (range 2 501)
+
+   (bind (vec (range 1 500))
+         (vec (range 1 500))
+         (vec (range 1 500))
+         returning-f)
+   => (range 3 1500 3)
+
+   (bind (apply list (range 1 500)) returning-f)
+   => (range 2 501)
+
+   (bind (apply list (range 1 500))
+         (apply list (range 1 500))
+         (apply list (range 1 500))
+         returning-f)
+   => (range 3 1500 3)
+
+   (bind (range 1 500) returning-f)
+   => (range 2 501)
+
+   (bind (range 1 500)
+         (range 1 500)
+         (range 1 500)
+         returning-f)
+   => (range 3 1500 3)
+
+   (bind (seq (apply list (range 1 500))) returning-f)
+   => (range 2 501)
+
+   (bind (seq (apply list (range 1 500)))
+         (seq (apply list (range 1 500)))
+         (seq (apply list (range 1 500)))
+         returning-f)
+   => (range 3 1500 3)
+
+   (bind (apply hash-set (range 1 500)) returning-f)
+   => (apply hash-set (distinct (range 2 501)))
+
+   (bind (apply hash-set (range 1 500))
+         (apply hash-set (range 1 500))
+         (apply hash-set (range 1 500))
+         returning-f)
+   => (apply hash-set (distinct (range 3 1500 3)))
+
+   (bind (apply hash-map
+                (interleave (range 1 500) (range 1 500)))
+         returning-f)
+   => (apply hash-map (interleave (range 1 500) (range 2 501)))
+
+   (bind (apply hash-map
+                (interleave (range 1 500) (range 1 500)))
+         (apply hash-map
+                (interleave (range 1 500) (range 1 500)))
+         (apply hash-map
+                (interleave (range 1 500) (range 1 500)))
+         returning-f)
+   => (apply hash-map (interleave (range 1 500) (range 3 1500 3)))
+
+   (with-context []
+     (into [] (bind (r/map identity (vec (range 1 500))) returning-f))
+     => (range 2 501))
+
+
+   ))
+
 
 (fact
  "Syntactic sugar for the bind function - mdo"
