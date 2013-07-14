@@ -188,6 +188,7 @@
    (if b (return []) (id *pure-context*)))
 
  (with-context (just nil)
+
    (guard (> 5 2))
    => (just [])
 
@@ -195,6 +196,7 @@
    => nil)
 
  (with-context []
+
    (guard (> 5 2))
    => [[]]
 

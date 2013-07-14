@@ -2,8 +2,6 @@
   (:use [uncomplicate.fluokitten protocols utils])
   (:require [clojure.core.reducers :as r]))
 
-(declare deref?)
-
 (extend-type nil
   Functor
   (fmap

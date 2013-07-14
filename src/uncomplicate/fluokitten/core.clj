@@ -369,16 +369,7 @@ contain the implementations of the protocols, by default jvm.
    the supplied value in it."
   algo/->Just)
 
-(defn ^:private gen-bind [bindings body]
-  (if (seq bindings)
-    (let [sym (get bindings 0)
-          monad (get bindings 1)]
-      `(bind ~monad
-             (fn [~sym]
-              ~(gen-bind (subvec bindings 2) body))))
-    body))
-
-(defmacro mdo [bindings body]
+(defmacro mdo
   "A syntactic sugar for gluing together chained bind calls.
    The structure of mdo is similar to the structure of let.
 
@@ -388,10 +379,7 @@ contain the implementations of the protocols, by default jvm.
    symbols. Body is not wrapped in an implicit do block, so
    if multiple forms are needed in the block, they have to
    be explicitly wrapped with do.
-   Body may use return or unit
-   symbols instead of (pure monadic-value), since mdo will
-   track and replace those symbols with appropriate calls
-   to the pure function.
+
    If the bindings vector is empty, there are no bindings and
    no bind function calls, mdo simply evaluates body in that
    case.
@@ -416,4 +404,11 @@ contain the implementations of the protocols, by default jvm.
 
    => [28 35 56 70]
   "
-  (gen-bind bindings body));;TODO gen-bind is probably no longer necessary since bind handles return and unit
+  [bindings body]
+  (if (seq bindings)
+    (let [sym (get bindings 0)
+          monad (get bindings 1)]
+      `(bind ~monad
+             (fn [~sym]
+              (mdo ~(subvec bindings 2) ~body))))
+    body))

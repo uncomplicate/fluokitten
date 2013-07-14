@@ -4,12 +4,12 @@ used or required for enabling Fluokitten on projects that
 run on JVM platform."
       :author "Dragan Djuric"}
   uncomplicate.fluokitten.jvm
-  (:use [uncomplicate.fluokitten protocols algo]))
+  (:use [uncomplicate.fluokitten protocols algo utils]))
 
 (set! *warn-on-reflection* true)
 
 ;;======== Set appropriate platform specific vars in algo. ======
-(ns uncomplicate.fluokitten.algo)
+(ns uncomplicate.fluokitten.utils)
 
 (defn deref?
   "Checks whether x is dereferencible. On JVM it checks if it is
@@ -17,6 +17,8 @@ run on JVM platform."
    be implemented in a similar or a completely different way."
   [x]
   (instance? clojure.lang.IDeref x))
+
+(ns uncomplicate.fluokitten.algo)
 
 (defn create-mapentry
   "Creates a map entry with the supplied key and value. On JVM it
@@ -107,19 +109,37 @@ run on JVM platform."
                ((apply cg x xs) (apply cf x xs))))
           1))
      ~'(fapply [cg cf hs]
-         (reduce fapply cg (cons cf hs)))
+         (CurriedFn.
+          (fn
+            ([x]
+               (apply (cg x) (cf x) (map #(% x) hs)))
+            ([x & xs]
+               (apply (apply cg x xs) (apply cf x xs)
+                      (map #(apply % x xs) hs))))
+          1))
      Monad
      ~'(bind [cf cg]
          (CurriedFn.
           (fn
             ([x]
-               ((cg (cf x)) x))
+               (with-context cf
+                 ((cg (cf x)) x)))
             ([x & xs]
-               (apply (cg (apply cf x xs)) x xs)))
+               (with-context cf
+                 (apply (cg (apply cf x xs)) x xs))))
           1))
      ~'(bind [cf cg hs]
-         (reduce #(bind %2 %1)
-                 (into [cg cf] hs)))
+         (CurriedFn.
+          (fn
+            ([x]
+               (with-context cf
+                 ((apply cg (cf x) (map #(% x) hs)) x)))
+            ([x & xs]
+               (with-context cf
+                 (apply (apply cg (apply cf x xs)
+                               (map #(apply % x xs) hs))
+                        x xs))))
+          1))
      ~'(join [cf] (bind cf identity))
      Foldable
      ~'(fold [_] f)

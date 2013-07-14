@@ -38,3 +38,5 @@
   "TODO"
   [x]
   (instance? clojure.core.protocols.CollReduce x))
+
+(declare deref?)

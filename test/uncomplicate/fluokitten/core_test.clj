@@ -595,7 +595,7 @@
 
    ((fapply (fapply (pure curried c+) (c+ 3))
             (c* 100)) 6) => 609
-   ((fapply (pure curried c+) (c+ 3) (c* 100)) 6) => 609)
+   ((<*> (pure curried c+) (c+ 3) (c* 100)) 6) => 609)
 
   (facts "First applicative law."
          ((fapply (pure curried inc) (pure curried 1)) 6)
@@ -610,9 +610,8 @@
 
   (facts "How fapply works for curried functions"
          ((fapply (curry + 4)
-                  (fapply (pure curried c+)
-                          (c+ 2)
-                          (c* 10))) 2 3 4)
+                  (<*> (pure curried c+) (c+ 2) (c* 10)))
+          2 3 4)
          => 260
 
          ((-> (pure curried (curry comp))
@@ -621,7 +620,15 @@
               (fapply (c* 10))) 7)
          => 84
 
-         ((fapply c+ (pure curried 7)) 9)=> 16)
+         ((fapply c+ (pure curried 7)) 9)=> 16
+
+         ((fapply (pure curried +) (pure curried 1)
+                  (pure curried 2) (pure curried 3)) 11)
+         => 6
+
+         ((fapply (pure curried +) (pure curried 1)
+                  (pure curried 2) (pure curried 3)) 11 33)
+         => 6)
 
   (facts "Composition applicative law"
          ((-> (pure curried (curry comp))
@@ -733,12 +740,11 @@
                           {:a 4 :b 3 :c 2}
                           {:a 12 :b 23 :c 9})
 
-;; TODO The following is true in haskell but not in clojure
-;;since clojure flattens many levels and haskell only one!
-(comment (fact (let [f #(hash-map :increment (inc %))
-                     m {:a 1 :b 2}]
-                 (fapply (pure {} f) m)
-                 => (bind (pure {} f) #(fmap % m)))))
+(fact
+ (let [f #(hash-map :increment (inc %))
+       m {:a 1 :b 2}]
+   (fapply (pure {} f) m)
+   => (bind (pure {} f) #(fmap % m))))
 
 ;;--------------- MapEntry ----------------------------
 (facts
@@ -1325,12 +1331,26 @@
          returning-f)
    => (apply hash-map (interleave (range 1 500) (range 3 1500 3)))
 
-   (with-context []
-     (into [] (bind (r/map identity (vec (range 1 500))) returning-f))
-     => (range 2 501))
+   (realize [] (bind (r/map identity (vec (range 1 500))) returning-f))
+   => (range 2 501)
 
+   (bind (first {:a 1}) returning-f)
+   => (first {:a 2})
 
-   ))
+   (bind (atom 1) returning-f)
+   => (check-eq (atom 2))
+
+   (dosync (bind (ref 1) returning-f))
+   => (check-eq (ref 2))
+
+   ((bind (pure curried 3) returning-f) 7)
+   => 4
+
+   ((bind (pure curried 3)
+          (pure curried 6)
+          (pure curried 9)
+          returning-f) 7)
+   => 18))
 
 
 (fact
