@@ -166,7 +166,7 @@
  (>>= [1 2 3] (fn [_] []))
  => []
 
- (>>= [1 2] (fn [n] (>>= [\a \b] (fn [ch] (pure [] [n ch])))))
+ (>>= [1 2] (fn [n] (>>= [\a \b] (fn [ch] (return [n ch])))))
  => [[1 \a] [1 \b] [2 \a] [2 \b]]
 
  (mdo [n [1 2]
@@ -180,18 +180,38 @@
  => [[1 \a] [1 \b] [2 \a] [2 \b]]
 
  (for [x (range 1 50)
-       :when (some #(= % \7) (str x))]
+       :when (some (partial = \7) (str x))]
    x)
  => [7 17 27 37 47]
 
- (defn guard [m b]
-   (if b (pure m []) (id m)))
+ (defn guard [b]
+   (if b (return []) (id *pure-context*)))
 
- (guard (just []) (> 5 2))
- => (just [])
+ (binding [*pure-context* (just nil)]
+   (guard (> 5 2))
+   => (just [])
 
- (guard (just []) (> 1 2))
- => nil
+   (guard (> 1 2))
+   => nil)
+
+ (binding [*pure-context* []]
+   (guard (> 5 2))
+   => [[]]
+
+   (guard (> 1 2))
+   => []
+
+   (>> (guard (> 5 2)) (return "cool"))
+   => ["cool"]
+
+   (>> (guard (> 1 2)) (return "cool"))
+   => [])
+
+ (>>= (vec (range 1 50)) (fn [x] (>> (guard (some (partial = \7) (str x))) (return x))))
+ => [7 17 27 37 47]
+
+
+
 
 
 

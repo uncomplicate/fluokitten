@@ -194,6 +194,16 @@ contain the implementations of the protocols, by default jvm.
   [monadic]
   (p/join monadic))
 
+(def ^:dynamic *pure-context* nil)
+
+(defn return [x]
+  "TODO"
+  (p/pure *pure-context* x))
+
+(def unit
+  "TODO"
+  return)
+
 (defn bind
   "Takes a value inside the context of a monad (monadic value)
    and a function f that takes a normal value (without the
@@ -237,10 +247,12 @@ contain the implementations of the protocols, by default jvm.
        ([monadic & ms]
           (apply bind monadic f ms))))
   ([monadic f]
-     (p/bind monadic f))
+     (binding [*pure-context* monadic] ;; TODO move *pure-context* to protocols, so it can be used in lazy-seq implementation
+       (p/bind monadic f)))
   ([monadic monadic2 & args]
-     (p/bind monadic (last args)
-             (cons monadic2 (butlast args)))));;TODO Optimize to avoid traversing args twice
+     (binding [*pure-context* monadic]
+       (p/bind monadic (last args)
+               (cons monadic2 (butlast args))))));;TODO Optimize to avoid traversing args twice
 
 (defn >>=
   "Performs a Haskell-style left-associative bind
@@ -255,9 +267,9 @@ contain the implementations of the protocols, by default jvm.
      (fn [f & fs]
        (apply >>= monadic f fs) ))
   ([monadic f]
-     (p/bind monadic f))
+     (bind monadic f))
   ([monadic f & fs]
-     (reduce p/bind monadic (cons f fs))))
+     (reduce bind monadic (cons f fs))))
 
 (defn fold
   "Folds all the contents of a foldable context by either
@@ -405,6 +417,4 @@ contain the implementations of the protocols, by default jvm.
 
    => [28 35 56 70]
   "
-  (gen-bind bindings (replace {'return `(pure ~(last bindings))
-                               'unit `(pure ~(last bindings))}
-                              body)))
+  (gen-bind bindings body))
