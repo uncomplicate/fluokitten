@@ -99,6 +99,9 @@ contain the implementations of the protocols, by default jvm.
    or fapply and pure (see the doc for
    uncomplicate.fluokitten.protocols/Applicative)
 
+   Has context-agnostic versions that take the applicative context
+   implicitly from the environment: return and unit.
+
    ---- Example 1: putting a number in a pure vector context
    (pure [] 1)
    => [1]
@@ -195,12 +198,37 @@ contain the implementations of the protocols, by default jvm.
   [monadic]
   (p/join monadic))
 
-(defn return [x]
-  "TODO"
+(defn return
+  "A monad-agnostic version of pure, it is equivalent to
+   (pure <current context>). Valid only inside
+   a context-aware *time-dependent* dynamic scope.
+   Otherwise, an IllegalArgumentException will be thrown
+   complaining that there is no implementation found for
+   class clojure.lang.Var$Unbound.
+   The context is available inside the execution of bind
+   method (and the methods and macros that use it internaly,
+   such as >>= mdo), or inside the with-context macro.
+   Also equivalent to the unit function.
+
+   ---- Example 1:
+   (defn f [x] (return (inc x)))
+   (bind [1 2 3] f)
+   => [2 3 4]
+   (bind (just 1) f)
+   => 2
+
+   ---- Example 2:
+   (f 1)
+   => IllegalArgumentException
+   (with-context []
+     (f 1))
+   => [1]
+   "
+  [x]
   (p/pure (utils/get-context) x))
 
 (def unit
-  "TODO"
+  "The equivalent of the return method."
   return)
 
 (defn bind
@@ -226,6 +254,9 @@ contain the implementations of the protocols, by default jvm.
    satisfied by any monad in regard to the behavior
    or bind and pure (see the doc for
    uncomplicate.fluokitten.protocols/Monad)
+
+   bind maintains an implicit context, and supports
+   functions that depend on it, such are return and unit.
 
    Some common Clojure constructs that are Monads:
    - persistent collections
@@ -261,6 +292,9 @@ contain the implementations of the protocols, by default jvm.
    If only two arguments are supplied, it is equivalent to bind.
    When called with one argument, creates a function
    that can accept the rest of the arguments and apply >>=.
+
+   bind maintains an implicit context, so >>= too supports
+   functions that depend on it, such are return and unit.
   "
   ([monadic]
      (fn [f & fs]
@@ -269,6 +303,56 @@ contain the implementations of the protocols, by default jvm.
      (bind monadic f))
   ([monadic f & fs]
      (reduce bind monadic (cons f fs))))
+
+(defmacro mdo
+  "A syntactic sugar for gluing together chained bind calls.
+   The structure of mdo is similar to the structure of let.
+
+   bindings should be a vector of symbol - expression pairs
+   in the form [sym1 exp1 sym2 exp2 ...].
+   while the body should be an expression that uses these
+   symbols. Body is not wrapped in an implicit do block, so
+   if multiple forms are needed in the block, they have to
+   be explicitly wrapped with do.
+
+   If the bindings vector is empty, there are no bindings and
+   no bind function calls, mdo simply evaluates body in that
+   case.
+
+   (mdo [x some-monadic-value
+         y some-other-monadic-value]
+     some-expression)
+
+   expands to:
+
+   (bind some-monadic-value
+         (fn [x]
+           (bind some-other-monadic-value
+                 (fn [y]
+                   some-expression))))))
+
+   bind maintains an implicit context, so mdo too supports
+   functions that depend on it, such are return and unit.
+
+   ---- Example:
+   (mdo [a [1 2]
+         b [4 5]
+         c [7]]
+     (return (* a b c)))
+
+   => [28 35 56 70]
+  "
+  [bindings body]
+  (if (and (vector? bindings) (even? (count bindings)))
+    (if (seq bindings)
+      (let [sym (get bindings 0)
+            monad (get bindings 1)]
+        `(bind ~monad
+               (fn [~sym]
+                 (mdo ~(subvec bindings 2) ~body))))
+      body)
+    (throw (IllegalArgumentException.
+            "bindings has to be a vector with even number of elements."))))
 
 (defn fold
   "Folds all the contents of a foldable context by either
@@ -368,47 +452,3 @@ contain the implementations of the protocols, by default jvm.
   "Creates the context of Maybe monad and puts
    the supplied value in it."
   algo/->Just)
-
-(defmacro mdo
-  "A syntactic sugar for gluing together chained bind calls.
-   The structure of mdo is similar to the structure of let.
-
-   bindings should be a vector of symbol - expression pairs
-   in the form [sym1 exp1 sym2 exp2 ...].
-   while the body should be an expression that uses these
-   symbols. Body is not wrapped in an implicit do block, so
-   if multiple forms are needed in the block, they have to
-   be explicitly wrapped with do.
-
-   If the bindings vector is empty, there are no bindings and
-   no bind function calls, mdo simply evaluates body in that
-   case.
-
-   (mdo [x some-monadic-value
-         y some-other-monadic-value]
-     some-expression)
-
-   expands to:
-
-   (bind some-monadic-value
-         (fn [x]
-           (bind some-other-monadic-value
-                 (fn [y]
-                   some-expression))))))
-
-   ---- Example:
-   (mdo [a [1 2]
-         b [4 5]
-         c [7]]
-     (return (* a b c)))
-
-   => [28 35 56 70]
-  "
-  [bindings body]
-  (if (seq bindings)
-    (let [sym (get bindings 0)
-          monad (get bindings 1)]
-      `(bind ~monad
-             (fn [~sym]
-              (mdo ~(subvec bindings 2) ~body))))
-    body))

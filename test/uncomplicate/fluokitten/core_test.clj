@@ -1352,7 +1352,6 @@
           returning-f) 7)
    => 18))
 
-
 (fact
  "Syntactic sugar for the bind function - mdo"
 

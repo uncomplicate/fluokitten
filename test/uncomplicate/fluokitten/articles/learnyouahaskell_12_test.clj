@@ -87,7 +87,6 @@
  (-> (>>= (just [0 0]) (land-left 1)) (>> nil) (>>= (land-right 1)))
  => nil
 
-
  (if-let [pole1 (land-left 1 [0 0])]
    (if-let [pole2 (land-right 4 (fold pole1))]
      (if-let [pole3 (land-left 2 (fold pole2))]
@@ -185,7 +184,7 @@
  => [7 17 27 37 47]
 
  (defn guard [b]
-   (if b (return []) (id *pure-context*)))
+   (if b (return []) (id (get-context))))
 
  (with-context (just nil)
 
@@ -212,9 +211,63 @@
  (>>= (range 1 50) (fn [x] (>> (guard (some (partial = \7) (str x))) (return x))))
  => [7 17 27 37 47]
 
+ (mdo
+  [x (range 1 50)
+   _ (guard (some (partial = \7) (str x)))]
+  (return x))
 
+ (defn move-knight [[c r]]
+   (mdo [[c' r'] [[(+ c 2) (- r 1)] [(+ c 2) (+ r 1)]
+                  [(- c 2) (- r 1)] [(- c 2) (+ r 1)]
+                  [(+ c 1) (- r 2)] [(+ c 1) (+ r 2)]
+                  [(- c 1) (- r 2)] [(- c 1) (+ r 2)]]
+         _ (guard (and (contains? #{1 2 3 4 5 6 7 8} c')
+                       (contains? #{1 2 3 4 5 6 7 8} r')))]
+        (return [c' r'])))
 
+ (defn move-knight2 [[c r]]
+   (let [on-board (fn [[c r]]
+                    (and (contains? #{1 2 3 4 5 6 7 8} c)
+                         (contains? #{1 2 3 4 5 6 7 8} r)))]
+     (filter on-board [[(+ c 2) (- r 1)] [(+ c 2) (+ r 1)]
+                       [(- c 2) (- r 1)] [(- c 2) (+ r 1)]
+                       [(+ c 1) (- r 2)] [(+ c 1) (+ r 2)]
+                       [(- c 1) (- r 2)] [(- c 1) (+ r 2)]])))
 
+ (move-knight [6 2])
+ => [[8 1] [8 3] [4 1] [4 3] [7 4] [5 4]]
 
+ (move-knight [8 1])
+ => [[6 2] [7 3]]
 
- )
+ (move-knight2 [6 2])
+ => [[8 1] [8 3] [4 1] [4 3] [7 4] [5 4]]
+
+ (move-knight2 [8 1])
+ => [[6 2] [7 3]]
+
+ (defn in3 [start]
+   (mdo [first (move-knight start)
+         second (move-knight first)]
+        (move-knight second)))
+
+ (defn in3' [start]
+   (>>= (move-knight start) move-knight move-knight))
+
+ (defn can-reach-in3 [start end]
+   (some (partial = end) (in3 start)))
+
+ (defn can-reach-in3' [start end]
+   (some (partial = end) (in3' start)))
+
+ (can-reach-in3 [6 2] [6 1])
+ => true
+
+ (can-reach-in3' [6 2] [6 1])
+ => true
+
+ (can-reach-in3 [6 2] [7 3])
+ => falsey
+
+ (can-reach-in3' [6 2] [7 3])
+ => falsey)
