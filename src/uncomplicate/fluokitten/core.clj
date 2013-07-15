@@ -273,9 +273,8 @@ contain the implementations of the protocols, by default jvm.
    => #<Atom: 2>
   "
   ([f]
-     (fn
-       ([monadic & ms]
-          (apply bind monadic f ms))))
+     (fn [monadic & ms]
+       (apply bind monadic f ms)))
   ([monadic f]
      (utils/with-context monadic
        (p/bind monadic f)))
@@ -303,6 +302,39 @@ contain the implementations of the protocols, by default jvm.
      (bind monadic f))
   ([monadic f & fs]
      (reduce bind monadic (cons f fs))))
+
+(defn >=>
+  "Composes monadic functions from left to right, in the reverse
+   order from comp. The composed functions threads the calls
+   through >>=.
+  "
+  ([f]
+     (fn [g & gs]
+       (apply >=> f g gs)))
+  ([f g]
+     (fn
+       ([x]
+          (bind (f x) g))
+       ([x & xs]
+          (bind (apply f x xs) g))))
+  ([f g & hs]
+     (fn
+       ([x]
+          (apply >>= (f x) g hs))
+       ([x & xs]
+          (apply >>= (apply f x xs) g hs)))))
+
+(defn <=<
+  "Composes monadic functions from right to left, in the reverse
+   order than >=>.
+  "
+  ([f]
+     (fn [g & gs]
+       (apply <=< f g gs)))
+  ([f g]
+     (>=> g f))
+  ([f g & hs]
+     (apply >=> (reverse (into [f g] hs)))))
 
 (defmacro mdo
   "A syntactic sugar for gluing together chained bind calls.
@@ -452,3 +484,8 @@ contain the implementations of the protocols, by default jvm.
   "Creates the context of Maybe monad and puts
    the supplied value in it."
   algo/->Just)
+
+(defn just?
+  "Checks whether x is an instance of the type Just."
+  [x]
+  (instance? uncomplicate.fluokitten.algo.Just x))

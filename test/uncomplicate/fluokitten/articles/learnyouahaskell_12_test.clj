@@ -7,6 +7,89 @@
   (:use [midje.sweet :exclude [just]]))
 
 (facts
+ "Examples from the LYAH book, chapter 12, A fistful of monads section"
+
+ (<*> (fmap * (just 2)) (just 8))
+ => (throws ClassCastException)
+
+ (<*> (fmap (curry *) (just 2)) (just 8))
+ => (just 16)
+
+ (fmap * (just 2) (just 8))
+ => (just 16)
+
+ (<*> (fmap (curry str 2) (just "klingon")) nil)
+ => nil
+
+ (<*> (fmap (curry -) [3 4]) [1 2 3])
+ => [2 1 0 3 2 1])
+
+(facts
+ "Examples from the LYAH book, chapter 12, A fistful of monads section"
+
+ (fmap #(str % "!") (just "wisdom"))
+ => (just "wisdom!")
+
+ (fmap (partial str "!") nil)
+ => nil
+
+ (<*> (just (partial + 3)) (just 3))
+ => (just 6)
+
+ (<*> nil (just "greed"))
+ => nil
+
+ (<*> (just +) nil)
+ => nil
+
+ (fmap max (just 3) (just 6))
+ => (just 6)
+
+ (fmap max (just 3) nil)
+ => nil
+
+ ((fn [x] (just (+ x 1))) 1)
+ => (just 2)
+
+ ((fn [x] (just (+ x 100))) 1)
+ => (just 101)
+
+ (defn apply-maybe [m f]
+   (cond (nil? m) nil
+         (just? m) (f (fold m))))
+
+ (apply-maybe (just 3) (fn [x] (just (+ x 1))))
+ => (just 4)
+
+ (apply-maybe (just "smile") (fn [x] (just (str x " :)"))))
+ => (just "smile :)")
+
+ (apply-maybe nil (fn [x] (just (+ x 1))))
+ => nil
+
+ (apply-maybe nil (fn [x] (just (str x " :)"))))
+ => nil
+
+ (apply-maybe (just 3) (fn [x] (if (> x 2) (just x) nil)))
+ => (just 3)
+
+ (apply-maybe nil (fn [x] (if (> x 2) (just x) nil)))
+ => nil)
+
+(facts
+ "Examples from the LYAH book, chapter 12, Walk the line section"
+
+ (with-context (just "")
+   (return "WHAT")
+   => (just "WHAT"))
+
+ (>>= (just 9) (fn [x] (return (* x 10))))
+ => (just 90)
+
+ (>>= nil (fn [x] (return (* x 10))))
+ => nil)
+
+(facts
  "Examples from the LYAH book, chapter 12, Walk the line section"
 
  (defn land-left [n [left right]]
@@ -271,3 +354,46 @@
 
  (can-reach-in3' [6 2] [7 3])
  => falsey)
+
+(facts
+ "Examples from the LYAH book, chapter 12, the Monad laws section"
+
+ (with-context (just nil)
+
+   (>>= (return 3) (fn [x] (just (+ x 1000000))))
+   => (just 1000003)
+
+   ((fn [x] (just (+ x 1000000))) 3)
+   => (just 1000003))
+
+ (with-context []
+
+   (>>= (return "WoM") (fn [x] [x x x]))
+   => ["WoM" "WoM" "WoM"]
+
+   ((fn [x] [x x x]) "WoM")
+   => ["WoM" "WoM" "WoM"])
+
+ (>>= (just "move on up") (fn [x] (return x)))
+ => (just "move on up")
+
+ (>>= [1 2 3 4] (fn [x] (return x)))
+ => [1 2 3 4]
+
+ (>>= (just [0 0]) (land-right 2) (land-left 2) (land-right 2))
+ => (just [2 4])
+
+ (>>= (>>= (>>= (just [0 0]) (land-right 2)) (land-left 2)) (land-right 2))
+ => (just [2 4])
+
+ (>>= (just [0 0]) (fn [x]
+ (>>= (land-right 2 x) (fn [y]
+ (>>= (land-left 2 y) (fn [z]
+ (land-right 2 z)))))))
+ => (just [2 4])
+
+ (let [f (fn [x] [x (- x)])
+       g (fn [x] [(* x 3) (* x 2)])
+       h (<=< f g)]
+   (h 3)
+   => [9 -9 6 -6]))

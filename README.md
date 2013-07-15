@@ -3,6 +3,8 @@
 
 Fluokitten is a Clojure library that implements category theory concepts, such as functors, applicative functors, monads, monoids etc. in idiomatic Clojure.
 
+There is a lot of documentation and tutorials at [Fluokitten Website](http://fluokitten.uncomplicate.org). Please make sure to check it out.
+
 ## Project Goals
 
 * Fit well into idiomatic Clojure - Clojure programmers should be able to use and understand Fluokitten like any regular Clojure library.
