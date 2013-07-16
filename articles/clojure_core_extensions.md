@@ -138,6 +138,19 @@ For maps and map entries, `pure` uses nil to generate the default key for the pu
  => (list 1)
 ```
 
+We can establish an implicit context with the `utils/with-context macro`, and use `return` or `unit` functions (they are the same) instead of `pure`. `return` ant `unit` call `pure` with the implicit context.
+
+```clojure
+(with-context []
+  (return 1)
+  ;=> [1])
+
+(with-context {}
+  (return 1)
+  ;=> {nil 1})
+
+```
+
 `fapply` is pretty straightforward for most structures (except for maps and map entries, where it has a more complex behavior). It expect two structures of the same type as arguments: a function(s) structure and a data structure. Then it applies the functions to the data. The actual matching of the functions and the data depends on the data structure. For most core structures, it applies all combinations of functions and data:
 
 ```clojure
@@ -253,59 +266,59 @@ In the case of maps and map entries, it matches the functions and the data by ma
 
 ### Monad
 
-Similarily to the previous examples, `bind` behaves in a straightforward way for most core data structures, except maps and map entries that are a bit specific. It requires one or more data structures, and a function as the last parameter. That function should accept elements extracted from all provided data structures (one by one), and wrap the result(s) in the same type of structure. Here are typical examples of sequences and friends:
+Similarily to the previous examples, `bind` behaves in a straightforward way for most core data structures, except maps and map entries that are a bit specific. It requires one or more data structures, and a function as the last parameter. That function should accept elements extracted from all provided data structures (one by one), and wrap the result(s) in the same type of structure.
+The bind function is automatically and transparently aware of the implicit context, so we can use `return` or `unit` to create agnostic monadic functions that can be applied to any monad. In the following example, the `increment` and `add` functions' results will be packaged in appropriate contexts transparently.
+
+Here are typical examples of sequences and friends:
 
 ```clojure
-(bind [] (comp vector inc))
+(def increment (comp return inc))
+(def add (comp return +))
+
+(bind [] increment)
 ;=> []
 
-(bind [1 2 3] (comp vector inc))
+(bind [1 2 3] increment)
 ;=> [2 3 4]
 
-(bind [1 2 3] [4 5 6] (comp vector +))
+(bind [1 2 3] [4 5 6] add)
 ;=> [5 7 9]
 
-(bind (list) (comp list inc))
+(bind (list) increment)
 ;=> (list)
 
-(bind (list 1 2 3) (comp list inc))
+(bind (list 1 2 3) increment)
 ;=> (list 2 3 4)
 
-(bind (list 1 2 3) (list 4 5 6) (comp list +))
+(bind (list 1 2 3) (list 4 5 6) add)
 ;=> (list 5 7 9)
 
-(bind (empty (seq [2])) (comp seq vector inc))
-;=> (emp ty (seq [3]))
+(bind (empty (seq [2])) increment)
+;=> (empty (seq [3]))
 
-(bind (seq [1 2 3]) (comp seq vector inc))
-;=> (seq [2 3 4])
+(bind (seq [1 2 3]) increment) => (seq [2 3 4])
 
-(bind (seq [1 2 3]) (seq [4 5 6]) (comp seq vector +))
+(bind (seq [1 2 3]) (seq [4 5 6]) add)
 ;=> (seq [5 7 9])
 
-(bind (lazy-seq [])
-      (fn [& args]
-        (lazy-seq (vector (apply inc args)))))
+(bind (lazy-seq []) increment)
 ;=> (lazy-seq [])
 
-(bind (lazy-seq [1 2 3])
-      (fn [& args]
-        (lazy-seq (vector (apply inc args)))))
+(bind (lazy-seq [1 2 3]) increment)
 ;=> (lazy-seq [2 3 4])
 
-(bind (lazy-seq [1 2 3]) (lazy-seq [4 5 6])
-      (fn [& args]
-        (lazy-seq (vector (apply + args)))))
+(bind (lazy-seq [1 2 3]) (lazy-seq [4 5 6]) add)
 ;=> (lazy-seq [5 7 9])
 
-(bind #{} (comp hash-set inc))
+(bind #{} increment)
 ;=> #{}
 
-(bind #{1 2 3} (comp hash-set inc))
+(bind #{1 2 3} increment)
 ;=> #{2 3 4}
 
-(bind #{1 2 3} #{4 5 6} (comp hash-set +))
+(bind #{1 2 3} #{4 5 6} add)
 ;=> #{5 7 9}
+
 ```
 
 With maps and map entries, `bind` treats keys as parts of the context, and feeds only the values of the corresponding entries to the function. Since the function returns a map for each entry, the results have to be flattened, so the final result is a map. It is easier to understand what happens with a few examples:
@@ -768,13 +781,16 @@ With refs and atoms, `fmap` is analoguous to `alter` and `swap!`. The main diffe
 `bind` accepts variable number of arguments of which all are references except the last, which is a function that takes plain values and produces a reference. `bind` updates the first reference using this function.
 
 ```clojure
-(dosync (bind (ref 8) (comp ref inc)))
+(bind (atom 8) increment)
+;=> (atom 9)
+
+(dosync (bind (ref 8) increment))
 ;=> (ref 9)
 
-(bind (atom 8) (ref 9) (atom 10) (comp atom +))
+(bind (atom 8) (ref 9) (atom 10) add)
 ;=> (atom 27)
 
-(dosync (bind (ref 18) (ref 19) (atom 20) (comp ref +)))
+(dosync (bind (ref 18) (ref 19) (atom 20) add))
 ;=> (ref 57)
 ```
 

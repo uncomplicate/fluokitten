@@ -31,7 +31,7 @@ Fluokitten is a Clojure library packaged in a `jar` file, distributed through [C
 The most straightforward way to include Fluokitten in your project is with leiningen. Add the following dependency to your `project.clj`:
 
 ```clojure
-[uncomplicate/fluokitten "0.2.0"]
+[uncomplicate/fluokitten "0.3.0"]
 ```
 
 ### With Maven
@@ -51,14 +51,9 @@ And then the dependency:
 <dependency>
   <groupId>uncomplicate</groupId>
   <artifactId>fluokitten</artifactId>
-  <version>0.2.0</version>
+  <version>0.3.0</version>
 </dependency>
 ```
-
-### Use the most recent version
-
-Note that you should replace `0.2.0` with the latest version of uncomplicate that is available in Clojars at [this link](https://clojars.org/uncomplicate/fluokitten).
-If you are using other tools for dependency management, you can download Fluokitten jar file manually from Clojars.org, or build it from the source by running `lein jar`.
 
 ### Requirements
 
@@ -158,13 +153,17 @@ Are these function definitions and implementations arbitrary? NO! All these func
 ### Monads and bind
 
 Monads are certainly the most discussed programming concept to come from category theory. Like functors and applicatives, monads deal with data in contexts. However, in addition to applying funtions contextually, monads can also transform context by unwrapping data, applying functions to it and rewrapping it, possibly in a completely different context. Sound confusing? Until you gain some practical experience, it is -- that is why monad tutorials are written every day. Don't be daunted, however. If you take a step-by-step approach and don't try to swallow everything in one sitting, it's really not hard at all. This tutorial only scratches the surface; please check out the further reading for deeper comprehension.
-The core monad function is `bind`, and in the case of vector, it is trivially used as follows
+The core monad function is `bind`, and in the case of vector, it is trivially used as follows.
 
 ```clojure
-(bind [1 2 3] #(vector (inc %) (dec %)))
+(bind [1 2 3] #(return (inc %) (dec %)))
 ;=> [2 0 3 1 4 2]
+```
 
-(bind (atom 1) (comp atom inc))
+If the function produces minimal context, it does even need to know which context it is. The return function is going to create the right context for the value, in this case atom.
+
+```clojure
+(bind (atom 1) (comp return inc))
 ;=> (atom 2)
 ```
 

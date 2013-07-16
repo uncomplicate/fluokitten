@@ -3,7 +3,7 @@ title: "Fluokitten: Learn You a Haskell for Great Good - in Clojure"
 layout: article
 ---
 
-FIXME - To be written
+FIXME - To be written. LOTS OF CODE IS ALREADY [HERE](https://github.com/uncomplicate/fluokitten/blob/master/test/uncomplicate/fluokitten/articles)
 
 # Learn You a Haskell for Great Good - in Clojure
 
@@ -13,21 +13,97 @@ It is recommended that you first read the article [Functors, Applicatives, and M
 
 To be able to follow along, you'll have to have Clojure installed and Fluokitten library included as a dependency in your project, as described in [Getting Started Guide](/articles/getting_started.html). Obviously, you'll need a reasonable knowledge of Clojure (you don't have to be an expert, though), and being familiar with the basics of Haskell is helpful, but not a necessity. So, after checking out [Getting Started Guide](/articles/getting_started.html), start up Clojure REPL and open this article and the [Learn You a Haskell for Great Good](http://learnyouahaskell.com) book side by side and we are ready to go.
 
-The complete source code of the examples used in this article is available [here](https://github.com/uncomplicate/fluokitten/blob/master/test/uncomplicate/fluokitten/articles/learnyouaheaskell.clj) in the form of [midje](https://github.com/marick/Midje) tests.
+The complete source code of the examples used in this article is available [here](https://github.com/uncomplicate/fluokitten/blob/master/test/uncomplicate/fluokitten/articles) in the form of [midje](https://github.com/marick/Midje) tests.
 
-## Chapter 7 - The Functor Type Class
+## Chapter 6 - Higher order functions
 
-## Chapter 11 - Applicative Functors
+### Curried functions
 
-## Chapter 12 - Monoids
+## Chapter 8 - Making our own types and typeclasses
 
-## Chapter 13 - A Fistful of Monads
+### The Functor typeclass
 
-## Chapter 14 - For a Few Monads More
+## Chapter 11 - Functors, Applicative Functors and Monoids
 
-### Functions as Monads
+### Functors redux
 
-### Some Useful Monadic Functions
+### Applicative functors
+
+### Monoids
+
+#### Lists are monoids
+
+#### Maybe the monoid
+
+#### Using monoids to fold data structures
+
+## Chapter 12 - A Fistful of Monads
+
+### Getting our feet wet with Maybe
+
+### The Monad typeclass
+
+### Walk the line
+
+### do notation
+
+### The list monad
+
+#### King's quest
+
+### Monad laws
+
+#### Left identity
+
+#### Right identity
+
+#### Associativity
+
+## Chapter 13 - For a Few Monads More
+
+### Writer? I hardly know her
+
+#### Monoids to the rescue
+
+#### The writer type
+
+#### Inefficient list construction
+
+#### Using do notation with Writer
+
+#### Adding logging to programs
+
+#### Difference lists
+
+#### Comparing performance
+
+### Reader? Ugh, not this joke again
+
+### Tasteful stateful computations
+
+#### Stacks and stones
+
+#### The state monad
+
+#### Randomness and the state monad
+
+### Error error on the wall
+
+### Some useful monadic functions
+
+#### liftM and friends
+
+#### The join function
+
+#### filterM
+
+#### foldM
+
+#### Making a safe RPN calculator
+
+#### Composing monadic functions
+
+### Making monads
 
 ## Conclusion
 

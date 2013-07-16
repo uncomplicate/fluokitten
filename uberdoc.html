@@ -3028,18 +3028,11 @@ net.brehaut.ClojureTools = (function (SH) {
     build_tree: build_tree
   };
 })(SyntaxHighlighter);
-</script><title>uncomplicate/fluokitten -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name">uncomplicate/fluokitten</h1><h2 class="project-version">0.2.0-SNAPSHOT</h2><br /><p>Category theory concepts in Clojure - Functors, Applicatives, Monads, Monoids and more.</p>
-</div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.5.1</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#uncomplicate.fluokitten.algo">uncomplicate.fluokitten.algo</a></li><li><a href="#uncomplicate.fluokitten.core">uncomplicate.fluokitten.core</a></li><li><a href="#uncomplicate.fluokitten.jvm">uncomplicate.fluokitten.jvm</a></li><li><a href="#uncomplicate.fluokitten.protocols">uncomplicate.fluokitten.protocols</a></li><li><a href="#uncomplicate.fluokitten.test">uncomplicate.fluokitten.test</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#uncomplicate.fluokitten.algo" name="uncomplicate.fluokitten.algo"><h1 class="project-name">uncomplicate.fluokitten.algo</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
+</script><title>uncomplicate/fluokitten -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name">uncomplicate/fluokitten</h1><h2 class="project-version">0.3.0</h2><br /><p>Category theory concepts in Clojure - Functors, Applicatives, Monads, Monoids and more.</p>
+</div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.5.1</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#uncomplicate.fluokitten.algo">uncomplicate.fluokitten.algo</a></li><li><a href="#uncomplicate.fluokitten.core">uncomplicate.fluokitten.core</a></li><li><a href="#uncomplicate.fluokitten.jvm">uncomplicate.fluokitten.jvm</a></li><li><a href="#uncomplicate.fluokitten.protocols">uncomplicate.fluokitten.protocols</a></li><li><a href="#uncomplicate.fluokitten.test">uncomplicate.fluokitten.test</a></li><li><a href="#uncomplicate.fluokitten.utils">uncomplicate.fluokitten.utils</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#uncomplicate.fluokitten.algo" name="uncomplicate.fluokitten.algo"><h1 class="project-name">uncomplicate.fluokitten.algo</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(ns uncomplicate.fluokitten.algo
-  (:use uncomplicate.fluokitten.protocols)
+  (:use [uncomplicate.fluokitten protocols utils])
   (:require [clojure.core.reducers :as r]))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(declare deref?)</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn reducible? [x]
-  (instance? clojure.core.protocols.CollReduce x))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn reducible [c]
-  (r/map identity c))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn realize [c cr]
-  (into (empty c) cr))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(extend-type nil
   Functor
   (fmap
@@ -3060,8 +3053,9 @@ net.brehaut.ClojureTools = (function (SH) {
   (foldmap [_ _] nil)
   Magma
   (op
-    ([_ _] nil)
-    ([_ _ _] nil))
+    ([_ y] y)
+    ([_ y ys]
+       (reduce op y ys)))
   Monoid
   (id [_] nil))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(extend-type Object
@@ -3198,8 +3192,6 @@ net.brehaut.ClojureTools = (function (SH) {
   (lazy-seq (coll-pure cv v)))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn map-pure [m v]
   (coll-pure m [nil v]))</pre></td></tr><tr><td class="docs"><p>================== Monad Implementations ======================</p>
-</td><td class="codes"><pre class="brush: clojure">(defn collreduce-join [cr]
-  (r/flatten cr))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn collreduce-bind
   ([cr g]
      (r/mapcat g cr))
@@ -3211,8 +3203,6 @@ net.brehaut.ClojureTools = (function (SH) {
      (join (fmap m g)))
   ([m g ms]
      (join (fmap m g ms))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn reducible-join [c]
-  (into (empty c) (r/flatten c)))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn reducible-bind
   ([c g]
      (into (empty c)
@@ -3225,10 +3215,10 @@ net.brehaut.ClojureTools = (function (SH) {
               (if (map? x)
                 (r/map (fn [[kx vx]]
                          [(if (and k kx)
-                            (join [k kx])
+                            (vec (flatten [k kx]))
                             (or k kx))
                           vx])
-                       (join x));;TODO non-TCO recursion
+                       x)
                 [e]))
             m))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn map-join [m]
@@ -3242,8 +3232,6 @@ net.brehaut.ClojureTools = (function (SH) {
      (into (empty m)
            (map-join-r
             (map-fmap-r m g ms)))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn coll-join [c]
-  (into (empty c) (flatten c)))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn coll-bind
   ([c g]
      (into (empty c)
@@ -3251,10 +3239,31 @@ net.brehaut.ClojureTools = (function (SH) {
   ([c g ss]
      (into (empty c)
            (apply mapcat g c ss))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn ^:private join-op [c e]
+  (if (coll? e)
+    (op c e)
+    (conj c e)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn seq-join [c]
+  (with-meta
+    (reduce join-op [] c)
+    (meta c)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn coll-join [c]
+  (into (empty c) (seq-join c)))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn list-join [c]
   (with-meta
-    (apply list (flatten c))
+    (apply list (seq-join c))
     (meta c)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn collreduce-join [c]
+  (let [combinef (fn [x y]
+                   (if (coll? x)
+                     (join-op x y)
+                     (if (coll? y)
+                       (conj y x)
+                       [x y])))]
+    (r/fold (fn [] []) combinef c)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn reducible-join [c]
+  (into (empty c)
+        (collreduce-join c)))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn list-bind
   ([c g]
      (with-meta
@@ -3264,8 +3273,6 @@ net.brehaut.ClojureTools = (function (SH) {
      (with-meta
        (apply list (apply mapcat g c ss))
        (meta c))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn seq-join [c]
-  (with-meta (flatten c) (meta c)))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn seq-bind
   ([c g]
      (with-meta
@@ -3275,16 +3282,28 @@ net.brehaut.ClojureTools = (function (SH) {
      (with-meta
        (apply mapcat g c ss)
        (meta c))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn set-join [s]
-  (with-meta
-    (reduce #(if (set? %2) %1 (conj %1 %2)) #{}
-            (rest (tree-seq set? seq (set s))))
-    (meta s)))</pre></td></tr><tr><td class="docs"><p>======== Algebraic structures implementations ==================</p>
+</td><td class="codes"><pre class="brush: clojure">(defn lazyseq-bind
+  ([c g]
+     (seq-bind c (with-current-context g)))
+  ([c g ss]
+     (seq-bind c (with-current-context g) ss)))</pre></td></tr><tr><td class="docs"><p>======== Algebraic structures implementations ==================</p>
 </td><td class="codes"><pre class="brush: clojure">(defn coll-op
   ([x y]
      (into x y))
   ([x y ys]
-     (reduce #(into %1 %2) (into x y) ys)))</pre></td></tr><tr><td class="docs">
+     (reduce into (into x y) ys)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn collreduce-op
+  ([x y]
+     (if (instance? clojure.core.protocols.CollReduce y)
+       (r/cat x y)
+       (into x y)))
+  ([x y ys]
+     (r/reduce collreduce-op (collreduce-op x y) ys)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn reducible-op
+  ([x y]
+     (into (empty x) (collreduce-op x y)))
+  ([x y ys]
+     (into (empty x) (collreduce-op x y ys))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn seq-op
   ([x y]
      (concat x y))
@@ -3333,7 +3352,9 @@ net.brehaut.ClojureTools = (function (SH) {
       :fapply reducible-fapply}
      Monad
      {:join reducible-join
-      :bind reducible-bind}))</pre></td></tr><tr><td class="docs">
+      :bind reducible-bind}
+     Magma
+     {:op reducible-op}))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defmacro extend-list [t]
   `(extend ~t
      Functor
@@ -3367,7 +3388,7 @@ net.brehaut.ClojureTools = (function (SH) {
       :fapply seq-fapply}
      Monad
      {:join seq-join
-      :bind seq-bind}
+      :bind lazyseq-bind}
      Magma
      {:op seq-op}))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defmacro extend-set [t]
@@ -3378,7 +3399,7 @@ net.brehaut.ClojureTools = (function (SH) {
      {:pure coll-pure
       :fapply reducible-fapply}
      Monad
-     {:join set-join
+     {:join coll-join
       :bind reducible-bind}))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defmacro extend-map [t]
   `(extend ~t
@@ -3433,9 +3454,9 @@ net.brehaut.ClojureTools = (function (SH) {
   (if (vector? x)
     (let [[kx vx] x]
       (create-mapentry (if (and k kx)
-                                (join [k kx])
-                                (or k kx))
-                              vx))
+                         (vec (flatten [k kx]))
+                         (or k kx))
+                       vx))
     e))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn mapentry-id [[kx vx]]
   (create-mapentry (id kx) (id vx)))</pre></td></tr><tr><td class="docs">
@@ -3638,21 +3659,36 @@ net.brehaut.ClojureTools = (function (SH) {
       nil
       (apply g v (map fold jvs))))
   (join [jjv]
-    (if (instance? Just v) (join v) jjv))
+    (if (or (nil? v) (instance? Just v)) v jjv))
   Foldable
   (fold [_] v)
   (foldmap [_ g] (g v))
   Magma
-  (op [_ y]
-    (Just. (op v (fold y))))
-  (op [_ y ys]
-    (Just. (op v (fold y) (map fold ys))))
+  (op [x y]
+    (if-not (nil? y)
+      (Just. (op v (fold y)))
+      x))
+  (op [x y ys]
+    (if-let [ys* (map fold (remove nil? (cons y ys)))]
+      (Just. (op v (first ys*) (rest ys*)))
+      x))
   Monoid
-  (id [jv]
-    (Just. (id (fold jv)))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#uncomplicate.fluokitten.core" name="uncomplicate.fluokitten.core"><h1 class="project-name">uncomplicate.fluokitten.core</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(ns uncomplicate.fluokitten.core
+  (id [_] nil))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#uncomplicate.fluokitten.core" name="uncomplicate.fluokitten.core"><h1 class="project-name">uncomplicate.fluokitten.core</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>Contains core Fluokitten categorical functions. This is the
+namespace that you want to use or require in your projects that use
+Fluokitten built-in functionality or the functionality of various other
+libraries that implement Fluokitten protocols.
+Intended use: use or require this namespace and other namespaces that
+contain the implementations of the protocols, by default jvm.</p>
+
+<p>---- Example:
+(ns test
+  (:use [uncomplicate.fluokitten core jvm]))</p>
+</td><td class="codes"><pre class="brush: clojure">(ns ^{:doc 
+      :author &quot;Dragan Djuric&quot;}
+  uncomplicate.fluokitten.core
   (:require [uncomplicate.fluokitten.protocols :as p])
-  (:require [uncomplicate.fluokitten.algo :as algo]))</pre></td></tr><tr><td class="docs"><p>Applies a function f to the value(s) inside functor's context
+  (:require [uncomplicate.fluokitten.algo :as algo])
+  (:require [uncomplicate.fluokitten.utils :as utils]))</pre></td></tr><tr><td class="docs"><p>Applies a function f to the value(s) inside functor's context
    while preserving the context. More about Functors can be found
    in the doc for uncomplicate.fluokitten.protocols/Functor.</p>
 
@@ -3733,6 +3769,9 @@ net.brehaut.ClojureTools = (function (SH) {
    or fapply and pure (see the doc for
    uncomplicate.fluokitten.protocols/Applicative)</p>
 
+<p>   Has context-agnostic versions that take the applicative context
+   implicitly from the environment: return and unit.</p>
+
 <p>   ---- Example 1: putting a number in a pure vector context
    (pure [] 1)
    => [1]</p>
@@ -3802,7 +3841,7 @@ net.brehaut.ClojureTools = (function (SH) {
 </td><td class="codes"><pre class="brush: clojure">(defn &lt;*&gt;
   ([af]
      (fn [a &amp; as]
-       (apply &lt;*&gt; af a as) ))
+       (apply &lt;*&gt; af a as)))
   ([af av]
      (p/fapply af av))
   ([af av &amp; avs]
@@ -3818,7 +3857,35 @@ net.brehaut.ClojureTools = (function (SH) {
    => #&lt;Atom: 1></p>
 </td><td class="codes"><pre class="brush: clojure">(defn join
   [monadic]
-  (p/join monadic))</pre></td></tr><tr><td class="docs"><p>Takes a value inside the context of a monad (monadic value)
+  (p/join monadic))</pre></td></tr><tr><td class="docs"><p>A monad-agnostic version of pure, it is equivalent to
+   (pure <current context>). Valid only inside
+   a context-aware <em>time-dependent</em> dynamic scope.
+   Otherwise, an IllegalArgumentException will be thrown
+   complaining that there is no implementation found for
+   class clojure.lang.Var$Unbound.
+   The context is available inside the execution of bind
+   method (and the methods and macros that use it internaly,
+   such as >>= mdo), or inside the with-context macro.
+   Also equivalent to the unit function.</p>
+
+<p>   ---- Example 1:
+   (defn f [x] (return (inc x)))
+   (bind [1 2 3] f)
+   => [2 3 4]
+   (bind (just 1) f)
+   => 2</p>
+
+<p>   ---- Example 2:
+   (f 1)
+   => IllegalArgumentException
+   (with-context []
+     (f 1))
+   => [1]</p>
+</td><td class="codes"><pre class="brush: clojure">(defn return
+  [x]
+  (p/pure (utils/get-context) x))</pre></td></tr><tr><td class="docs"><p>The equivalent of the return method.</p>
+</td><td class="codes"><pre class="brush: clojure">(def unit
+  return)</pre></td></tr><tr><td class="docs"><p>Takes a value inside the context of a monad (monadic value)
    and a function f that takes a normal value (without the
    context) and produces the result inside of a context
    of the monadic type.</p>
@@ -3830,6 +3897,9 @@ net.brehaut.ClojureTools = (function (SH) {
    with f fixed, so it just accepts monadic values and feeds
    them to f.</p>
 
+<p>   For nested bind calls, there is a syntactic sugar, the
+   mdo macro.</p>
+
 <p>   bind can be also thought of as a function that combines
    two computations into one large computation.</p>
 
@@ -3837,6 +3907,9 @@ net.brehaut.ClojureTools = (function (SH) {
    satisfied by any monad in regard to the behavior
    or bind and pure (see the doc for
    uncomplicate.fluokitten.protocols/Monad)</p>
+
+<p>   bind maintains an implicit context, and supports
+   functions that depend on it, such are return and unit.</p>
 
 <p>   Some common Clojure constructs that are Monads:
    - persistent collections
@@ -3853,14 +3926,15 @@ net.brehaut.ClojureTools = (function (SH) {
    => #&lt;Atom: 2></p>
 </td><td class="codes"><pre class="brush: clojure">(defn bind
   ([f]
-     (fn
-       ([monadic &amp; ms]
-          (apply bind monadic f ms))))
+     (fn [monadic &amp; ms]
+       (apply bind monadic f ms)))
   ([monadic f]
-     (p/bind monadic f))
+     (utils/with-context monadic
+       (p/bind monadic f)))
   ([monadic monadic2 &amp; args]
-     (p/bind monadic (last args)
-             (cons monadic2 (butlast args)))));;TODO Optimize to avoid traversing args twice</pre></td></tr><tr><td class="docs"><p>TODO Optimize to avoid traversing args twice</p>
+     (utils/with-context monadic
+       (p/bind monadic (last args)
+               (cons monadic2 (butlast args))))));;TODO Optimize to avoid traversing args twice</pre></td></tr><tr><td class="docs"><p>TODO Optimize to avoid traversing args twice</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Performs a Haskell-style left-associative bind
    on its arguments. (>>= f g h) is equivalent to
    (bind (bind f g) h). It always uses a two-argument bind.</p>
@@ -3868,14 +3942,91 @@ net.brehaut.ClojureTools = (function (SH) {
 <p>   If only two arguments are supplied, it is equivalent to bind.
    When called with one argument, creates a function
    that can accept the rest of the arguments and apply >>=.</p>
+
+<p>   bind maintains an implicit context, so >>= too supports
+   functions that depend on it, such are return and unit.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn &gt;&gt;=
   ([monadic]
      (fn [f &amp; fs]
        (apply &gt;&gt;= monadic f fs) ))
   ([monadic f]
-     (p/bind monadic f))
+     (bind monadic f))
   ([monadic f &amp; fs]
-     (reduce p/bind monadic (cons f fs))))</pre></td></tr><tr><td class="docs"><p>Folds all the contents of a foldable context by either
+     (reduce bind monadic (cons f fs))))</pre></td></tr><tr><td class="docs"><p>Composes monadic functions from left to right, in the reverse
+   order from comp. The composed functions threads the calls
+   through >>=.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn &gt;=&gt;
+  ([f]
+     (fn [g &amp; gs]
+       (apply &gt;=&gt; f g gs)))
+  ([f g]
+     (fn
+       ([x]
+          (bind (f x) g))
+       ([x &amp; xs]
+          (bind (apply f x xs) g))))
+  ([f g &amp; hs]
+     (fn
+       ([x]
+          (apply &gt;&gt;= (f x) g hs))
+       ([x &amp; xs]
+          (apply &gt;&gt;= (apply f x xs) g hs)))))</pre></td></tr><tr><td class="docs"><p>Composes monadic functions from right to left, in the reverse
+   order than >=>.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn &lt;=&lt;
+  ([f]
+     (fn [g &amp; gs]
+       (apply &lt;=&lt; f g gs)))
+  ([f g]
+     (&gt;=&gt; g f))
+  ([f g &amp; hs]
+     (apply &gt;=&gt; (reverse (into [f g] hs)))))</pre></td></tr><tr><td class="docs"><p>A syntactic sugar for gluing together chained bind calls.
+   The structure of mdo is similar to the structure of let.</p>
+
+<p>   bindings should be a vector of symbol - expression pairs
+   in the form [sym1 exp1 sym2 exp2 ...].
+   while the body should be an expression that uses these
+   symbols. Body is not wrapped in an implicit do block, so
+   if multiple forms are needed in the block, they have to
+   be explicitly wrapped with do.</p>
+
+<p>   If the bindings vector is empty, there are no bindings and
+   no bind function calls, mdo simply evaluates body in that
+   case.</p>
+
+<p>   (mdo [x some-monadic-value
+         y some-other-monadic-value]
+     some-expression)</p>
+
+<p>   expands to:</p>
+
+<p>   (bind some-monadic-value
+         (fn [x]
+           (bind some-other-monadic-value
+                 (fn [y]
+                   some-expression))))))</p>
+
+<p>   bind maintains an implicit context, so mdo too supports
+   functions that depend on it, such are return and unit.</p>
+
+<p>   ---- Example:
+   (mdo [a [1 2]
+         b [4 5]
+         c [7]]
+     (return (* a b c)))</p>
+
+<p>   => [28 35 56 70]</p>
+</td><td class="codes"><pre class="brush: clojure">(defmacro mdo
+  [bindings body]
+  (if (and (vector? bindings) (even? (count bindings)))
+    (if (seq bindings)
+      (let [sym (get bindings 0)
+            monad (get bindings 1)]
+        `(bind ~monad
+               (fn [~sym]
+                 (mdo ~(subvec bindings 2) ~body))))
+      body)
+    (throw (IllegalArgumentException.
+            &quot;bindings has to be a vector with even number of elements.&quot;))))</pre></td></tr><tr><td class="docs"><p>Folds all the contents of a foldable context by either
    getting the single element or if there are more than one
    elements in the context by combining them all in the one
    aggregate value. How exactly these elements
@@ -3960,14 +4111,28 @@ net.brehaut.ClojureTools = (function (SH) {
   (p/id x))</pre></td></tr><tr><td class="docs"><p>Creates the context of Maybe monad and puts
    the supplied value in it.</p>
 </td><td class="codes"><pre class="brush: clojure">(def just
-  algo/-&gt;Just)</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#uncomplicate.fluokitten.jvm" name="uncomplicate.fluokitten.jvm"><h1 class="project-name">uncomplicate.fluokitten.jvm</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(ns uncomplicate.fluokitten.jvm
-  (:use [uncomplicate.fluokitten protocols algo]))</pre></td></tr><tr><td class="docs">
+  algo/-&gt;Just)</pre></td></tr><tr><td class="docs"><p>Checks whether x is an instance of the type Just .</p>
+</td><td class="codes"><pre class="brush: clojure">(defn just?
+  [x]
+  (instance? uncomplicate.fluokitten.algo.Just x))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#uncomplicate.fluokitten.jvm" name="uncomplicate.fluokitten.jvm"><h1 class="project-name">uncomplicate.fluokitten.jvm</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>Extends Clojure core with the implementations of
+fluokitten protocols. Defines curried functions. Need to be
+used or required for enabling Fluokitten on projects that
+run on JVM platform.</p>
+</td><td class="codes"><pre class="brush: clojure">(ns ^{:doc 
+      :author &quot;Dragan Djuric&quot;}
+  uncomplicate.fluokitten.jvm
+  (:use [uncomplicate.fluokitten protocols algo utils]))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(set! *warn-on-reflection* true)</pre></td></tr><tr><td class="docs"><p>======== Set appropriate platform specific vars in algo. ======</p>
-</td><td class="codes"><pre class="brush: clojure">(ns uncomplicate.fluokitten.algo)</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn deref? [x]
+</td><td class="codes"><pre class="brush: clojure">(ns uncomplicate.fluokitten.utils)</pre></td></tr><tr><td class="docs"><p>Checks whether x is dereferencible. On JVM it checks if it is
+   an instance of clojure.lang.IDeref, on other platforms it may
+   be implemented in a similar or a completely different way.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn deref?
+  [x]
   (instance? clojure.lang.IDeref x))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn create-mapentry [k v]
+</td><td class="codes"><pre class="brush: clojure">(ns uncomplicate.fluokitten.algo)</pre></td></tr><tr><td class="docs"><p>Creates a map entry with the supplied key and value. On JVM it
+   creates an instance of clojure.lang.MapEntry.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn create-mapentry
+  [k v]
   (clojure.lang.MapEntry. k v))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(ns uncomplicate.fluokitten.jvm)</pre></td></tr><tr><td class="docs"><p>======== Clojure JVM-specific Extensions =====================</p>
 </td><td class="codes"><pre class="brush: clojure">(extend-collection clojure.lang.IPersistentCollection)</pre></td></tr><tr><td class="docs">
@@ -4032,19 +4197,37 @@ net.brehaut.ClojureTools = (function (SH) {
                ((apply cg x xs) (apply cf x xs))))
           1))
      ~'(fapply [cg cf hs]
-         (reduce fapply cg (cons cf hs)))
+         (CurriedFn.
+          (fn
+            ([x]
+               (apply (cg x) (cf x) (map #(% x) hs)))
+            ([x &amp; xs]
+               (apply (apply cg x xs) (apply cf x xs)
+                      (map #(apply % x xs) hs))))
+          1))
      Monad
      ~'(bind [cf cg]
          (CurriedFn.
           (fn
             ([x]
-               ((cg (cf x)) x))
+               (with-context cf
+                 ((cg (cf x)) x)))
             ([x &amp; xs]
-               (apply (cg (apply cf x xs)) x xs)))
+               (with-context cf
+                 (apply (cg (apply cf x xs)) x xs))))
           1))
      ~'(bind [cf cg hs]
-         (reduce #(bind %2 %1)
-                 (into [cg cf] hs)))
+         (CurriedFn.
+          (fn
+            ([x]
+               (with-context cf
+                 ((apply cg (cf x) (map #(% x) hs)) x)))
+            ([x &amp; xs]
+               (with-context cf
+                 (apply (apply cg (apply cf x xs)
+                               (map #(apply % x xs) hs))
+                        x xs))))
+          1))
      ~'(join [cf] (bind cf identity))
      Foldable
      ~'(fold [_] f)
@@ -4060,17 +4243,43 @@ net.brehaut.ClojureTools = (function (SH) {
          (reduce op x (cons y ys)))
      Monoid
      ~'(id [_] cidentity)))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(deftype-curried-fn)</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(def curried? (partial instance? CurriedFn))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(deftype-curried-fn)</pre></td></tr><tr><td class="docs"><p>Checks whether an object is a curried function.</p>
+</td><td class="codes"><pre class="brush: clojure">(def 
+  curried? (partial instance? CurriedFn))</pre></td></tr><tr><td class="docs"><p>Creates an automatically curried version of the function f.
+   If arity is supplied, the function will be automatically
+   curried when called with less arguments. If arity is not
+   supplied, the default arity will depend on the arity of f.
+   arity defaults to 2 if f can support it, otherwise it is
+   1.</p>
+
+<p>   ---- Example: currying +
+   (((curry +) 3) 5)
+   => 8</p>
+
+<p>   ((((curry + 3) 3) 5) 7)
+   => 15</p>
+
+<p>   ((curry +) 3 5 7)
+   => 15</p>
 </td><td class="codes"><pre class="brush: clojure">(defn curry
   ([f] (curry f (min 2 (apply max (arg-counts f)))))
-  ([f n]
-     (if (and (fn? f) (pos? n))
-       (-&gt;CurriedFn f n)
+  ([f arity]
+     (if (and (fn? f) (pos? arity))
+       (-&gt;CurriedFn f arity)
        f)))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(def curried (CurriedFn. identity 1))
-(def cidentity curried)</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#uncomplicate.fluokitten.protocols" name="uncomplicate.fluokitten.protocols"><h1 class="project-name">uncomplicate.fluokitten.protocols</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(ns uncomplicate.fluokitten.protocols)</pre></td></tr><tr><td class="docs">
+(def cidentity curried)</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#uncomplicate.fluokitten.protocols" name="uncomplicate.fluokitten.protocols"><h1 class="project-name">uncomplicate.fluokitten.protocols</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>Defines Fluokitten protocols for various categorical concepts.
+You need to use or require this namespace and provide your implementations
+of these protocols if you want to extend Fluokitten with specific instances
+of categorical concepts beyond those from Clojure core that Fluokitten
+itself extends to be categorical. To use your own implementations, you need
+to use or require the namespace where you define the implementations
+from the calling code's namespace, as well as to use or require Fluokitten
+core. Your implemntations are normally not called directly from the client
+code. The clent code should call the generic functions from Fluokitten core.</p>
+</td><td class="codes"><pre class="brush: clojure">(ns ^{:doc 
+      :author &quot;Dragan Djuric&quot;}
+    uncomplicate.fluokitten.protocols)</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defprotocol Curried
   (arity [f]))</pre></td></tr><tr><td class="docs"><p>Functor is an abstraction for a context (box, container,
    computation) along with the abiliity to apply a function
@@ -4290,88 +4499,167 @@ other methods.</p></li>
     &quot;Similar to fold, but before returning the sole value
      from the context or combining multiple values into
      a summary, applies the function g to transform it
-     (to a Monoid if needed).&quot;))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#uncomplicate.fluokitten.test" name="uncomplicate.fluokitten.test"><h1 class="project-name">uncomplicate.fluokitten.test</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(ns uncomplicate.fluokitten.test
-  (:use [uncomplicate.fluokitten core algo])
-  (:use [midje.sweet :exclude [just]]))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn check-eq [expected]
-  (cond
-   (deref? expected)
-   (let [exp (deref expected)]
-     #(and (instance? (type expected) %)
-           (= exp (deref %))))
-   (reducible? expected)
-   #(= (into [] expected) (into [] %))
-   :else #(= expected %)))</pre></td></tr><tr><td class="docs"><p>=============== Functor tests ========================</p>
+     (to a Monoid if needed).&quot;))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#uncomplicate.fluokitten.test" name="uncomplicate.fluokitten.test"><h1 class="project-name">uncomplicate.fluokitten.test</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>Macros that generate Midje tests for various laws that
+categorical concepts have to satisfy. You should use these tests
+to check if your implementations of clojure protocols are valid
+beyond what the compiler can assert.</p>
+</td><td class="codes"><pre class="brush: clojure">(ns ^{:doc 
+      :author &quot;Dragan Djuric&quot;} uncomplicate.fluokitten.test
+  (:use [uncomplicate.fluokitten core algo utils])
+  (:use [midje.sweet :exclude [just]]))</pre></td></tr><tr><td class="docs"><p>Midje checker that check for the equality of contents in contexts such
+   as references and reducibles.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn check-eq
+  ([expected]
+     (fn [actual]
+       (check-eq expected actual)))
+  ([expected actual]
+     (cond
+      (nil? expected)
+      (nil? actual)
+      (and (instance? (type expected) actual)
+           (deref? expected) (deref? actual))
+      (let [e (deref expected)
+            a (deref actual)]
+        (check-eq e a))
+      (reducible? expected)
+      (= (into [] expected) (into [] actual))
+      :else (= expected actual))))</pre></td></tr><tr><td class="docs"><p>Generates a test that checks if the functor x satisfies
+   the Second Functor Law:</p>
+
+<p>   (fmap (comp f g)) => (fmap f (fmap g))</p>
+
+<p>   or, when applied to a concrete functor:</p>
+
+<p>   (fmap (comp f g) x) => (fmap f (fmap g x))</p>
+
+<p>=============== Functor tests ========================</p>
 </td><td class="codes"><pre class="brush: clojure">(defmacro functor-law2
   ([f x] `(functor-law2 ~f ~f ~x))
-  ([f1 f2 x &amp; xs]
+  ([f g x &amp; xs]
      `(facts &quot;Second functor law.&quot;
-             (fmap (comp ~f1 ~f2) ~x ~@xs) =&gt;
-             (check-eq (fmap ~f1 (fmap ~f2 ~x ~@xs))))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defmacro fmap-keeps-type [f x &amp; xs]
+             (fmap (comp ~f ~g) ~x ~@xs) =&gt;
+             (check-eq (fmap ~f (fmap ~g ~x ~@xs))))))</pre></td></tr><tr><td class="docs"><p>Generates a test that checks if the functor x's implementation of
+   fmap keeps the type of x when f is applied to its content.</p>
+</td><td class="codes"><pre class="brush: clojure">(defmacro fmap-keeps-type
+  [f x &amp; xs]
   `(fact &quot;fmap should return data of the same type
             as the functor argument.&quot;
-         (type (fmap ~f ~x ~@xs)) =&gt; #(isa? % (type ~x))))</pre></td></tr><tr><td class="docs"><p>================ Applicative tests ==========================</p>
-</td><td class="codes"><pre class="brush: clojure">(defmacro applicative-law1 [f x &amp; xs]
+         (type (fmap ~f ~x ~@xs)) =&gt; #(isa? % (type ~x))))</pre></td></tr><tr><td class="docs"><p>Generates a test that checks if the applicative functor x
+   satisfies the first applicative law:</p>
+
+<p>   (fapply (pure x f) x) => (fmap f x)</p>
+
+<p>================ Applicative tests ==========================</p>
+</td><td class="codes"><pre class="brush: clojure">(defmacro applicative-law1
+  [f x &amp; xs]
   `(fact &quot;First applicative law.&quot;
         (fapply (pure ~x ~f) ~x ~@xs)
-        =&gt; (check-eq (fmap ~f ~x ~@xs))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defmacro applicative-law2-identity [x]
+        =&gt; (check-eq (fmap ~f ~x ~@xs))))</pre></td></tr><tr><td class="docs"><p>Generates a test that checks if the applicative functor x
+   satisfies the second applicative law:</p>
+
+<p>   (fapply (pure x identity) x) => x</p>
+</td><td class="codes"><pre class="brush: clojure">(defmacro applicative-law2-identity
+  [x]
   `(fact &quot;Identity applicative law.&quot;
          (fapply (pure ~x identity) ~x)
-         =&gt; (check-eq ~x)))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defmacro applicative-law3-composition [u v x &amp; xs]
+         =&gt; (check-eq ~x)))</pre></td></tr><tr><td class="docs"><p>Generates a test that checks if the applicative functor x
+   satisfies the third applicative law:</p>
+
+<p>   (&lt;*> (pure x (curry comp)) u v x)
+   => (fapply u (fapply v x))</p>
+</td><td class="codes"><pre class="brush: clojure">(defmacro applicative-law3-composition
+  [u v x &amp; xs]
   `(fact &quot;Composition applicative law.&quot;
          (-&gt; (pure ~x #(partial comp %))
              (fapply ~u) (fapply ~v) (fapply ~x ~@xs))
-         =&gt; (check-eq (fapply ~u (fapply ~v ~x ~@xs)))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defmacro applicative-law4-homomorphism [ap f x &amp; xs]
+         =&gt; (check-eq (fapply ~u (fapply ~v ~x ~@xs)))))</pre></td></tr><tr><td class="docs"><p>Generates a test that checks if the applicative functor x
+   satisfies the fourth applicative law:</p>
+
+<p>   (fapply (pure a f) (pure a x)) => (f x)</p>
+</td><td class="codes"><pre class="brush: clojure">(defmacro applicative-law4-homomorphism
+  [ap f x &amp; xs]
   `(fact &quot;Homomorphism applicative law.&quot;
          (apply fapply (pure ~ap ~f) (pure ~ap ~x)
                 (map (pure ~ap) '~xs))
-         =&gt; (check-eq (pure ~ap (~f ~x ~@xs)))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defmacro applicative-law5-interchange [ap f x &amp; xs]
+         =&gt; (check-eq (pure ~ap (~f ~x ~@xs)))))</pre></td></tr><tr><td class="docs"><p>Generates a test that checks if the applicative functor x
+   satisfies the fifth applicative law:</p>
+
+<p>   (fapply u (pure a y)) => (fapply (pure a fn(% y)) u)</p>
+</td><td class="codes"><pre class="brush: clojure">(defmacro applicative-law5-interchange
+  [ap f x &amp; xs]
   `(fact &quot;Interchange applicative law.&quot;
          (apply fapply (pure ~ap ~f) (pure ~ap ~x)
                 (map (pure ~ap) '~xs))
          =&gt; (check-eq (fapply (pure ~ap #(% ~x ~@xs))
-                 (pure ~ap ~f)))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defmacro fapply-keeps-type [f x &amp; xs]
+                 (pure ~ap ~f)))))</pre></td></tr><tr><td class="docs"><p>Generates a test that checks if the applicative functor x's
+   implementation of fapply keeps the type of x when the function
+   inside f is applied to its content.</p>
+</td><td class="codes"><pre class="brush: clojure">(defmacro fapply-keeps-type
+  [f x &amp; xs]
   `(fact &quot;fapply should return data of the same type
             as the applicative argument.&quot;
          (type (fapply (pure ~x ~f) ~x ~@xs))
-         =&gt; (type ~x)))</pre></td></tr><tr><td class="docs"><p>=============== Monad tests ============================</p>
-</td><td class="codes"><pre class="brush: clojure">(defmacro monad-law1-left-identity [m g x &amp; xs]
+         =&gt; (type ~x)))</pre></td></tr><tr><td class="docs"><p>Generates a test that checks if the monad x
+   satisfies the first monad law:</p>
+
+<p>   (bind (pure m x) f) => (g x)</p>
+
+<p>=============== Monad tests ============================</p>
+</td><td class="codes"><pre class="brush: clojure">(defmacro monad-law1-left-identity
+  [m g x &amp; xs]
   `(fact &quot;Left Identity Monad Law&quot;
          (apply bind (pure ~m ~x)
                 (conj (vec (map (pure ~m) '~xs))
                       ~g))
-         =&gt; (check-eq (~g ~x ~@xs))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defmacro monad-law2-right-identity [m]
+         =&gt; (check-eq (~g ~x ~@xs))))</pre></td></tr><tr><td class="docs"><p>Generates a test that checks if the monad x
+   satisfies the secondmonad law:</p>
+
+<p>   (bind m (pure m)) => m</p>
+</td><td class="codes"><pre class="brush: clojure">(defmacro monad-law2-right-identity
+  [m]
   `(fact &quot;Right Identity Monad Law&quot;
          (bind ~m (pure ~m))
-         =&gt; (check-eq ~m)))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defmacro monad-law3-associativity [f g m &amp; ms]
+         =&gt; (check-eq ~m)))</pre></td></tr><tr><td class="docs"><p>Generates a test that checks if the monad x
+   satisfies the third monad law:</p>
+
+<p>   (bind m (fn [x] (bind (f x) g)</p>
+</td><td class="codes"><pre class="brush: clojure">(defmacro monad-law3-associativity
+  [f g m &amp; ms]
   `(fact &quot;Associativity Monad Law&quot;
          (bind (bind ~m ~@ms ~f) ~g)
          =&gt; (check-eq (bind ~m ~@ms
                             (fn [&amp; xs#]
-                              (bind (apply ~f xs#) ~g))))))</pre></td></tr><tr><td class="docs"><p>============= Magmas, Semigroups and Monoids =======================</p>
-</td><td class="codes"><pre class="brush: clojure">(defmacro magma-op-keeps-type [x y &amp; ys]
+                              (bind (apply ~f xs#) ~g))))))</pre></td></tr><tr><td class="docs"><p>Generates a test that checks if the operation op is closed on magma x.</p>
+
+<p>============= Magmas, Semigroups and Monoids =======================</p>
+</td><td class="codes"><pre class="brush: clojure">(defmacro magma-op-keeps-type
+  [x y &amp; ys]
   `(fact &quot;Magma - op should keep the type.&quot;
          (type (op ~x ~y ~@ys))
-         =&gt; #(isa? % (type ~x))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defmacro semigroup-op-associativity [x y &amp; ys]
+         =&gt; #(isa? % (type ~x))))</pre></td></tr><tr><td class="docs"><p>Generates a test that checks if x and op form a semigroup,
+   i.e whether op is associative:</p>
+
+<p>   (op (op a b)) => (op a (op b c))</p>
+</td><td class="codes"><pre class="brush: clojure">(defmacro semigroup-op-associativity
+  [x y &amp; ys]
   `(fact &quot;Semigroup - op associativity.&quot;
          (op ~x ~y ~@ys)
          =&gt; (check-eq
              (reduce #(op %2 %1)
-                     (reverse (list ~x ~y ~@ys))))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defmacro monoid-identity-law [x &amp; xs]
+                     (reverse (list ~x ~y ~@ys))))))</pre></td></tr><tr><td class="docs"><p>Generates a test that checks whether the Monoid implementation x
+   satisfies the monoid identity law, i.e. if identity element for op
+   exists:
+      (op x (id x)) => x
+      (op (id x) x) => x</p>
+</td><td class="codes"><pre class="brush: clojure">(defmacro monoid-identity-law
+  [x &amp; xs]
   `(fact &quot;Monoid law 1.&quot;
          (op (id ~x) ~x) =&gt; (check-eq ~x)
-         (op ~x (id ~x)) =&gt; (check-eq ~x)))</pre></td></tr><tr><td class="docs"><p>=============== Metadata ==========================</p>
+         (op ~x (id ~x)) =&gt; (check-eq ~x)))</pre></td></tr><tr><td class="docs"><p>Generates the tests that check whether the implementations
+   of functions defined in Fluokitten protocols that extend
+   Clojure core data structures preserve metadata.</p>
+
+<p>=============== Metadata ==========================</p>
 </td><td class="codes"><pre class="brush: clojure">(defmacro data-structures-should-preserve-metadata
   [f1 f2 builder x y]
   `(facts  &quot;All data structures should preserve metadata.&quot;
@@ -4413,5 +4701,43 @@ other methods.</p></li>
            =&gt; {:test true}
            (meta (join (with-meta (empty ~x)
                          {:test true})))
-           =&gt; {:test true}))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/fogus/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
+           =&gt; {:test true}))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#uncomplicate.fluokitten.utils" name="uncomplicate.fluokitten.utils"><h1 class="project-name">uncomplicate.fluokitten.utils</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>TODO</p>
+</td><td class="codes"><pre class="brush: clojure">(ns ^{:doc 
+      :author &quot;Dragan Djuric&quot;}
+  uncomplicate.fluokitten.utils
+  (:require [clojure.core.reducers :as r]))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(def ^{:dynamic true :private true} *pure-context*)</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn get-context []
+  &quot;Fetches the currently valid monadic context, if any.
+   If no context is currently bound, returns
+   Var$Unbound.&quot;
+  *pure-context*)</pre></td></tr><tr><td class="docs"><p>Establishes the monadic context that can be accessed
+   with the get-context function in the dynamic scope inside
+   the body.</p>
+</td><td class="codes"><pre class="brush: clojure">(defmacro with-context
+  [context &amp; body]
+  `(binding [*pure-context* ~context]
+     ~@body))</pre></td></tr><tr><td class="docs"><p>Creates a function that applies function f with the supplied arguments,
+   while providing the currently valid dynamic scoped monadic context
+   inside f's lexical scope.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn with-current-context
+  [f]
+  (let [current-context (get-context)]
+    (fn [&amp; args]
+      (with-context current-context
+        (apply f args)))))</pre></td></tr><tr><td class="docs"><p>Creates an identity reducible function from the collection c.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn reducible
+  [c]
+  (r/map identity c))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn realize [c cr]
+  &quot;Realizes the reducible function cr into a collection
+   that has the same type as c, while enabling monadic context
+   to be used inside the lexical scope of cr.&quot;
+  (let [res (empty c)]
+    (with-context res
+      (into res cr))))</pre></td></tr><tr><td class="docs"><p>Checks whether x is an instance of the CollReduce protocol.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn reducible?
+  [x]
+  (instance? clojure.core.protocols.CollReduce x))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(declare deref?)</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/fogus/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
        SyntaxHighlighter.all()</script></body></html>
