@@ -6,6 +6,23 @@
   (:require [uncomplicate.fluokitten.protocols :as protocols])
   (:use [midje.sweet :exclude [just]]))
 
+
+(facts
+ "Examples from the LYAH book, chapter 13,
+  the Writer? I hardly know her! section"
+
+
+ )
+
+(facts
+ "Examples from the LYAH book, chapter 13,
+  Some useful monadic functions section"
+
+ ;;TODO The first few functions are obsolete in Clojure.
+ ;;Write the examples with fmap and fapply once Writer and
+ ;; Reader are implemented.
+ )
+
 (deftype Prob [xs]
   Object
   (hashCode [_]
@@ -41,6 +58,7 @@
     nil))
 
 (facts
+ "Examples from the LYAH book, chapter 13, Making monads section"
  (fmap - (Prob. [[3 1/2] [5 1/4] [9 1/4]]))
  => (Prob. [[-3 1/2] [-5 1/4] [-9 1/4]])
 

@@ -1,4 +1,4 @@
-(defproject uncomplicate/fluokitten "0.3.0-SNAPSHOT"
+(defproject uncomplicate/fluokitten "0.3.0"
   :description "Category theory concepts in Clojure - Functors, Applicatives, Monads, Monoids and more."
   :url "https://github.com/uncomplicate/fluokitten"
   :scm {:name "git"

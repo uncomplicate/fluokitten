@@ -228,7 +228,7 @@ contain the implementations of the protocols, by default jvm.
   (p/pure (utils/get-context) x))
 
 (def unit
-  "The equivalent of the return method."
+  "The same as return."
   return)
 
 (defn bind
@@ -486,6 +486,6 @@ contain the implementations of the protocols, by default jvm.
   algo/->Just)
 
 (defn just?
-  "Checks whether x is an instance of the type Just."
+  "Checks whether x is an instance of the type Just ."
   [x]
   (instance? uncomplicate.fluokitten.algo.Just x))
