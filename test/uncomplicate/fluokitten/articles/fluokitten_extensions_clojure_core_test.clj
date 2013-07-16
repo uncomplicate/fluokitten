@@ -2,7 +2,7 @@
    "These expressions are used as examples in the
     Fluokitten Extensions of Clojure Core
     article at the Fluokitten web site."
-  (:use [uncomplicate.fluokitten jvm core test])
+  (:use [uncomplicate.fluokitten jvm core test utils])
   (:require [clojure.core.reducers :as r])
   (:use [midje.sweet :exclude [just]]))
 
@@ -79,6 +79,14 @@
 
  (into (list) (pure (r/map identity [2 3]) 1))
  => (list 1)
+
+ (with-context []
+   (return 1)
+   => [1])
+
+ (with-context {}
+   (return 1)
+   => {nil 1})
 
  (fapply [] []) => []
 
@@ -174,51 +182,48 @@
 (facts
  "Data structures: Monad"
 
- (bind [] (comp vector inc)) => []
+ (def increment (comp return inc))
+ (def add (comp return +))
 
- (bind [1 2 3] (comp vector inc)) => [2 3 4]
+ (bind [] increment) => []
 
- (bind [1 2 3] [4 5 6] (comp vector +)) => [5 7 9]
+ (bind [1 2 3] increment) => [2 3 4]
 
- (bind (list) (comp list inc)) => (list)
+ (bind [1 2 3] [4 5 6] add) => [5 7 9]
 
- (bind (list 1 2 3) (comp list inc)) => (list 2 3 4)
+ (bind (list) increment) => (list)
 
- (bind (list 1 2 3) (list 4 5 6) (comp list +)) => (list 5 7 9)
+ (bind (list 1 2 3) increment) => (list 2 3 4)
 
- (bind (empty (seq [2])) (comp seq vector inc))
+ (bind (list 1 2 3) (list 4 5 6) add) => (list 5 7 9)
+
+ (bind (empty (seq [2])) increment)
  => (empty (seq [3]))
 
- (bind (seq [1 2 3]) (comp seq vector inc)) => (seq [2 3 4])
+ (bind (seq [1 2 3]) increment) => (seq [2 3 4])
 
- (bind (seq [1 2 3]) (seq [4 5 6]) (comp seq vector +))
+ (bind (seq [1 2 3]) (seq [4 5 6]) add)
  => (seq [5 7 9])
 
- (bind (lazy-seq [])
-       (fn [& args]
-         (lazy-seq (vector (apply inc args)))))
+ (bind (lazy-seq []) increment)
  => (lazy-seq [])
 
- (bind (lazy-seq [1 2 3])
-       (fn [& args]
-         (lazy-seq (vector (apply inc args)))))
+ (bind (lazy-seq [1 2 3]) increment)
  => (lazy-seq [2 3 4])
 
- (bind (lazy-seq [1 2 3]) (lazy-seq [4 5 6])
-       (fn [& args]
-         (lazy-seq (vector (apply + args)))))
+ (bind (lazy-seq [1 2 3]) (lazy-seq [4 5 6]) add)
  => (lazy-seq [5 7 9])
 
- (bind #{} (comp hash-set inc)) => #{}
+ (bind #{} increment) => #{}
 
- (bind #{1 2 3} (comp hash-set inc)) => #{2 3 4}
+ (bind #{1 2 3} increment) => #{2 3 4}
 
- (bind #{1 2 3} #{4 5 6} (comp hash-set +)) => #{5 7 9}
+ (bind #{1 2 3} #{4 5 6} add) => #{5 7 9}
 
- (bind {} #(hash-map :x %)) => {}
+ (bind {} increment) => {}
 
- (bind {:a 1} #(hash-map :increment (inc %)))
- => {[:a :increment] 2}
+ (bind {:a 1} increment)
+ => {:a 2}
 
  (bind {:a 1  :b 2 :c 3} #(hash-map :increment (inc %)))
  => {[:a :increment] 2 [:b :increment] 3 [:c :increment] 4}
@@ -445,15 +450,15 @@
  (dosync (join (ref (ref (atom 33)))))
  => (check-eq (ref (atom 33)))
 
- (bind (atom 8) (comp atom inc)) => (check-eq (atom 9))
+ (bind (atom 8) increment) => (check-eq (atom 9))
 
- (dosync (bind (ref 8) (comp ref inc)))
+ (dosync (bind (ref 8) increment))
  => (check-eq (ref 9))
 
- (bind (atom 8) (ref 9) (atom 10) (comp atom +))
+ (bind (atom 8) (ref 9) (atom 10) add)
  => (check-eq (atom 27))
 
- (dosync (bind (ref 18) (ref 19) (atom 20) (comp ref +)))
+ (dosync (bind (ref 18) (ref 19) (atom 20) add))
  => (check-eq (ref 57))
 
  (op (atom 3) (atom 4)) => (check-eq (atom 7))

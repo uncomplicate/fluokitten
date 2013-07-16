@@ -34,7 +34,7 @@
        (bind [1 2 3] #(vector (inc %) (dec %)))
        => [2 0 3 1 4 2]
 
-       (bind (atom 1) (comp atom inc))
+       (bind (atom 1) (comp return inc))
        => (check-eq (atom 2))
 
        (id 4) => 0
