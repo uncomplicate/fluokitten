@@ -1,4 +1,4 @@
-# Project Name Documentation
+# Fluokitten Documentation
 
 This is a documentation site for [Fluokitten](http://fluokitten.uncomplicate.org).
 
@@ -26,5 +26,3 @@ then navigate to [localhost:4000](http://localhost:4000)
 ## License & Copyright
 
 Copyright (C) 2013 Dragan Djuric.
-
-Distributed under the Eclipse Public License, the same as Clojure.
