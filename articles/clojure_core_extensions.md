@@ -143,11 +143,11 @@ We can establish an implicit context with the `utils/with-context macro`, and us
 ```clojure
 (with-context []
   (return 1))
-  ;=> [1]
+;=> [1]
 
 (with-context {}
   (return 1))
-  ;=> {nil 1}
+;=> {nil 1}
 
 ```
 
