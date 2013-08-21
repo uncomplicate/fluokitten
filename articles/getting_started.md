@@ -156,11 +156,11 @@ Monads are certainly the most discussed programming concept to come from categor
 The core monad function is `bind`, and in the case of vector, it is trivially used as follows.
 
 ```clojure
-(bind [1 2 3] #(return (inc %) (dec %)))
-;=> [2 0 3 1 4 2]
+(bind [1 2 3] #(return (inc %)))
+;=> [2 3 4]
 ```
 
-If the function produces minimal context, it does even need to know which context it is. The return function is going to create the right context for the value, in this case atom.
+If the function produces minimal context, it doesn't even need to know which context it is. The return function is going to create the right context for the value, in this case atom.
 
 ```clojure
 (bind (atom 1) (comp return inc))
