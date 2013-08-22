@@ -39,7 +39,8 @@ Generally, any data structure can be considered as a specific context that can h
 (fmap + (list 1 2) (list 3 4 5) (list 6 7 8))
 ;=> (list 10 13)
 
-(fmap inc (empty (seq [1]))) => (empty (seq [2]))
+(fmap inc (empty (seq [1])))
+;=> (empty (seq [2]))
 
 (fmap inc (seq [1 2 3]))
 ;=> (seq [2 3 4])
