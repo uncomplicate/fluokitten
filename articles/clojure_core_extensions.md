@@ -151,7 +151,7 @@ We can establish an implicit context with the `utils/with-context macro`, and us
 
 ```
 
-`fapply` is pretty straightforward for most structures (except for maps and map entries, where it has a more complex behavior). It expect two structures of the same type as arguments: a function(s) structure and a data structure. Then it applies the functions to the data. The actual matching of the functions and the data depends on the data structure. For most core structures, it applies all combinations of functions and data:
+`fapply` is pretty straightforward for most structures (except for maps and map entries, where it has a more complex behavior). It expects two structures of the same type as arguments: a function(s) structure and a data structure. Then it applies the functions to the data. The actual matching of the functions and the data depends on the data structure. For most core structures, it applies all combinations of functions and data:
 
 ```clojure
 (fapply [] [])
@@ -296,7 +296,8 @@ Here are typical examples of sequences and friends:
 (bind (empty (seq [2])) increment)
 ;=> (empty (seq [3]))
 
-(bind (seq [1 2 3]) increment) => (seq [2 3 4])
+(bind (seq [1 2 3]) increment)
+;=> (seq [2 3 4])
 
 (bind (seq [1 2 3]) (seq [4 5 6]) add)
 ;=> (seq [5 7 9])
@@ -324,7 +325,8 @@ Here are typical examples of sequences and friends:
 With maps and map entries, `bind` treats keys as parts of the context, and feeds only the values of the corresponding entries to the function. Since the function returns a map for each entry, the results have to be flattened, so the final result is a map. It is easier to understand what happens with a few examples:
 
 ```clojure
-(bind {} #(hash-map :x %)) => {}
+(bind {} #(hash-map :x %))
+;=> {}
 
 (bind {:a 1} #(hash-map :increment (inc %)))
 ;=> {[:a :increment] 2}
@@ -345,7 +347,7 @@ Map entries do not care about the keys when feeding the values to the function. 
 => (first {[:a :increment] 2})
 
 (bind (first {:a 1}) (first {:a 2}) (first {:b 4}) (fn [& args] (first {:sum (apply + args)})))
-=> {[:a :sum] 8}
+=> {[:a :sum] 7}
 ```
 
 The `join` function flattens one nesting level of the the data structure if it contains nested data structures of the same type, in a similar way as clojure's `flatten` function (but only one level deep), for all collections except maps. For maps, it have to take account of the nesting of the map's keys as parts of the context, by creating a vector of all the keys that were flattened and using it as the key for the value of the flattened entry, as shown in the following examples:
@@ -369,7 +371,7 @@ The `join` function flattens one nesting level of the the data structure if it c
 (join {:a 1 :b {:c 2 :d {:e 3}}})
 ;=> {:a 1 [:b :c] 2 [:b :d] {:e 3}}
 
-(join (first {:a (first {:b 1})}))
+(join (first {:a (first {:b (first {:c 1})})}))
 ;=> (first {[:a :b] (first {:c 1})})
 ```
 
