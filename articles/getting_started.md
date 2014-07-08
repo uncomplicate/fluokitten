@@ -75,7 +75,7 @@ What functions does this make available? Not many (which is a good thing), becau
 
 ### Functors and fmap
 
-The basic categorical concepts concern contexts for data. One familiar data context is a sequence, for example one that represents several numbers. Suppuse we have a vanilla function that operates on numbers and we want to apply it to data without regard to the wrapper (context) that contains it. Of course, Clojure already has a function that can reach inside the sequence and apply a function to each element -- the ubiquitous `map` function:
+The basic categorical concepts concern contexts for data. One familiar data context is a sequence, for example one that represents several numbers. Suppose we have a vanilla function that operates on numbers and we want to apply it to data without regard to the wrapper (context) that contains it. Of course, Clojure already has a function that can reach inside the sequence and apply a function to each element -- the ubiquitous `map` function:
 
 ```clojure
 (map inc [1 2 3])
