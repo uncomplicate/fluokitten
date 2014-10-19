@@ -148,7 +148,7 @@ More simple examples:
 ;=> (atom 5)
 ```
 
-Are these function definitions and implementations arbitrary? NO! All these functions have to satisfy mathematical laws, ensuring they mesh seemlessly with the rest of the framework. Discussion of these laws is well beuond our scope, but you may rest assured that they are rigoroufly followed in the Fluokitten implementation. When you move beyond using the provided contexts and functions to writing youw own CT inplementations, you'll have to become familiar with these laws, which are covered in the advanced guides.
+Are these function definitions and implementations arbitrary? NO! All these functions have to satisfy mathematical laws, ensuring they mesh seamlessly with the rest of the framework. Discussion of these laws is well beyond the scope of this introduction, but you may rest assured that they are rigorously followed in the Fluokitten implementation. When you move beyond using the provided contexts and functions to writing your own CT implementations, you'll have to become familiar with these laws, which are covered in the advanced guides.
 
 ### Monads and bind
 
@@ -156,11 +156,11 @@ Monads are certainly the most discussed programming concept to come from categor
 The core monad function is `bind`, and in the case of vector, it is trivially used as follows.
 
 ```clojure
-(bind [1 2 3] #(return (inc %) (dec %)))
-;=> [2 0 3 1 4 2]
+(bind [0 2 3] #(return (inc %) (dec %)))
+;=> [1 -1 3 1 4 2]
 ```
 
-If the function produces minimal context, it does even need to know which context it is. The return function is going to create the right context for the value, in this case atom.
+If the function produces minimal context, it doesn't even need to know which context it is. The return function is going to create the right context for the value, in this case atom.
 
 ```clojure
 (bind (atom 1) (comp return inc))
