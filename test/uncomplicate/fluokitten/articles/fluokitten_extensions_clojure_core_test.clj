@@ -13,21 +13,22 @@
 
  (fmap inc [1 2 3]) => [2 3 4]
 
- (fmap + [1 2] [3 4 5] [6 7 8]) => [10 13]
+ (fmap + [1 2] [3 4 5] [6 7 8]) 
+ => [10 11 12 11 12 13 12 13 14 11 12 13 12 13 14 13 14 15]
 
  (fmap inc (list)) => (list)
 
  (fmap inc (list 1 2 3)) => (list 2 3 4)
-
+ 
  (fmap + (list 1 2) (list 3 4 5) (list 6 7 8))
- => (list 10 13)
+ => '(10 11 12 11 12 13 12 13 14 11 12 13 12 13 14 13 14 15)
 
  (fmap inc (empty (seq [1]))) => (empty (seq [2]))
 
  (fmap inc (seq [1 2 3])) => (seq [2 3 4])
 
  (fmap + (seq [1 2]) (seq [3 4 5]) (seq [6 7 8]))
- => (seq [10 13])
+ => (seq [10 11 12 11 12 13 12 13 14 11 12 13 12 13 14 13 14 15])
 
  (fmap inc (lazy-seq [])) => (lazy-seq [])
 
@@ -36,29 +37,18 @@
  (fmap + (lazy-seq [1 2])
        (lazy-seq [3 4 5])
        (lazy-seq [6 7 8]))
- => (lazy-seq [10 13])
+ => (lazy-seq 
+     [10 11 12 11 12 13 12 13 14 11 12 13 12 13 14 13 14 15])
 
  (fmap inc {}) => {}
 
  (fmap inc {:a 1 :b 2 :c 3}) => {:a 2 :b 3 :c 4}
 
- (fmap + {:a 1 :b 2} {:a 3 :b 4 :c 5} {:a 6 :b 7 :c 8})
- => {:a 10 :b 13 :c 13}
-
  (fmap inc (first {:a 1}))
  => (first {:a 2})
 
- (fmap + (first {:a 1}) (first {:a 3}) (first {:b 6}))
- => (first {:a 10})
-
-
  (into [] (fmap inc (r/map identity  [1 2 3])))
- => [2 3 4]
-
- (into [] (fmap + (r/map identity [1 2])
-                (r/map identity [3 4 5])
-                (r/map identity [6 7 8])))
- => (throws UnsupportedOperationException))
+ => [2 3 4])
 
 (facts
  "Data structures: Applicative"
@@ -73,20 +63,9 @@
 
  (pure #{} 1) => #{1}
 
- (pure {} 1) => {nil 1}
-
- (pure (first {1 1}) 1) => (first {nil 1})
-
- (into (list) (pure (r/map identity [2 3]) 1))
- => (list 1)
-
  (with-context []
    (return 1)
    => [1])
-
- (with-context {}
-   (return 1)
-   => {nil 1})
 
  (fapply [] []) => []
 
@@ -96,7 +75,8 @@
 
  (fapply [inc dec] [1 2 3]) => [2 3 4 0 1 2]
 
- (fapply [+ *] [1 2 3] [4 5 6]) => [5 7 9 4 10 18]
+ (fapply [+ *] [1 2 3] [4 5 6]) => 
+ [5 6 7 6 7 8 7 8 9 4 5 6 8 10 12 12 15 18]
 
  (fapply (list) (list)) => (list)
 
@@ -108,7 +88,7 @@
  => (list 2 3 4 0 1 2)
 
  (fapply (list + *) (list 1 2 3) (list 4 5 6))
- => (list 5 7 9 4 10 18)
+ => (list 5 6 7 6 7 8 7 8 9 4 5 6 8 10 12 12 15 18)
 
  (fapply (empty (seq [2])) (empty (seq [3])))
  => (empty (seq [1]))
@@ -123,7 +103,7 @@
  => (seq [2 3 4 0 1 2])
 
  (fapply (seq [+ *]) (seq [1 2 3]) (seq [4 5 6]))
- => (seq [5 7 9 4 10 18])
+ => (seq [5 6 7 6 7 8 7 8 9 4 5 6 8 10 12 12 15 18])
 
  (fapply (lazy-seq []) (lazy-seq []))
  => (lazy-seq [])
@@ -140,7 +120,7 @@
  (fapply (lazy-seq [+ *])
          (lazy-seq [1 2 3])
          (lazy-seq [4 5 6]))
- => (lazy-seq [5 7 9 4 10 18])
+ => (lazy-seq [5 6 7 6 7 8 7 8 9 4 5 6 8 10 12 12 15 18])
 
  (fapply #{} #{}) => #{}
 
@@ -150,34 +130,7 @@
 
  (fapply #{inc dec} #{1 2 3}) => #{2 3 4 0 1}
 
- (fapply #{+ *} #{1 2 3} #{4 5 6}) => #{5 7 9 4 10 18}
-
- (fapply {} {}) => {}
-
- (fapply {} {:a 1 :b 2 :c 3}) => {:a 1 :b 2 :c 3}
-
- (fapply {:a inc} {}) => {}
-
- (fapply {:a inc :b dec nil (partial * 10)}
-         {:a 1 :b 2 :c 3 :d 4 nil 5})
- => {:a 2 :b 1 :c 30 :d 40 nil 50}
-
- (fapply {nil /  :a + :b *} {:a 1 :c 2} {:a 3 :b 4} {:c 2 :d 5})
- => {:a 4 :b 4 :c 1 :d 1/5}
-
- (fapply (first {:a inc}) (first {:b 1}))
- => (first {:b 1})
-
- (fapply (first {:a inc}) (first {:a 1}))
- => (first {:a 2})
-
- (fapply (first {nil inc}) (first {:a 1}))
- => (first {:a 2})
-
- (fapply (first {nil inc}) (first {nil 1}))
- => (first {nil 2})
-
- (fapply (first {nil inc})))
+ (fapply #{+ *} #{1 2 3} #{4 5 6}) => #{4 5 6 7 8 9 10 12 15 18})
 
 (facts
  "Data structures: Monad"
@@ -220,25 +173,6 @@
 
  (bind #{1 2 3} #{4 5 6} add) => #{5 7 9}
 
- (bind {} increment) => {}
-
- (bind {:a 1} increment)
- => {:a 2}
-
- (bind {:a 1  :b 2 :c 3} #(hash-map :increment (inc %)))
- => {[:a :increment] 2 [:b :increment] 3 [:c :increment] 4}
-
- (bind {:a 1} {:a 2 :b 3} {:b 4 :c 5}
-       (fn [& args] {:sum (apply + args)}))
- => {[:a :sum] 3 [:b :sum] 7 [:c :sum] 5}
-
- (bind (first {:a 1}) #(first {:increment (inc %)}))
- => (first {[:a :increment] 2})
-
- (bind (first {:a 1}) (first {:a 2}) (first {:b 4})
-       (fn [& args] (first {:sum (apply + args)})))
- => (first {[:a :sum] 7})
-
  (join [[1 2] [3 [4 5] 6]]) => [1 2 3 [4 5] 6]
 
  (join (list (list 1 2) (list 3 (list 4 5) 6)))
@@ -250,11 +184,7 @@
  (join (lazy-seq (list (list 1 2) (list 3 (list 4 5) 6))))
  => (lazy-seq (list 1 2 3 (list 4 5) 6))
 
- (join #{#{1 2} #{3 #{4 5} 6}}) => #{1 2 3 #{4 5} 6}
-
- (join {:a 1 :b {:c 2 :d {:e 3}}}) => {:a 1 [:b :c] 2 [:b :d] {:e 3}}
-
- (join (first {:a (first {:b (first {:c 1})})})) => (first {[:a :b] (first {:c 1})}))
+ (join #{#{1 2} #{3 #{4 5} 6}}) => #{1 2 3 #{4 5} 6})
 
 (facts
  "Data structures: Magma"
@@ -332,46 +262,25 @@
  (fold (first {:a 1})) => 1)
 
 (facts
- "Object: Functor and Foldable."
-
- (let [o (Object. )]
-
-   (fmap str o) => (str o)
-
-   (fold o) => o))
-
-(facts
  "String: Functor, Magma, Monoid, Foldable."
-
- (fmap reverse "loWercase") => "esacreWol"
 
  (op "some" "thing" " " "else") => "something else"
 
- (id "something") => ""
-
- (fold "something") => "something")
+ (id "something") => "")
 
 (facts
  "Keyword: Functor, Magma, Monoid, Foldable."
 
- (fmap reverse :something) => :gnihtemos
-
  (op :some :thing :else) => :somethingelse
 
- (id :something) => (keyword "")
-
- (fold :something) => :something)
+ (id :something) => (keyword ""))
 
 (facts
  "Numbers: Functor, Magma, Monoid, Foldable."
 
- (fmap + 1 2 3) => 6
-
  (op 1 2 3) => 6
 
- (id 4) => 0
-
- (fold 5) => 5)
+ (id 4) => 0)
 
 (facts
  "Functions: Functor."
@@ -389,18 +298,7 @@
 
    ((cinc+ 1) 2) => 4
 
-   ((inc+ 1) 2) => (throws ClassCastException))
-
- (let [inc*3+2 (fmap inc (partial * 3) (partial + 2))
-       cinc*3+2 (fmap inc ((curry *) 3) ((curry +) 2))]
-
-   (inc*3+2 7 3 1) => 40
-
-   (cinc*3+2 7 3 1) => 40
-
-   ((inc*3+2) 2) => (throws ClassCastException)
-
-   ((cinc*3+2) 2) => 13))
+   ((inc+ 1) 2) => (throws ClassCastException)))
 
 (facts
  "Functions: Applicative."
@@ -424,13 +322,11 @@
 
  (fmap inc (atom 3)) => (check-eq (atom 4))
 
- (dosync
-  (fmap inc (ref 5)) => (check-eq (ref 6)))
+ (fmap inc (ref 5)) => (check-eq (ref 6))
 
- (fmap + (atom 3) (atom 4) (ref 5)) => (check-eq (atom 12))
+ (fmap + (atom 3) (atom 4) (ref 5)) => (check-eq (ref 12))
 
- (dosync
-  (fmap + (ref 5) (atom 6) (ref 7)) => (check-eq (ref 18)))
+ (fmap + (ref 5) (atom 6) (ref 7)) => (check-eq (ref 18))
 
  (pure (atom 8) 1) => (check-eq (atom 1))
 
@@ -438,28 +334,19 @@
 
  (fapply (atom inc) (atom 1)) => (check-eq (atom 2))
 
- (dosync (fapply (ref inc) (ref 2))) => (check-eq (ref 3))
+ (fapply (ref inc) (ref 2)) => (check-eq (ref 3))
 
  (fapply (atom +) (atom 1) (ref 2) (atom 3)) => (check-eq (atom 6))
 
- (dosync (fapply (ref +) (ref 1) (atom 2) (atom 3)))
- => (check-eq (ref 6))
+ (fapply (ref +) (ref 1) (atom 2) (atom 3)) => (check-eq (atom 6))
 
  (join (atom (ref (atom 33)))) => (check-eq (atom (atom 33)))
 
- (dosync (join (ref (ref (atom 33)))))
- => (check-eq (ref (atom 33)))
+ (join (ref (ref (atom 33)))) => (check-eq (ref (atom 33)))
 
  (bind (atom 8) increment) => (check-eq (atom 9))
 
- (dosync (bind (ref 8) increment))
- => (check-eq (ref 9))
-
- (bind (atom 8) (ref 9) (atom 10) add)
- => (check-eq (atom 27))
-
- (dosync (bind (ref 18) (ref 19) (atom 20) add))
- => (check-eq (ref 57))
+ (bind (ref 8) increment) => (check-eq (ref 9))
 
  (op (atom 3) (atom 4)) => (check-eq (atom 7))
 
@@ -475,4 +362,5 @@
 
  (fold (atom "something")) => "something"
 
- (fold (ref 2)) => 2)
+ (fold (ref 2)) => 2
+ )

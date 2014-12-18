@@ -203,8 +203,8 @@ beyond what the compiler can assert."
                             {:test true})))
            => {:test true}
 
-           (meta (fmap ~f2 (with-meta ~x
-                            {:test true}) ~y))
+           (meta (fmap ~f2 ~x (with-meta ~y
+                            {:test true})))
            => {:test true}
 
            (meta (fmap ~f1 (with-meta (empty ~x)
@@ -217,8 +217,9 @@ beyond what the compiler can assert."
            => {:test true}
 
            (meta (fapply (pure ~x ~f2)
-                         (with-meta ~x
-                           {:test true}) ~y))
+                         ~x
+                         (with-meta ~y
+                           {:test true})))
            => {:test true}
 
            (meta (fapply (pure ~x ~f1)

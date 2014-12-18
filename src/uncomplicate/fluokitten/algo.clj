@@ -28,34 +28,19 @@
   Monoid
   (id [_] nil))
 
-(extend-type Object
-  Functor
-  (fmap [o f]
-    (f o))
-  Applicative
-  (pure [o x] x)
-  (fapply [f x] (f x))
-  Foldable
-  (fold [o] o)
-  (foldmap [o g] (g o)))
 
-                                        ;=============== Functor implementations =========================
+
+  ;=============== Functor implementations =========================
   ;;--------------- fmap implementations ---------------
 
 (defn collreduce-fmap
   ([cr g]
-   (r/map g cr))
-  ([_ _ _]
-   (throw (java.lang.UnsupportedOperationException.
-           "fmap for reducibles does not support varargs."))))
+   (r/map g cr)))
 
 (defn reducible-fmap
   ([c g]
    (into (empty c)
-         (r/map g c)))
-  ([c g cs]
-   (into (empty c)
-         (apply map g c cs))))
+         (r/map g c))))
 
 (defn group-entries [k ms]
   (r/map val
@@ -67,41 +52,25 @@
 
 (defn map-fmap-r
   ([m g]
-   (r/map (fn [[k v]] [k (g v)]) m))
-  ([m g ms]
-   (let [source (cons m ms)
-         keys (distinct (into [] (r/flatten (r/map keys source))))]
-     (r/map (partial apply-key g source) keys))))
+   (r/map (fn [[k v]] [k (g v)]) m)))
 
 (defn map-fmap
   ([m g]
-   (into (empty m) (map-fmap-r m g)))
-  ([m g ms]
-   (into (empty m) (map-fmap-r m g ms))))
+   (into (empty m) (map-fmap-r m g))))
 
 (defn list-fmap
   ([l g]
    (with-meta
      (apply list (map g l))
-     (meta l)))
-  ([l g ss]
-   (with-meta
-     (apply list (apply map g l ss))
      (meta l))))
 
 (defn seq-fmap
   ([s g]
-   (with-meta (map g s) (meta s)))
-  ([s g ss]
-   (with-meta
-     (apply map g s ss)
-     (meta s))))
+   (with-meta (map g s) (meta s))))
 
 (defn coll-fmap
   ([c g]
-   (into (empty c) (map g c)))
-  ([c g ss]
-   (into (empty c) (apply map g c ss))))
+   (into (empty c) (map g c))))
 
 ;;================ Applicative implementations ==================
 ;;-------------- fapply implementations ----------------
@@ -115,10 +84,7 @@
 (defn reducible-fapply
   ([cg cv]
    (into (empty cv)
-         (collreduce-fapply cg cv)))
-  ([cg cv cvs]
-   (into (empty cv)
-         (r/mapcat #(apply map % cv cvs) cg))))
+         (collreduce-fapply cg cv))))
 
 (defn- apply-universal-f [mf m]
   (if-let [f (mf nil)]
@@ -129,29 +95,18 @@
   ([cg cv]
    (with-meta
      (apply list (mapcat #(map % cv) cg))
-     (meta cv)))
-  ([cg cv cvs]
-   (with-meta
-     (apply list (mapcat #(apply map % cv cvs) cg))
      (meta cv))))
 
 (defn seq-fapply
   ([cg cv]
    (with-meta
      (mapcat #(map % cv) cg)
-     (meta cv)))
-  ([cg cv cvs]
-   (with-meta
-     (mapcat #(apply map % cv cvs) cg)
      (meta cv))))
 
 (defn coll-fapply
   ([cg cv]
    (into (empty cv)
-         (mapcat #(map % cv) cg)))
-  ([cg cv cvs]
-   (into (empty cv)
-         (mapcat #(apply map % cv cvs) cg))))
+         (mapcat #(map % cv) cg))))
 
 (defn coll-pure [cv v]
   (conj (empty cv) v))
@@ -413,22 +368,13 @@
   `(extend ~t
      Functor
      {:fmap map-fmap}
-     Monad
-     {:join map-join
-      :bind map-bind}
      Foldable
      {:fold map-fold
       :foldmap map-foldmap}))
 
 (extend clojure.core.protocols.CollReduce
   Functor
-  {:fmap collreduce-fmap}
-  Applicative
-  {:pure collreduce-pure
-   :fapply collreduce-fapply}
-  Monad
-  {:join collreduce-join
-   :bind collreduce-bind})
+  {:fmap collreduce-fmap})
 
 (extend clojure.core.reducers.CollFold
   Foldable
@@ -471,9 +417,6 @@
   `(extend ~t
      Functor
      {:fmap mapentry-fmap}
-     Monad
-     {:join mapentry-join
-      :bind default-bind}
      Magma
      {:op mapentry-op}
      Monoid
@@ -481,15 +424,9 @@
      Foldable
      {:fold mapentry-fold}))
 
-  ;;===================== Literals Extensions ================
+;;===================== Literals Extensions ================
 
 (extend-type String
-  Functor
-  (fmap
-    ([s g]
-     (apply str (g s)))
-    ([s g ss]
-     (apply str (apply g s ss))))
   Magma
   (op
     ([x y]
@@ -529,8 +466,6 @@
 
 (defmacro extend-keyword [t]
   `(extend ~t
-     Functor
-     {:fmap keyword-fmap}
      Magma
      {:op keyword-op}
      Monoid
@@ -594,9 +529,7 @@
 
 (defn agent-fmap
   ([a g]
-   (do (swap! a g) a))
-  ([a g as]
-   (do (apply swap! a g (map deref as)) a)))
+   (do (swap! a g) a)))
 
 (defn agent-pure [_ v]
   (atom v))
@@ -608,9 +541,7 @@
 
 (defn ref-fmap
   ([r g]
-   (do (alter r g) r))
-  ([r g rs]
-   (do (apply alter r g (map deref rs)) r)))
+   (dosync (alter r g) r)))
 
 (defn ref-pure [_ v]
   (ref v))

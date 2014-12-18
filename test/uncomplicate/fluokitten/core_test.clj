@@ -13,44 +13,7 @@
       (fmap identity) => identity)
 
 ;;--------------- nil ---------------
-(functor-law2 inc + nil)
-
-(functor-law2 inc + nil 99 0)
-
-;;--------------- literals ---------------
-;; Functor operations on any Object, if more particular
-;; implementation is not specified.
-;; The type of the result does not have to be the same
-;; as the type of the input object. The result type
-;; depends on the function that is being applied.
-;; However, keeping the type is not required by any
-;; Functor law (in the sense of clojure types),
-;; so keeping the exact type is convenient
-;; but not mandatory.
-
-(functor-law2 inc (partial * 100) 101)
-
-(functor-law2 inc (partial * 100) 101 2 3)
-
-(functor-law2 s/capitalize str \a)
-
-(functor-law2 s/capitalize str \a \b \c)
-
-(facts "Objects as functors."
-       (fmap identity 1) => 1
-       (fmap inc 1) => 2
-       (fmap str 1) => "1"
-       (fmap str \a) => "a"
-       (fmap  + \a) => (throws ClassCastException))
-
-;;--------------- String ---------------
-(functor-law2 s/capitalize s/reverse "something")
-
-(functor-law2 s/capitalize str "something" "else")
-
-(fmap-keeps-type s/reverse "something")
-
-(fmap-keeps-type str "something" "else")
+(functor-law2 inc #(+ 2 %) nil)
 
 ;;--------------- Vector ---------------
 (functor-law2 inc (partial * 100)
@@ -61,9 +24,6 @@
               [1 -66 9])
 
 (fmap-keeps-type inc [100 0 -999])
-
-(fmap-keeps-type + [100 0 -999]
-                 (list 44 0 -54))
 
 ;;--------------- List ---------------
 (functor-law2 inc (partial * 100)
@@ -87,9 +47,6 @@
               #{-4 88 7})
 
 (fmap-keeps-type inc #{5 89 -7})
-
-(fmap-keeps-type + #{5 89 -7}
-                 (list -3 -4 -45))
 
 ;;--------------- Seq ---------------
 ;; Due to Clojure implementation details,
@@ -129,37 +86,14 @@
 (functor-law2 inc (partial * 100)
               (first {:a 11}))
 
-(functor-law2 inc (partial * 100)
-              (first {:a 11})
-              (first {:a 5}))
-
 (fmap-keeps-type inc (first {:c 3}))
 
-(fmap-keeps-type + (first {:c 3})
-                 (first {:d 5}))
-
 ;;--------------- Map ---------------
-(fact
- (fmap (comp inc +) {:a 1} {:a 2} {:a 3})
- => {:a 7})
-
-(fact
- (fmap (fn [& xs]
-         (hash-map :sum (apply + xs)))
-       {:a 1 :b 2} {:a 4})
- => {:a {:sum 5}, :b {:sum 2}})
 
 (functor-law2 inc (partial * 100)
               {:a 2 :t 5 :h 99})
-(functor-law2 inc +
-              {:a 2 :t 5 :h 99}
-              {:a 7 :t 8 :h 49}
-              {:a 8 :t 3 :h 59})
 
 (fmap-keeps-type inc {:a 2 :t 5 :h 99})
-
-(fmap-keeps-type + {:a 2 :t 5 :h 99}
-                 {:k 5 :n 4 :dd 5})
 
 ;;--------------- Atom ---------------
 (functor-law2 inc (partial * 100) (atom 34))
@@ -172,19 +106,15 @@
 (fmap-keeps-type  + (atom 37) (atom 5))
 
 ;;--------------- Ref ---------------
-(dosync
- (functor-law2 inc (partial * 100) (ref 44)))
 
-(dosync
- (functor-law2 inc
-               (partial * 100) (ref 45)
-               (atom 3) (ref 7)))
+(functor-law2 inc (partial * 100) (ref 44))
 
-(dosync
- (fmap-keeps-type inc (ref 46)))
 
-(dosync
- (fmap-keeps-type + (ref 47) (ref 4) (atom 7)))
+(functor-law2 inc
+              (partial * 100) (ref 45)
+              (atom 3) (ref 7))
+
+(fmap-keeps-type inc (ref 46))
 
 ;;--------------- Function ---------------
 (fact "Second functor law."
@@ -195,13 +125,7 @@
       ((fmap (comp inc dec) +) 1 2 3)
       => ((fmap inc (fmap dec +)) 1 2 3))
 
-(fact "Second functor law - varargs"
-      ((fmap (comp inc dec) + (partial * 10)) 2 3 4)
-      => ((fmap inc (fmap dec + (partial * 10))) 2 3 4))
-
 (fact "Fmap keeps type." (fn? (fmap inc dec)))
-
-(fact "Fmap keeps type - varargs." (fn? (fmap inc dec +)))
 
 ;;--------------- Curried Function ---------------
 (facts "How CurriedFn fmap works for fixed args."
@@ -229,32 +153,6 @@
       => ((((fmap #(partial %)
                   (fmap (curry + 2) (curry + 2))) 1) 2) 3))
 
-(facts "How CurriedFn fmap works for variable args."
- ((((fmap #(partial %)
-          (curry +)
-          (curry (partial * 10) 3)) 2 3) 5) 7)
- => 307
- ((((fmap (comp #(partial % 2) #(partial % 1))
-          (curry + 4)
-          (curry (partial * 10) 3)) 2 3) 5) 6)
- => 309)
-
-(facts "Second functor law - varargs."
-       (((fmap (comp #(partial % 2) #(partial % 3))
-               (curry + 4)
-               (curry (partial * 10))) 2 3 5) 7)
-       => ((fmap #(partial % 2)
-                 (fmap #(partial % 3)
-                       (curry + 4)
-                       (curry (partial * 10)))) 2 3 5)
-
-       ((((fmap (comp #(partial % 2) #(partial % 3))
-                (curry + 4)
-                (curry (partial * 10) 3)) 2 3) 5) 6)
-       => ((((fmap #(partial % 2)
-                   (fmap #(partial % 3)
-                         (curry +)
-                         (curry (partial * 10) 3))) 2 3) 5) 6))
 
 (fact "Fmap keeps type."
       (curried? (fmap inc (curry dec))))
@@ -277,7 +175,7 @@
 (applicative-law3-composition [inc]
                               [(partial * 10)]
                               [1 -34343444]
-                              (list 1 78))
+                              [1 78])
 
 (applicative-law4-homomorphism [] inc 1)
 (applicative-law4-homomorphism [] + 1 55 6)
@@ -287,21 +185,6 @@
 
 (fapply-keeps-type inc  [1 -4 9])
 (fapply-keeps-type + [1 -4 9] [2 -3 -4])
-
-;--------------- CollReduce ---------------
-(applicative-law1 inc (reducible [1 -2 5]))
-
-(applicative-law2-identity (reducible [1 445 -4]))
-
-(applicative-law3-composition (reducible [inc])
-                              (reducible [(partial * 10)])
-                              (reducible [1 -34343444]))
-
-(applicative-law4-homomorphism (reducible []) inc 1)
-
-(applicative-law5-interchange (reducible []) inc 1)
-
-(fapply-keeps-type inc (reducible [1 -4 9]))
 
 ;;--------------- List ---------------
 (applicative-law1 inc (list 2 44 -7))
@@ -422,102 +305,6 @@
 
 (fapply-keeps-type + #{4 -2 5}
                 #{-9 -7})
-
-;;-------------- MapEntry -----------
-(applicative-law1 inc (first {5 5}))
-
-(applicative-law1 +
-                  (first {5 5})
-                  (first {5 6}))
-
-(applicative-law2-identity (first {5 5}))
-
-(applicative-law3-composition (first {58 inc})
-                              (first {57 (partial * 10)})
-                              (first {5 5}))
-
-(applicative-law3-composition (first {58 inc})
-                              (first {57 (partial * 10)})
-                              (first {5 5})
-                              (first {5 6}))
-
-(applicative-law4-homomorphism (first {57 57})
-                               inc
-                               5)
-
-(applicative-law4-homomorphism (first {57 57})
-                               +
-                               5 -4 5)
-
-(applicative-law5-interchange (first {58 58})
-                              inc
-                              5)
-
-(applicative-law5-interchange (first {58 58})
-                              +
-                              5 3 4 5)
-
-;;-------------- Map ----------------
-(fact (pure {} 2) => {nil 2})
-
-(fact (fapply {:a inc :b dec
-               nil (partial * 2)}
-              {:a 1 :b 5})
-      => {:a 2 :b 4})
-
-(fact (fapply {:a inc :b dec} {:a 1 :c 2})
-      => {:a 2 :c 2})
-
-(fact (fapply {:a + :b - nil (partial * 2)}
-           {:a 1 :b 1}
-           {:a 2 :b 3 :c 44}
-           {:b 4})
-      => {:a 3 :b -6 :c 88})
-
-(fact (fapply {:a + :b - :d (partial * 2)}
-           {:a 1 :b 1}
-           {:a 2 :b 3 :c 44}
-           {:b 4})
-      => {:a 3 :b -6 :c 44})
-
-(fact (fapply {nil +}
-              {:a 1 :b 3}
-              {:a 2 :b 4}
-              {:a 3 :b 5})
-      => {:a 6 :b 12})
-
-(applicative-law1 inc {nil 6})
-
-(applicative-law1 inc {6 6})
-
-(applicative-law1 + {nil 6} {2 23})
-
-(applicative-law2-identity {nil 6})
-
-(applicative-law2-identity {6 6})
-
-(applicative-law3-composition {6 inc}
-                              {6 (partial * 10)}
-                              {6 6 -5 -6})
-
-(applicative-law3-composition {6 inc}
-                              {6 (partial * 10)}
-                              {6 6 -5 -6}
-                              {6 8 -5 -2})
-
-(applicative-law3-composition {nil inc}
-                              {nil (partial * 10)}
-                              {6 6 -5 -6})
-
-(applicative-law4-homomorphism {} inc 4)
-
-(applicative-law4-homomorphism {} + 4 7 9)
-
-(applicative-law5-interchange {} inc 4)
-
-(applicative-law5-interchange {} + 4 8 9)
-
-(fapply-keeps-type inc {4 -2 5 5})
 
 ;;-------------- Atom -----------
 (applicative-law1 inc (atom 6))
@@ -657,16 +444,6 @@
                           (comp vector (partial * 10))
                           [1 -3 -88])
 
-;;--------------- CollReduce ---------------------------------
-(monad-law1-left-identity (reducible [])
-                          (comp reducible vector inc) 1)
-
-(monad-law2-right-identity (reducible [1 2 -33]))
-
-(monad-law3-associativity (comp reducible vector inc)
-                          (comp reducible vector (partial * 10))
-                          (reducible [1 -3 -88]))
-
 ;;--------------- List -----------------------------------
 (monad-law1-left-identity (list) (comp list inc) 2)
 
@@ -715,71 +492,12 @@
                           (comp hash-set (partial * 10))
                           #{5 -56 30})
 
-;;--------------- Map ---------------------------------
-(facts
- (join {:a 1 :b 2}) => {:a 1 :b 2}
- (join {:a {:a1 1 :a2 5} :b {:b1 2}})
- => {[:a :a1] 1 [:a :a2] 5 [:b :b1] 2})
-
-(monad-law1-left-identity {} #(hash-map :increment (inc %)) 5)
-
-(monad-law1-left-identity {}
-                          (fn [& xs]
-                            (hash-map :sum (apply + xs)))
-                          5 6 88 9)
-
-(monad-law2-right-identity {:a 1 :b 2})
-
-(monad-law3-associativity #(hash-map :increment (inc %))
-                          #(hash-map :10times (* 10 %))
-                          {:a 1 :b 2})
-
-(monad-law3-associativity (fn [& xs] (hash-map :sum (apply + xs)))
-                          #(hash-map :10times (* 10 %))
-                          {:a 1 :b 2 :c 3}
-                          {:a 4 :b 3 :c 2}
-                          {:a 12 :b 23 :c 9})
-
-(fact
- (let [f #(hash-map :increment (inc %))
-       m {:a 1 :b 2}]
-   (fapply (pure {} f) m)
-   => (bind (pure {} f) #(fmap % m))))
-
-;;--------------- MapEntry ----------------------------
-(facts
- (join (first {:a 1})) => (first {:a 1})
- (join (first {:a [:b 1]})) => (first {[:a :b] 1}))
-
-(monad-law1-left-identity (first {:a 1})
-                          #(first (hash-map :increment (inc %)))
-                          5)
-
-(monad-law1-left-identity (first {:a 1})
-                          (fn [& xs] (first (hash-map :sum (apply + xs))))
-                          5 77 8)
-
-(monad-law2-right-identity (first {:a 4}))
-
-(monad-law3-associativity #(first (hash-map :increment (inc %)))
-                          #(first (hash-map :10times (* 10 %)))
-                          (first {:a 1}))
-
-(monad-law3-associativity (fn [& xs]
-                            (first (hash-map :sum (apply + xs))))
-                          #(first (hash-map :10times (* 10 %)))
-                          (first {:a 1})
-                          (first {:a 2})
-                          (first {:a 77}))
-
 ;;--------------- Atom ----------------------------
 (facts "Join function for atoms."
        (join (atom 1)) => (check-eq (atom 1))
        (join (atom (atom 2))) => (check-eq (atom 2)))
 
 (monad-law1-left-identity (atom 9) (comp atom inc) 1)
-
-(monad-law1-left-identity (atom 9) (comp atom +) 1 2 3)
 
 (monad-law2-right-identity (atom 9))
 
@@ -788,24 +506,17 @@
                           (atom 9))
 
 ;;--------------- Ref ----------------------------
-(dosync
- (facts "Join function for refs."
-        (join (ref 1)) => (check-eq (ref 1))
-        (join (ref (ref 2))) => (check-eq (ref 2))))
+(facts "Join function for refs."
+       (join (ref 1)) => (check-eq (ref 1))
+       (join (ref (ref 2))) => (check-eq (ref 2)))
 
-(dosync
- (monad-law1-left-identity (ref 9) (comp ref inc) 1))
+(monad-law1-left-identity (ref 9) (comp ref inc) 1)
 
-(dosync
- (monad-law1-left-identity (ref 9) (comp ref +) 1 2 3))
+(monad-law2-right-identity (ref 9))
 
-(dosync
- (monad-law2-right-identity (ref 9)))
-
-(dosync
- (monad-law3-associativity (comp ref inc)
-                           (comp ref (partial * 10))
-                           (ref 9)))
+(monad-law3-associativity (comp ref inc)
+                          (comp ref (partial * 10))
+                          (ref 9))
 
 ;;------------------- Curried Function ---------------------------
 (let [c+ (curry +)
@@ -1130,23 +841,16 @@
 (data-structures-should-preserve-metadata
  inc + hash-set #{1 2 3} #{4 5 6})
 
-(data-structures-should-preserve-metadata
- inc + #(hash-map nil %) {:a 2 :b 4} {:a 5 :b 7})
-
 (let [a1 (atom 1 :meta {:test true})
       a2 (atom 2 :meta {:test true})]
   (facts  "All atoms should preserve metadata."
           (meta (fmap inc a1)) => {:test true}
           (meta (fmap + a1 a2)) => {:test true}
-
+          (reset! a1 0)
           (meta (fapply (pure a1 inc) a1))
-          => {:test true}
-          (meta (fapply (pure a1 +) a1 a2))
           => {:test true}
 
           (meta (bind a1 #(atom (inc %))))
-          => {:test true}
-          (meta (bind a1 a2 #(atom (+ %1 %2))))
           => {:test true}
 
           (meta (join (atom (atom 1) :meta {:test true})))
@@ -1155,27 +859,23 @@
 (let [r1 (ref 1 :meta {:test true})
       r2 (ref 2 :meta {:test true})]
   (facts  "All atoms should preserve metadata."
-          (dosync
-           (meta (fmap inc r1))) => {:test true}
-          (dosync
-           (meta (fmap + r1 r2)) => {:test true})
+          (meta (fmap inc r1)) => {:test true}
+          (meta (fmap + r1 r2)) => {:test true}
 
-          (dosync
-           (meta (fapply (pure r1 inc) r1)))
-          => {:test true}
-          (dosync
-           (meta (fapply (pure r1 +) r1 r2)))
+          (dosync (ref-set r1 1))
+
+          (meta (fapply (pure r1 inc) r1))
           => {:test true}
 
-          (dosync
-           (meta (bind r1 #(ref (inc %)))))
-          => {:test true}
-          (dosync
-           (meta (bind r1 r2 #(ref (+ %1 %2)))))
+          (meta (fapply (pure r1 +) r1 r2))
           => {:test true}
 
-          (dosync
-           (meta (join (ref (ref 1) :meta {:test true}))))
+          (dosync (ref-set r1 1))
+
+          (meta (bind r1 #(ref (inc %))))
+          => {:test true}
+
+          (meta (join (ref (ref 1) :meta {:test true})))
           => {:test true}))
 
 ;; Reducers and MapEntry do not support metadata.
@@ -1316,26 +1016,6 @@
          (apply hash-set (range 1 500))
          returning-f)
    => (apply hash-set (distinct (range 3 1500 3)))
-
-   (bind (apply hash-map
-                (interleave (range 1 500) (range 1 500)))
-         returning-f)
-   => (apply hash-map (interleave (range 1 500) (range 2 501)))
-
-   (bind (apply hash-map
-                (interleave (range 1 500) (range 1 500)))
-         (apply hash-map
-                (interleave (range 1 500) (range 1 500)))
-         (apply hash-map
-                (interleave (range 1 500) (range 1 500)))
-         returning-f)
-   => (apply hash-map (interleave (range 1 500) (range 3 1500 3)))
-
-   (realize [] (bind (r/map identity (vec (range 1 500))) returning-f))
-   => (range 2 501)
-
-   (bind (first {:a 1}) returning-f)
-   => (first {:a 2})
 
    (bind (atom 1) returning-f)
    => (check-eq (atom 2))

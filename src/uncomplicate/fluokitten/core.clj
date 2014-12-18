@@ -14,6 +14,15 @@ contain the implementations of the protocols, by default jvm.
   (:require [uncomplicate.fluokitten.algo :as algo])
   (:require [uncomplicate.fluokitten.utils :as utils]))
 
+(defn monad?
+  "Tests if v can act as a monad. Returns true if v
+  satisfies Applicative protocol. In future versions it can
+  be changed. It's likely that you want use this function
+  instead of testing (satisfies? Monad v)
+  explicitly."
+  [v]
+  (satisfies? p/Monad v))
+
 (defn applicative?
   "Tests if v can act as an applicative functor. At the
   moment returns true if v satisfies Applicative
@@ -147,9 +156,11 @@ contain the implementations of the protocols, by default jvm.
    => 1
   "
   ([applicative]
-     #(p/pure applicative %))
+   {:pre [(applicative? applicative)]}
+   #(p/pure applicative %))
   ([applicative x]
-     (p/pure applicative x)))
+   {:pre [(applicative? applicative)]}
+   (p/pure applicative x)))
 
 (defn fapply
   "Applies the function(s) inside af's context to the value(s)
@@ -195,11 +206,14 @@ contain the implementations of the protocols, by default jvm.
    => 2
   "
   ([af]
-     (fn [av & avs]
-       (apply fapply af av avs)))
+   {:pre [(applicative? af)]}
+   (fn [av & avs]
+     (apply fapply af av avs)))
   ([af av]
-     (p/fapply af av))
+   {:pre [(applicative? af) (applicative? av)]}
+   (p/fapply af av))
   ([af av & avs]
+   {:pre [(applicative? af) (applicative? av)]}
    (let [[av' & avs'] avs] 
      (apply fapply 
             ;; curry (af av)
@@ -219,11 +233,14 @@ contain the implementations of the protocols, by default jvm.
   that can accept the rest of the arguments and apply <*>.
   "
   ([af]
+   {:pre [(applicative? af)]}
    (fn [a & as]
      (apply <*> af a as)))
   ([af av]
+   {:pre [(applicative? af) (applicative? av)]}
    (p/fapply af av))
   ([af av & avs]
+   {:pre [(applicative? af) (applicative? av)]}
    (reduce p/fapply af (cons av avs))))
 
 (defn join
