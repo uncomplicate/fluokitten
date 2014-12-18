@@ -103,8 +103,8 @@
   ([c g ss]
    (into (empty c) (apply map g c ss))))
 
-  ;;================ Applicative implementations ==================
-  ;;-------------- fapply implementations ----------------
+;;================ Applicative implementations ==================
+;;-------------- fapply implementations ----------------
 
 (defn collreduce-fapply [crg crv]
   (r/mapcat #(r/map % crv) crg))
@@ -124,31 +124,6 @@
   (if-let [f (mf nil)]
     (map-fmap m f)
     m))
-
-(defn map-fapply
-  ([mg mv]
-   (into
-    (if-let [f (mg nil)]
-      (map-fmap mv f)
-      mv)
-    (r/remove
-     nil?
-     (r/map (fn [[kg vg]]
-              (if-let [[kv vv] (find mv kg)]
-                [kv (vg vv)]))
-            mg))))
-  ([mg mv mvs]
-   (into
-    (if-let [f (mg nil)]
-      (map-fmap mv f mvs)
-      (apply merge mv mvs))
-    (r/remove
-     nil?
-     (r/map (fn [[kg vg]]
-              (if-let [vs (seq (into [] (group-entries
-                                         kg (cons mv mvs))))]
-                [kg (apply vg vs)]))
-            mg)))))
 
 (defn list-fapply
   ([cg cv]
@@ -184,10 +159,7 @@
 (defn lazyseq-pure [cv v]
   (lazy-seq (coll-pure cv v)))
 
-(defn map-pure [m v]
-  (coll-pure m [nil v]))
-
-  ;;================== Monad Implementations ======================
+;;================== Monad Implementations ======================
 
 (defn collreduce-bind
   ([cr g]
@@ -441,9 +413,6 @@
   `(extend ~t
      Functor
      {:fmap map-fmap}
-     Applicative
-     {:pure map-pure
-      :fapply map-fapply}
      Monad
      {:join map-join
       :bind map-bind}
