@@ -95,8 +95,6 @@ run on JVM platform."
      Functor
      ~'(fmap [_ g]
          (CurriedFn. (comp g f) n))
-     ~'(fmap [cf g cfs]
-         (reduce fmap (into (list cf g) (seq cfs))))
      Applicative
      ~'(pure [_ x]
          (CurriedFn. (fn [& _] x) 0))
@@ -107,15 +105,6 @@ run on JVM platform."
                ((cg x) (cf x)))
             ([x & xs]
                ((apply cg x xs) (apply cf x xs))))
-          1))
-     ~'(fapply [cg cf hs]
-         (CurriedFn.
-          (fn
-            ([x]
-               (apply (cg x) (cf x) (map #(% x) hs)))
-            ([x & xs]
-               (apply (apply cg x xs) (apply cf x xs)
-                      (map #(apply % x xs) hs))))
           1))
      Monad
      ~'(bind [cf cg]
