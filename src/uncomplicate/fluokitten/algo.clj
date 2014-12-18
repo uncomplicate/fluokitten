@@ -445,23 +445,6 @@
     ke
     (apply g ve (vals es)))))
 
-(defn mapentry-pure [e v]
-  (create-mapentry nil v))
-
-(defn mapentry-fapply
-  ([[kg vg] [ke ve :as e]]
-   (if (or (nil? kg) (= ke kg))
-     (create-mapentry ke (vg ve))
-     e))
-  ([[kg vg] [ke ve :as e] es]
-   (if (or (nil? kg)
-           (not (some (fn [[k _]]
-                        (not= k kg))
-                      (cons e es))))
-     (create-mapentry ke (apply vg ve (map val es)))
-     e)));;TODO e should be represented with Nothing once Maybe is implemented
-
-
 (defn mapentry-join [[k x :as e]]
   (if (vector? x)
     (let [[kx vx] x]
@@ -488,9 +471,6 @@
   `(extend ~t
      Functor
      {:fmap mapentry-fmap}
-     Applicative
-     {:pure mapentry-pure
-      :fapply mapentry-fapply}
      Monad
      {:join mapentry-join
       :bind default-bind}
