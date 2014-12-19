@@ -43,6 +43,7 @@ contain the implementations of the protocols, by default jvm.
       (applicative? v)))
 
 (declare fapply)
+(declare pure)
 
 (defn fmap
   "Applies a function f to the value(s) inside functor's
@@ -120,7 +121,7 @@ contain the implementations of the protocols, by default jvm.
     (p/fmap functor f)
     
     (satisfies? p/Applicative f) 
-    (p/fapply (p/pure functor f) functor)))
+    (fapply (pure functor f) functor)))
   ([f]
      (if (= identity f)
        identity
@@ -214,13 +215,18 @@ contain the implementations of the protocols, by default jvm.
    (p/fapply af av))
   ([af av & avs]
    {:pre [(applicative? af) (applicative? av)]}
-   (let [[av' & avs'] avs] 
-     (apply fapply 
+   (loop [af' af
+          av' av
+          avs' avs]
+     (if (empty? avs')
+         (fapply af' av')         
+         (let [[av'' & avs''] avs'] 
+           (recur 
             ;; curry (af av)
-            (p/fapply (fmap #(fn [x] (partial % x)) af) 
-                      av)
-            av'
-            avs'))))
+            (p/fapply (fmap #(fn [x] (partial % x)) af') 
+                      av')
+            av''
+            avs''))))))
 
 (defn <*>
   "Performs a Haskell-style left-associative fapply
