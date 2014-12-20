@@ -31,7 +31,7 @@ Applicatives are Functors now with the following laws:
 	9 : b 3})`. While it is convenient to use this
 	function it could not be extended to applicative
 	functor structure. For example: what is the result
-	of `(fmap subs {:a "1234" :b "abcd"} {:a 1 :c 3})`
+	of `(fmap subs {:a "1234" :b "abcd"} {:a 1 :c 3})`?
     - What to do: TotalMap functor can be implemented,
 	or another realization of applicative for maps could
 	be provided with result map containing only keys
@@ -44,7 +44,7 @@ Applicatives are Functors now with the following laws:
 	now act as a Functor.
     - What to do: they can be added in the future for
 	performance reason. However the following law must
-	hold: `(fmap f x) = (fapply (pure f) x)`
+	hold: `(fmap f x) = (fapply (pure f) x)`.
 
 ### Semantic changes:
 * Variadic fmap and fapply now follows the following laws:
@@ -64,7 +64,7 @@ Applicatives are Functors now with the following laws:
         + Before: `(fmap + '(1) [2]) = '(3)`
         + Now: `(fmap + '(1) [2]) = [3]` All type and
           methadata information in non heterogeneous fmaps is
-	  now take from the last parameter.
+	  now taken from the last parameter.
 
 ## 0.3.0
 
