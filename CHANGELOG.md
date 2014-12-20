@@ -32,10 +32,7 @@ Applicatives are Functors now with the following laws:
 	function it could not be extended to applicative
 	functor structure. For example: what is the result
 	of `(fmap subs {:a "1234" :b "abcd"} {:a 1 :c 3})`?
-    - What to do: TotalMap functor can be implemented,
-	or another realization of applicative for maps could
-	be provided with result map containing only keys
-	which were present in all maps.
+    - What to do: TotalMap functor can be implemente.
 * No Applicative instance for CollReduce.
     - Why: it is not an Applicative functor.
 * No Functor instance for types supporting Applicative
