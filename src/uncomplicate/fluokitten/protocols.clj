@@ -45,18 +45,14 @@ code. The clent code should call the generic functions from Fluokitten core."
    the implementation of this protocol if needed from
    other methods.
   "
-  (fmap [fv g] [fv g fvs]
+  (fmap [fv g]
     "Applies function g to the value(s) inside the context
      of the functor fv. The result is a functor of the same
-     type as fv. If more functor values are supplied in a
-     sequence fvs, uses them as arguments for a vararg g.
-     This method is intended to be used by fluokitten core's
-     fmap, not directly by clients. The first two arguments
-     are reversed compared to core's fmap because protocol's
-     polymorphism is based on java-based dispatch. The third
-     parameter, fvs, contains a sequence of all additional
-     arguments, normally supplied by core fmap's varargs
-     (protocol methods do not support varargs)."))
+     type as fv. This method is intended to be used by
+     fluokitten core's fmap, not directly by clients. Two
+     arguments are reversed compared to core's fmap because
+     protocol's polymorphism is based on java-based
+     dispatch."))
 
 (defprotocol Applicative
   "Applicative (applicative functor) is an abstraction for a
@@ -103,19 +99,13 @@ code. The clent code should call the generic functions from Fluokitten core."
      in the most minimal context possible that has appropriate
      type. av is needed only for proper dispatching and is
      not changed in any way.")
-  (fapply [ag av] [ag av avs]
+  (fapply [ag av]
     "Applies the function(s) inside ag's context to the value(s)
      inside av's context while preserving the context. Both contexts
      should be of the same (or compatible) type, and the type of
      the resulting context is determined by av's type.
-     If more applicative functor values are supplied in a
-     sequence avs, uses them as arguments for vararg
-     function(s) inside the context ag.
      This method is intended to be used by fluokitten core's
-     fapply, not directly by clients. The third argument, avs,
-     contains a sequence of all additional arguments, normally
-     supplied by core fapply's varargs (protocol methods do not
-     support varargs)."))
+     fapply, not directly by clients."))
 
 (defprotocol Monad
   "Monad is an abstraction for a context (box, container,
