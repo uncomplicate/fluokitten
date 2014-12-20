@@ -16,13 +16,13 @@ Applicatives are Functors now with the following laws:
     - Why: it is to easy to make an error and try to
 	fmap over collection which do not implement Functor
 	protocol with unexpected result.
-    - How to solve: Identity functor can be implemented
+    - What to do: Identity functor can be implemented
 	with the same behavior unwrapped Objects had.
 * Variadic fmap now requires Applicative instance.
     - Why: variadic fmap defines applicative functor
 	structure on objects, functor structure is not
 	enough to implement variadic fmap.
-    - How to solve: If your type defined variadic fmap,
+    - What to do: If your type defined variadic fmap,
 	than it has an applicative functor structure. Provide
 	Applicative instance for it.
 * No Applicative instance for maps and map-entries.
@@ -32,7 +32,7 @@ Applicatives are Functors now with the following laws:
 	function it could not be extended to applicative
 	functor structure. For example: what is the result
 	of `(fmap subs {:a "1234" :b "abcd"} {:a 1 :c 3})`
-	- How to solve: TotalMap functor can be implemented,
+    - What to do: TotalMap functor can be implemented,
 	or another realization of applicative for maps could
 	be provided with result map containing only keys
 	which were present in all maps.
@@ -42,7 +42,7 @@ Applicatives are Functors now with the following laws:
   protocol.
     - Why: it is not needed now, as any Applicative can
 	now act as a Functor.
-    - How to solve: they can be added in the future for
+    - What to do: they can be added in the future for
 	performance reason. However the following law must
 	hold: `(fmaf f x) = (fapply (pure f) x)`
 
