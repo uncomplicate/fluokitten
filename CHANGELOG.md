@@ -44,7 +44,7 @@ Applicatives are Functors now with the following laws:
 	now act as a Functor.
     - What to do: they can be added in the future for
 	performance reason. However the following law must
-	hold: `(fmaf f x) = (fapply (pure f) x)`
+	hold: `(fmap f x) = (fapply (pure f) x)`
 
 ### Semantic changes:
 * Variadic fmap and fapply now follows the following laws:
