@@ -63,7 +63,7 @@ Applicatives are Functors now with the following laws:
     - Non heterogenic fmaps
         + Before: `(fmap + '(1) [2]) = '(3)`
         + Now: `(fmap + '(1) [2]) = [3]` All type and
-          methadata information in heterogeneous fmaps is
+          methadata information in non heterogeneous fmaps is
 	  now take from the last parameter.
 
 ## 0.3.0
