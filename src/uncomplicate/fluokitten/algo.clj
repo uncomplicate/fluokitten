@@ -123,13 +123,6 @@
    (throw (ex-info "bind for reducibles does not support varargs."
                    {:exception-type :unsupported-operation}))))
 
-(defn default-bind
-  ([m g]
-   (join (fmap m g)))
-  ([m g ms]
-   (throw (ex-info "bind for reducibles does not support varargs."
-                   {:exception-type :unsupported-operation}))))
-
 (defn reducible-bind
   ([c g]
    (into (empty c)
@@ -248,7 +241,7 @@
   ([x y]
    (into (empty x) (collreduce-op x y)))
   ([x y ys]
-   (into (empty x) (collreduce-op x y ys))))
+    (into (empty x) (collreduce-op x y ys))))
 
 (defn seq-op
   ([x y]
@@ -285,8 +278,6 @@
 
 (defmacro extend-collection [t]
   `(extend ~t
-     Functor
-     {:fmap coll-fmap}
      Applicative
      {:pure coll-pure
       :fapply coll-fapply}
@@ -303,8 +294,6 @@
 
 (defmacro extend-vector [t]
   `(extend ~t
-     Functor
-     {:fmap reducible-fmap}
      Applicative
      {:pure coll-pure
       :fapply reducible-fapply}
@@ -316,8 +305,6 @@
 
 (defmacro extend-list [t]
   `(extend ~t
-     Functor
-     {:fmap list-fmap}
      Applicative
      {:pure coll-pure
       :fapply list-fapply}
@@ -329,8 +316,6 @@
 
 (defmacro extend-seq [t]
   `(extend ~t
-     Functor
-     {:fmap seq-fmap}
      Applicative
      {:pure coll-pure
       :fapply seq-fapply}
@@ -342,8 +327,6 @@
 
 (defmacro extend-lazyseq [t]
   `(extend ~t
-     Functor
-     {:fmap seq-fmap}
      Applicative
      {:pure lazyseq-pure
       :fapply seq-fapply}
@@ -355,8 +338,6 @@
 
 (defmacro extend-set [t]
   `(extend ~t
-     Functor
-     {:fmap reducible-fmap}
      Applicative
      {:pure coll-pure
       :fapply reducible-fapply}
@@ -505,12 +486,30 @@
   ;;====================== References =======================
   ;;----------------- Universal ------------------
 
+(defn reference-fmap 
+  [f rv]
+  (do
+    ((cond
+      (instance? clojure.lang.Atom rv)
+      swap!
+      (instance? clojure.lang.Ref rv)
+      #(dosync (alter %1 %2))
+      ) rv f)
+    rv))
+
 (defn reference-fapply
-  ([rg rv]
-   (fmap rv (deref rg))))
+  [rg rv]
+  (reference-fmap (deref rg) rv))
 
 (defn reference-join [r]
-  (fmap r #(if (deref? %) (deref %) %)))
+  (reference-fmap #(if (deref? %) (deref %) %) r))
+
+(defn reference-bind
+  ([m g]
+   (join (reference-fmap g m)))
+  ([m g ms]
+   (throw (ex-info "bind for reducibles does not support varargs."
+                   {:exception-type :unsupported-operation}))))
 
 (defn reference-op
   ([rx ry]
@@ -531,6 +530,10 @@
   ([a g]
    (do (swap! a g) a)))
 
+(defn agent-fapply
+  ([rg rv]
+   (agent-fmap rv (deref rg))))
+
 (defn agent-pure [_ v]
   (atom v))
 
@@ -538,10 +541,13 @@
   (atom (id @a)))
 
   ;;------------------- Ref --------------------------
-
 (defn ref-fmap
   ([r g]
    (dosync (alter r g) r)))
+
+(defn ref-fapply
+  ([rg rv]
+   (ref-fmap rv (deref rg))))
 
 (defn ref-pure [_ v]
   (ref v))
@@ -553,14 +559,12 @@
 
 (defmacro extend-atom [t]
   `(extend ~t
-     Functor
-     {:fmap agent-fmap}
      Applicative
      {:pure agent-pure
       :fapply reference-fapply}
      Monad
      {:join reference-join
-      :bind default-bind}
+      :bind reference-bind}
      Foldable
      {:fold reference-fold
       :foldmap reference-foldmap}
@@ -571,14 +575,12 @@
 
 (defmacro extend-ref [t]
   `(extend ~t
-     Functor
-     {:fmap ref-fmap}
      Applicative
      {:pure ref-pure
       :fapply reference-fapply}
      Monad
      {:join reference-join
-      :bind default-bind}
+      :bind reference-bind}
      Foldable
      {:fold reference-fold
       :foldmap reference-foldmap}

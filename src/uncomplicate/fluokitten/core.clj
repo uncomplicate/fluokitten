@@ -116,11 +116,12 @@ contain the implementations of the protocols, by default jvm.
   "
   ([f functor]
    {:pre [(functor? functor)]}
+   println (str f " " functor)
    (cond
-    (satisfies? p/Functor f) 
+    (satisfies? p/Functor functor) 
     (p/fmap functor f)
     
-    (satisfies? p/Applicative f) 
+    (satisfies? p/Applicative functor) 
     (fapply (pure functor f) functor)))
   ([f]
      (if (= identity f)
