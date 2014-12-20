@@ -1,12 +1,16 @@
 # [Fluokitten](http://fluokitten.uncomplicate.org) - notable changes between versions
 
 ## 0.4.0-adavydow
-Briefly: Functors now supports only non-variadic fmap. 
+### Briefly: 
+
+Functors now supports only non-variadic fmap. 
 Applicatives are Functors now with the following laws:
+
 1. `(fmap f x) = (fapply (pure f) x`
 2. `(fmap apply x y z) = (fapply x y z)`
 3. `(fmap f x y) = (fapply (fmap (curry f) x) y)`
-Regressions:
+
+### Regressions:
 
 * No default implementations for protocols.
     - Why: it is to easy to make an error and try to
@@ -42,7 +46,7 @@ Regressions:
 	performance reason. However the following law must
 	hold: `(fmaf f x) = (fapply (pure f) x)`
 
-Semantic changes:
+### Semantic changes:
 * Variadic fmap and fapply now follows the following laws:
   `(fmap f x y) = (fapply (fmap (curry f) x) y)`.
   `(fapply f x y) = (fapply (fapply f x) y)`.
