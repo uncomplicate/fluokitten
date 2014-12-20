@@ -26,9 +26,9 @@ Regressions:
 	of `(fmap subs {:a "1234" :b "abcd"} {:a 1 :c 3})`
 	- How to solve: TotalMap functor can be implemented,
 	or another realization of applicative for maps could
-	be provided with result maps containing only keys
+	be provided with result map containing only keys
 	which were present in all maps.
-* No Applicative implementation for CollReduce.
+* No Applicative instance for CollReduce.
     - Why: it is not an Applicative functor.
 * No Functor instance for types supporting Applicative
   protocol.
