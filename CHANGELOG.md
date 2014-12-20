@@ -4,21 +4,21 @@
 Briefly: Functors now supports only
 Regressions:
 
-    * No default implementations for protocols.
-        - Why: it is to easy to make an error and try to
+* No default implementations for protocols.
+    - Why: it is to easy to make an error and try to
 	fmap over collection which do not implement Functor
 	protocol with unexpected result.
-	- How to solve: Identity functor can be implemented
+    - How to solve: Identity functor can be implemented
 	with the same behavior unwrapped Objects had.
-    * Variadic fmap now requires Applicative instance.
-	- Why: variadic fmap defines applicative functor
+* Variadic fmap now requires Applicative instance.
+    - Why: variadic fmap defines applicative functor
 	structure on objects, functor structure is not
 	enough to implement variadic fmap.
-	- How to solve: If your type defined variadic fmap,
+    - How to solve: If your type defined variadic fmap,
 	than it has an applicative functor structure. Provide
 	Applicative instance for it.
-    * No Applicative instance for maps and map-entries.
-	- Why: it was defined in the following way:
+* No Applicative instance for maps and map-entries.
+    - Why: it was defined in the following way:
         `(fmap + {:a 1} {:a 2 :c 4} {:b 3 :c 5}) = {:a 3 :c
 	9 : b 3})`. While it is convenient to use this
 	function it could not be extended to applicative
@@ -28,35 +28,35 @@ Regressions:
 	or another realization of applicative for maps could
 	be provided with result maps containing only keys
 	which were present in all maps.
-    * No Applicative implementation for CollReduce.
-	- Why: it is not an Applicative functor.
-    * No Functor instance for types supporting Applicative
-	protocol.
-	- Why: it is not needed now, as any Applicative can
+* No Applicative implementation for CollReduce.
+    - Why: it is not an Applicative functor.
+* No Functor instance for types supporting Applicative
+  protocol.
+    - Why: it is not needed now, as any Applicative can
 	now act as a Functor.
-	- How to solve: they can be added in the future for
+    - How to solve: they can be added in the future for
 	performance reason. However the following law must
 	hold: `(fmaf f x) = (fapply (pure f) x)`
 
 Semantic changes:
-    * Variadic fmap and fapply now follows the following laws:
-	`(fmap f x y) = (fapply (fmap (curry f) x) y)`.
-	`(fapply f x y) = (fapply (fapply f x) y)`.
-      Several types now implements fmap in the different way
-	compared to previous version:
-	- Sequential collections
-	  + Before: `(fmap + [1 2] [3 4]) = [4 6]`
-          + Now: `(fmap + [1 2] [3 4]) = [4 5 5 6]`
-	(nondeterministic computation pattern).
-	- Functions
-	  + Before: `((fmap inc ((curry *) 3) ((curry +) 2))
-	7 3 1) = 40`
-	  + Now: type error
-	- Non heterogenic fmaps
-	  + Before: `(fmap + '(1) [2]) = '(3)`
-	  + Now: `(fmap + '(1) [2]) = [3]` All type and
-	methadata information in heterogeneous fmaps is now
-	take from the last parameter.
+* Variadic fmap and fapply now follows the following laws:
+  `(fmap f x y) = (fapply (fmap (curry f) x) y)`.
+  `(fapply f x y) = (fapply (fapply f x) y)`.
+  Several types now implements fmap in the different way
+  compared to previous version:
+    - Sequential collections
+        + Before: `(fmap + [1 2] [3 4]) = [4 6]`
+        + Now: `(fmap + [1 2] [3 4]) = [4 5 5 6]`
+	  (nondeterministic computation pattern).
+    - Functions
+        + Before: `((fmap inc ((curry *) 3) ((curry +) 2))
+	  7 3 1) = 40`
+        + Now: type error
+    - Non heterogenic fmaps
+        + Before: `(fmap + '(1) [2]) = '(3)`
+        + Now: `(fmap + '(1) [2]) = [3]` All type and
+          methadata information in heterogeneous fmaps is
+	  now take from the last parameter.
 
 ## 0.3.0
 
