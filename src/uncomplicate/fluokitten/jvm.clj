@@ -9,6 +9,7 @@ run on JVM platform."
 (set! *warn-on-reflection* true)
 
 ;;======== Set appropriate platform specific vars in algo. ======
+
 (ns uncomplicate.fluokitten.utils)
 
 (defn deref?
@@ -29,6 +30,7 @@ run on JVM platform."
 (ns uncomplicate.fluokitten.jvm)
 
 ;;======== Clojure JVM-specific Extensions =====================
+
 (extend-collection clojure.lang.IPersistentCollection)
 
 (extend-seq clojure.lang.ASeq)
@@ -56,6 +58,7 @@ run on JVM platform."
 (extend-ref clojure.lang.Ref)
 
 ;;===================== CurriedFn ===========================
+
 (defn ^:private arg-counts [f]
   (map alength (map (fn [^java.lang.reflect.Method m]
                       ( .getParameterTypes m))

@@ -5,6 +5,7 @@
             [clojure.core.reducers :as r]))
 
 ;;=============== Curried tests ========================
+
 (facts
  ((curry + 3) 1 2 3) => 6
  (((curry + 2) 1) 2) => 3)
@@ -13,6 +14,7 @@
       (fmap identity) => identity)
 
 ;;--------------- nil ---------------
+
 (functor-law2 inc + nil)
 
 (functor-law2 inc + nil 99 0)
@@ -44,6 +46,7 @@
        (fmap  + \a) => (throws ClassCastException))
 
 ;;--------------- String ---------------
+
 (functor-law2 s/capitalize s/reverse "something")
 
 (functor-law2 s/capitalize str "something" "else")
@@ -53,6 +56,7 @@
 (fmap-keeps-type str "something" "else")
 
 ;;--------------- Vector ---------------
+
 (functor-law2 inc (partial * 100)
               [1 -199 9])
 
@@ -66,6 +70,7 @@
                  (list 44 0 -54))
 
 ;;--------------- List ---------------
+
 (functor-law2 inc (partial * 100)
               (list -3 5 0))
 
@@ -79,6 +84,7 @@
                  (list 88 -8 8))
 
 ;;--------------- Set ---------------
+
 (functor-law2 inc (partial * 100)
               #{-449 9 6})
 
@@ -106,6 +112,7 @@
               (seq (list -5 -4 -5)))
 
 ;;--------------- LazySeq ---------------
+
 (functor-law2 inc (partial * 100)
               (lazy-seq (list 78 -3 5)))
 
@@ -120,12 +127,14 @@
 
 
 ;;--------------- CollReduce ---------------
+
 (functor-law2 inc (partial * 100)
               (reducible [1 -199 9]))
 
 (fmap-keeps-type inc (reducible [100 0 -999]))
 
 ;;--------------- MapEntry ---------------
+
 (functor-law2 inc (partial * 100)
               (first {:a 11}))
 
@@ -139,6 +148,7 @@
                  (first {:d 5}))
 
 ;;--------------- Map ---------------
+
 (fact
  (fmap (comp inc +) {:a 1} {:a 2} {:a 3})
  => {:a 7})
@@ -162,6 +172,7 @@
                  {:k 5 :n 4 :dd 5})
 
 ;;--------------- Atom ---------------
+
 (functor-law2 inc (partial * 100) (atom 34))
 
 (functor-law2 inc (partial * 100)
@@ -172,6 +183,7 @@
 (fmap-keeps-type  + (atom 37) (atom 5))
 
 ;;--------------- Ref ---------------
+
 (dosync
  (functor-law2 inc (partial * 100) (ref 44)))
 
@@ -187,6 +199,7 @@
  (fmap-keeps-type + (ref 47) (ref 4) (atom 7)))
 
 ;;--------------- Function ---------------
+
 (fact "Second functor law."
       ((fmap (comp inc dec) inc) 1)
       => ((fmap inc (fmap dec inc)) 1))
@@ -204,40 +217,41 @@
 (fact "Fmap keeps type - varargs." (fn? (fmap inc dec +)))
 
 ;;--------------- Curried Function ---------------
+
 (facts "How CurriedFn fmap works for fixed args."
- ((((fmap (curry +) (curry +)) 1) 2) 3) => 6
+       ((((fmap (curry +) (curry +)) 1) 2) 3) => 6
 
- ((((fmap (comp #(partial % 1) (curry + 2))
-          (curry + 2)) 1) 2) 3) => 7
+       ((((fmap (comp #(partial % 1) (curry + 2))
+                (curry + 2)) 1) 2) 3) => 7
 
- ((((fmap #(partial % 1)
-          (fmap (curry + 2) (curry + 2))) 1) 2) 3)
- => 7)
+       ((((fmap #(partial % 1)
+                (fmap (curry + 2) (curry + 2))) 1) 2) 3)
+       => 7)
 
 (facts "Second functor law."
-      ((fmap (comp inc dec) (curry inc)) 1)
-      => ((fmap inc (fmap dec (curry inc))) 1)
+       ((fmap (comp inc dec) (curry inc)) 1)
+       => ((fmap inc (fmap dec (curry inc))) 1)
 
-      ((fmap (comp inc dec) (curry +)) 1 2 3)
-      => ((fmap inc (fmap dec (curry +))) 1 2 3)
+       ((fmap (comp inc dec) (curry +)) 1 2 3)
+       => ((fmap inc (fmap dec (curry +))) 1 2 3)
 
-      (((fmap (comp inc dec) (curry + 2)) 1) 2)
-      => (((fmap inc (fmap dec (curry + 2))) 1) 2)
+       (((fmap (comp inc dec) (curry + 2)) 1) 2)
+       => (((fmap inc (fmap dec (curry + 2))) 1) 2)
 
-      ((((fmap (comp #(partial %)
-                     (curry + 2)) (curry + 2)) 1) 2) 3)
-      => ((((fmap #(partial %)
-                  (fmap (curry + 2) (curry + 2))) 1) 2) 3))
+       ((((fmap (comp #(partial %)
+                      (curry + 2)) (curry + 2)) 1) 2) 3)
+       => ((((fmap #(partial %)
+                   (fmap (curry + 2) (curry + 2))) 1) 2) 3))
 
 (facts "How CurriedFn fmap works for variable args."
- ((((fmap #(partial %)
-          (curry +)
-          (curry (partial * 10) 3)) 2 3) 5) 7)
- => 307
- ((((fmap (comp #(partial % 2) #(partial % 1))
-          (curry + 4)
-          (curry (partial * 10) 3)) 2 3) 5) 6)
- => 309)
+       ((((fmap #(partial %)
+                (curry +)
+                (curry (partial * 10) 3)) 2 3) 5) 7)
+       => 307
+       ((((fmap (comp #(partial % 2) #(partial % 1))
+                (curry + 4)
+                (curry (partial * 10) 3)) 2 3) 5) 6)
+       => 309)
 
 (facts "Second functor law - varargs."
        (((fmap (comp #(partial % 2) #(partial % 3))
@@ -263,7 +277,8 @@
       (curried? (fmap inc (curry dec) (curry +))))
 
 
-;--------------- Vector ---------------
+;;--------------- Vector ---------------
+
 (applicative-law1 inc [1 -2 5])
 
 (applicative-law1 + [1 -2 5] [8 98 0])
@@ -288,7 +303,8 @@
 (fapply-keeps-type inc  [1 -4 9])
 (fapply-keeps-type + [1 -4 9] [2 -3 -4])
 
-;--------------- CollReduce ---------------
+;;--------------- CollReduce ---------------
+
 (applicative-law1 inc (reducible [1 -2 5]))
 
 (applicative-law2-identity (reducible [1 445 -4]))
@@ -304,6 +320,7 @@
 (fapply-keeps-type inc (reducible [1 -4 9]))
 
 ;;--------------- List ---------------
+
 (applicative-law1 inc (list 2 44 -7))
 
 (applicative-law1 + (list 2 44 -7) (list 3 5 -3))
@@ -332,6 +349,7 @@
 (fapply-keeps-type + (list 2 -4 9) (list 9 -8))
 
 ;;-------------- Seq ----------------
+
 (applicative-law1 inc (seq (list 3 9 0)))
 
 (applicative-law1 +
@@ -360,9 +378,10 @@
 (fapply-keeps-type inc (seq (list 3 -4 9)))
 
 (fapply-keeps-type + (seq (list 3 -4 9))
-                (seq (list -5 -5 -3)))
+                   (seq (list -5 -5 -3)))
 
 ;;-------------- Lazy Seq ----------------
+
 (applicative-law1 inc (lazy-seq (list 3 9 0)))
 
 (applicative-law1 +
@@ -391,13 +410,13 @@
 (fapply-keeps-type inc (lazy-seq (list 3 -4 9)))
 
 (fapply-keeps-type + (lazy-seq (list 3 -4 9))
-                (lazy-seq (list -5 -5 -5)))
+                   (lazy-seq (list -5 -5 -5)))
 
 ;;-------------- Set ----------------
+
 (applicative-law1 inc #{4 2 -44})
 
-(applicative-law1 + #{4 2 -44}
-                  #{0 -8})
+(applicative-law1 + #{4 2 -44} #{0 -8})
 
 (applicative-law2-identity #{4 40 -1})
 
@@ -421,9 +440,10 @@
 (fapply-keeps-type inc #{4 -2 5})
 
 (fapply-keeps-type + #{4 -2 5}
-                #{-9 -7})
+                   #{-9 -7})
 
 ;;-------------- MapEntry -----------
+
 (applicative-law1 inc (first {5 5}))
 
 (applicative-law1 +
@@ -458,6 +478,7 @@
                               5 3 4 5)
 
 ;;-------------- Map ----------------
+
 (fact (pure {} 2) => {nil 2})
 
 (fact (fapply {:a inc :b dec
@@ -469,15 +490,15 @@
       => {:a 2 :c 2})
 
 (fact (fapply {:a + :b - nil (partial * 2)}
-           {:a 1 :b 1}
-           {:a 2 :b 3 :c 44}
-           {:b 4})
+              {:a 1 :b 1}
+              {:a 2 :b 3 :c 44}
+              {:b 4})
       => {:a 3 :b -6 :c 88})
 
 (fact (fapply {:a + :b - :d (partial * 2)}
-           {:a 1 :b 1}
-           {:a 2 :b 3 :c 44}
-           {:b 4})
+              {:a 1 :b 1}
+              {:a 2 :b 3 :c 44}
+              {:b 4})
       => {:a 3 :b -6 :c 44})
 
 (fact (fapply {nil +}
@@ -520,6 +541,7 @@
 (fapply-keeps-type inc {4 -2 5 5})
 
 ;;-------------- Atom -----------
+
 (applicative-law1 inc (atom 6))
 
 (applicative-law1 +
@@ -548,6 +570,7 @@
 (applicative-law5-interchange (atom 6) + 5 3 4 5)
 
 ;;-------------- Ref -----------
+
 (dosync
  (applicative-law1 inc (ref 6)))
 
@@ -573,18 +596,19 @@
                                (ref -2)))
 
 (dosync
-   (applicative-law4-homomorphism (ref 6) inc 5))
+ (applicative-law4-homomorphism (ref 6) inc 5))
 
 (dosync
  (applicative-law4-homomorphism (ref 6) + 5 -4 5))
 
 (dosync
-   (applicative-law5-interchange (ref 6) inc 5))
+ (applicative-law5-interchange (ref 6) inc 5))
 
 (dosync
-   (applicative-law5-interchange (ref 6) + 5 3 4 5))
+ (applicative-law5-interchange (ref 6) + 5 3 4 5))
 
 ;;------------------- Curried Function ---------------------------
+
 (let [c+ (curry +)
       c* (curry *)]
 
@@ -647,6 +671,7 @@
          => ((fapply (pure curried #(% 7)) c+) 9)))
 
 ;;--------------- Vector --------------------------------
+
 (monad-law1-left-identity [] (comp vector inc) 1)
 
 (monad-law1-left-identity [] (comp vector +) 1 2 3)
@@ -658,6 +683,7 @@
                           [1 -3 -88])
 
 ;;--------------- CollReduce ---------------------------------
+
 (monad-law1-left-identity (reducible [])
                           (comp reducible vector inc) 1)
 
@@ -668,6 +694,7 @@
                           (reducible [1 -3 -88]))
 
 ;;--------------- List -----------------------------------
+
 (monad-law1-left-identity (list) (comp list inc) 2)
 
 (monad-law1-left-identity (list) (comp list +) 2 3 4)
@@ -679,6 +706,7 @@
                           (list 2 -3 -88))
 
 ;;--------------- LazySeq -----------------------------------
+
 (monad-law1-left-identity (lazy-seq (list))
                           (comp list inc) 3)
 
@@ -692,6 +720,7 @@
                           (lazy-seq (list 3 -3 -88)))
 
 ;;--------------- Seq -----------------------------------
+
 (monad-law1-left-identity (conj (seq [0]) 2)
                           (comp seq vector inc) 4)
 
@@ -705,6 +734,7 @@
                           (conj (seq [4 -3 -88]) 2))
 
 ;;--------------- Set ---------------------------------
+
 (monad-law1-left-identity #{} (comp hash-set inc) 6)
 
 (monad-law1-left-identity #{} (comp hash-set +) 6 7 99)
@@ -716,6 +746,7 @@
                           #{5 -56 30})
 
 ;;--------------- Map ---------------------------------
+
 (facts
  (join {:a 1 :b 2}) => {:a 1 :b 2}
  (join {:a {:a1 1 :a2 5} :b {:b1 2}})
@@ -747,6 +778,7 @@
    => (bind (pure {} f) #(fmap % m))))
 
 ;;--------------- MapEntry ----------------------------
+
 (facts
  (join (first {:a 1})) => (first {:a 1})
  (join (first {:a [:b 1]})) => (first {[:a :b] 1}))
@@ -773,6 +805,7 @@
                           (first {:a 77}))
 
 ;;--------------- Atom ----------------------------
+
 (facts "Join function for atoms."
        (join (atom 1)) => (check-eq (atom 1))
        (join (atom (atom 2))) => (check-eq (atom 2)))
@@ -788,6 +821,7 @@
                           (atom 9))
 
 ;;--------------- Ref ----------------------------
+
 (dosync
  (facts "Join function for refs."
         (join (ref 1)) => (check-eq (ref 1))
@@ -808,6 +842,7 @@
                            (ref 9)))
 
 ;;------------------- Curried Function ---------------------------
+
 (let [c+ (curry +)
       c* (curry *)]
 
@@ -829,8 +864,8 @@
          => ((c* 7) 6 7 8))
 
   (fact "Right identity Monad Law."
-         ((bind c* (pure c*)) 2 3)
-         => (c* 2 3))
+        ((bind c* (pure c*)) 2 3)
+        => (c* 2 3))
 
   (facts "Associativity Monad Law."
          ((bind (bind (c* 3) c*) c+) 7)
@@ -841,6 +876,7 @@
 
 ;;============= Magmas, Semigroups and Monoids =======================
 ;;----------------------- Vector --------------------------
+
 (magma-op-keeps-type [1 2] [3 4])
 
 (magma-op-keeps-type [1 2] [3 4] [5 6])
@@ -852,6 +888,7 @@
 (monoid-identity-law [1 2])
 
 ;;----------------------- List --------------------------
+
 (magma-op-keeps-type (list 1 2)
                      (list 3 4))
 
@@ -871,6 +908,7 @@
 (monoid-identity-law (list 1 2))
 
 ;;----------------------- LazySeq --------------------------
+
 (magma-op-keeps-type (lazy-seq (list 1 2))
                      (lazy-seq (list 3 4)))
 
@@ -890,6 +928,7 @@
 (monoid-identity-law (lazy-seq (list 1 2)))
 
 ;;----------------------- Seq --------------------------
+
 (magma-op-keeps-type (seq (list 1 2))
                      (seq (list 3 4)))
 
@@ -909,6 +948,7 @@
 (monoid-identity-law (seq (list 1 2)))
 
 ;;----------------------- Set --------------------------
+
 (magma-op-keeps-type #{1 2} #{3 4})
 
 (magma-op-keeps-type #{1 2} #{3 4} #{5 6})
@@ -920,6 +960,7 @@
 (monoid-identity-law #{1 2})
 
 ;;----------------------- Map --------------------------
+
 (magma-op-keeps-type {:a 1} {:b 2})
 
 (magma-op-keeps-type {:a 1}
@@ -938,6 +979,7 @@
 (monoid-identity-law {:a 1 :b 2})
 
 ;;----------------------- MapEntry --------------------------
+
 (magma-op-keeps-type (first {:a 1})
                      (first {:b 2}))
 
@@ -955,7 +997,9 @@
                             (first {:e 6}))
 
 (monoid-identity-law (first {:a 1}))
+
 ;;----------------------- String --------------------------
+
 (magma-op-keeps-type "something"
                      "else")
 
@@ -975,6 +1019,7 @@
 (monoid-identity-law "something")
 
 ;;----------------------- Number --------------------------
+
 (magma-op-keeps-type 1 2)
 
 (magma-op-keeps-type 1 2 3 4)
@@ -986,6 +1031,7 @@
 (monoid-identity-law 4)
 
 ;;----------------------- Keyword --------------------------
+
 (magma-op-keeps-type :something
                      :else)
 
@@ -1005,6 +1051,7 @@
 (monoid-identity-law :something)
 
 ;;----------------------- Atom --------------------------
+
 (magma-op-keeps-type (atom 1)
                      (atom 2))
 
@@ -1020,7 +1067,9 @@
                             (atom 9))
 
 (monoid-identity-law (atom 4))
- ;;----------------------- Ref --------------------------
+
+;;----------------------- Ref --------------------------
+
 (dosync
  (magma-op-keeps-type (ref 1)
                       (ref 2)))
@@ -1039,6 +1088,7 @@
  (monoid-identity-law (ref 5)))
 
 ;;------------------- Functions --------------------------
+
 (facts "Magma op keeps type"
        (op + *) => fn?
        (op + * /) => fn?)
@@ -1050,6 +1100,7 @@
 (monoid-identity-law +)
 
 ;;-------------------- CurriedFn ----------------------
+
 (let [c+ (curry +)
       c* (curry *)
       cdiv (curry /)]
@@ -1065,6 +1116,7 @@
   (monoid-identity-law c+))
 
 ;;----------------- monoid fold -------------------------
+
 (facts "Monoids are used by collection fold."
        (fold [[1] [2]]) => [1 2]
        (fold [(list 1) (list 2)]) => (list 1 2)
@@ -1084,8 +1136,10 @@
        => (check-eq (ref 6))
        (fold [(first {:a 1}) (first {:a 2}) (first {:b 3})])
        => (check-eq (first {:aab 6}))
-)
+       )
+
 ;;===================== Foldable =====================
+
 (facts "How Foldable collections work."
        (fold [1 2 3 4 5]) => 15
        (fold []) => nil
@@ -1113,6 +1167,7 @@
       (foldmap inc (ref 5)) => 6)
 
 ;;=============== Metadata ==========================
+
 (data-structures-should-preserve-metadata
  inc + vector [1 2 3] [4 5 6])
 
@@ -1181,6 +1236,7 @@
 ;; Reducers and MapEntry do not support metadata.
 
 ;; =========== Additional core functions =============
+
 (let [c+ (curry +)
       c* (curry *)]
 
@@ -1190,6 +1246,7 @@
    => [4 6 8]))
 
 ;;=================== Just ===================================
+
 (functor-law2 inc + (just 5))
 
 (functor-law2 inc + (just 6) (just 99) (just 0))
@@ -1268,9 +1325,9 @@
  "Automatic binding of context for return and unit"
 
  (let [returning-f (fn ([x]
-                         (return (inc x)))
+                        (return (inc x)))
                      ([x & ys]
-                        (return (apply + x ys))))]
+                      (return (apply + x ys))))]
 
    (bind (vec (range 1 500)) returning-f)
    => (range 2 501)
@@ -1290,10 +1347,22 @@
          returning-f)
    => (range 3 1500 3)
 
-   (bind (range 1 500) returning-f)
+   ;; ===== TODO: clojure.lang.Range has been introduced in 1.7.0-beta1
+   ;; instead of LazySeq. It seems that it does something multithreaded
+   ;; since it fails if range is larger than 32
+   #_((bind (range 1 500) returning-f)
+      => (range 2 501)
+
+      (bind  (range 1 500)
+             (range 1 500)
+             (range 1 500)
+             returning-f)
+      => (range 3 1500 3))
+
+   (bind (vec (range 1 500)) returning-f)
    => (range 2 501)
 
-   (bind (range 1 500)
+   (bind (vec (range 1 500))
          (range 1 500)
          (range 1 500)
          returning-f)
@@ -1362,15 +1431,15 @@
        c [7 8 9]]
       (return (* a b c)))
  => (bind [1 2 3] (fn [a]
-    (bind [4 5 6] (fn [b]
-    (bind [7 8 9] (fn [c]
-    (pure [7 8 9] (* a b c))))))))
+                    (bind [4 5 6] (fn [b]
+                                    (bind [7 8 9] (fn [c]
+                                                    (pure [7 8 9] (* a b c))))))))
 
  (mdo [a [1 2 3]
        b [4 5 6]
        c [7 8 9]]
       (unit (* a b c)))
  => (bind [1 2 3] (fn [a]
-    (bind [4 5 6] (fn [b]
-    (bind [7 8 9] (fn [c]
-    (pure [7 8 9] (* a b c)))))))))
+                    (bind [4 5 6] (fn [b]
+                                    (bind [7 8 9] (fn [c]
+                                                    (pure [7 8 9] (* a b c)))))))))

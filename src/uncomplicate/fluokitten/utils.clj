@@ -19,16 +19,6 @@
   `(binding [*pure-context* ~context]
      ~@body))
 
-(defn with-current-context
-  "Creates a function that applies function f with the supplied arguments,
-   while providing the currently valid dynamic scoped monadic context
-   inside f's lexical scope."
-  [f]
-  (let [current-context (get-context)]
-    (fn [& args]
-      (with-context current-context
-        (apply f args)))))
-
 (defn reducible
   "Creates an identity reducible function from the collection c."
   [c]

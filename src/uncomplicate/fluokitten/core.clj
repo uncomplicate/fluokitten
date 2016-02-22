@@ -9,7 +9,7 @@ contain the implementations of the protocols, by default jvm.
 (ns test
   (:use [uncomplicate.fluokitten core jvm]))"
       :author "Dragan Djuric"}
-  uncomplicate.fluokitten.core
+    uncomplicate.fluokitten.core
   (:require [uncomplicate.fluokitten.protocols :as p])
   (:require [uncomplicate.fluokitten.algo :as algo])
   (:require [uncomplicate.fluokitten.utils :as utils]))
@@ -76,15 +76,15 @@ contain the implementations of the protocols, by default jvm.
    => [\"1\" \"2\" \"3\"]
   "
   ([f functor]
-    (p/fmap functor f))
+   (p/fmap functor f))
   ([f]
-     (if (= identity f)
-       identity
-       (fn
-         ([functor & functors]
-            (apply fmap f functor functors)))))
+   (if (= identity f)
+     identity
+     (fn
+       ([functor & functors]
+        (apply fmap f functor functors)))))
   ([f functor & functors]
-    (p/fmap functor f functors)))
+   (p/fmap functor f functors)))
 
 (defn pure
   "Takes any value x and wraps it in a minimal, default, context
@@ -111,9 +111,9 @@ contain the implementations of the protocols, by default jvm.
    => 1
   "
   ([applicative]
-     #(p/pure applicative %))
+   #(p/pure applicative %))
   ([applicative x]
-     (p/pure applicative x)))
+   (p/pure applicative x)))
 
 (defn fapply
   "Applies the function(s) inside af's context to the value(s)
@@ -159,12 +159,12 @@ contain the implementations of the protocols, by default jvm.
    => 2
   "
   ([af]
-     (fn [av & avs]
-       (apply fapply af av avs)))
+   (fn [av & avs]
+     (apply fapply af av avs)))
   ([af av]
-     (p/fapply af av))
+   (p/fapply af av))
   ([af av & avs]
-     (p/fapply af av avs)))
+   (p/fapply af av avs)))
 
 (defn <*>
   "Performs a Haskell-style left-associative fapply
@@ -176,12 +176,12 @@ contain the implementations of the protocols, by default jvm.
    that can accept the rest of the arguments and apply <*>.
   "
   ([af]
-     (fn [a & as]
-       (apply <*> af a as)))
+   (fn [a & as]
+     (apply <*> af a as)))
   ([af av]
-     (p/fapply af av))
+   (p/fapply af av))
   ([af av & avs]
-     (reduce p/fapply af (cons av avs))))
+   (reduce p/fapply af (cons av avs))))
 
 (defn join
   "Flattens multiple monads nested in monadic into a single
@@ -273,15 +273,15 @@ contain the implementations of the protocols, by default jvm.
    => #<Atom: 2>
   "
   ([f]
-     (fn [monadic & ms]
-       (apply bind monadic f ms)))
+   (fn [monadic & ms]
+     (apply bind monadic f ms)))
   ([monadic f]
-     (utils/with-context monadic
-       (p/bind monadic f)))
+   (utils/with-context monadic
+     (p/bind monadic f)))
   ([monadic monadic2 & args]
-     (utils/with-context monadic
-       (p/bind monadic (last args)
-               (cons monadic2 (butlast args))))));;TODO Optimize to avoid traversing args twice
+   (utils/with-context monadic
+     (p/bind monadic (last args)
+             (cons monadic2 (butlast args))))));;TODO Optimize to avoid traversing args twice
 
 (defn >>=
   "Performs a Haskell-style left-associative bind
@@ -296,12 +296,12 @@ contain the implementations of the protocols, by default jvm.
    functions that depend on it, such are return and unit.
   "
   ([monadic]
-     (fn [f & fs]
-       (apply >>= monadic f fs) ))
+   (fn [f & fs]
+     (apply >>= monadic f fs) ))
   ([monadic f]
-     (bind monadic f))
+   (bind monadic f))
   ([monadic f & fs]
-     (reduce bind monadic (cons f fs))))
+   (reduce bind monadic (cons f fs))))
 
 (defn >=>
   "Composes monadic functions from left to right, in the reverse
@@ -309,32 +309,32 @@ contain the implementations of the protocols, by default jvm.
    through >>=.
   "
   ([f]
-     (fn [g & gs]
-       (apply >=> f g gs)))
+   (fn [g & gs]
+     (apply >=> f g gs)))
   ([f g]
-     (fn
-       ([x]
-          (bind (f x) g))
-       ([x & xs]
-          (bind (apply f x xs) g))))
+   (fn
+     ([x]
+      (bind (f x) g))
+     ([x & xs]
+      (bind (apply f x xs) g))))
   ([f g & hs]
-     (fn
-       ([x]
-          (apply >>= (f x) g hs))
-       ([x & xs]
-          (apply >>= (apply f x xs) g hs)))))
+   (fn
+     ([x]
+      (apply >>= (f x) g hs))
+     ([x & xs]
+      (apply >>= (apply f x xs) g hs)))))
 
 (defn <=<
   "Composes monadic functions from right to left, in the reverse
    order than >=>.
   "
   ([f]
-     (fn [g & gs]
-       (apply <=< f g gs)))
+   (fn [g & gs]
+     (apply <=< f g gs)))
   ([f g]
-     (>=> g f))
+   (>=> g f))
   ([f g & hs]
-     (apply >=> (reverse (into [f g] hs)))))
+   (apply >=> (reverse (into [f g] hs)))))
 
 (defmacro mdo
   "A syntactic sugar for gluing together chained bind calls.
@@ -436,10 +436,10 @@ contain the implementations of the protocols, by default jvm.
    by first using f to convert them to monoids.
   "
   ([f]
-     (fn [foldable]
-       (p/foldmap foldable f)))
-  ([f foldable]
+   (fn [foldable]
      (p/foldmap foldable f)))
+  ([f foldable]
+   (p/foldmap foldable f)))
 
 (defn op
   "Applies the monoid operation op determined by the type
@@ -461,9 +461,9 @@ contain the implementations of the protocols, by default jvm.
    => \"something\"
   "
   ([x y]
-     (p/op x y))
+   (p/op x y))
   ([x y & ys]
-     (p/op x y ys)))
+   (p/op x y ys)))
 
 (defn id
   "Returns the identity element of the monoid that x is

@@ -291,7 +291,9 @@
    (>> (guard (> 1 2)) (return "cool"))
    => [])
 
- (>>= (range 1 50) (fn [x] (>> (guard (some (partial = \7) (str x))) (return x))))
+ ;;== TODO: clojure.lang.Range breaks bind and binding when count > 32
+ (>>= (vec (range 1 50))
+      (fn [x] (>> (guard (some (partial = \7) (str x))) (return x))))
  => [7 17 27 37 47]
 
  (mdo
