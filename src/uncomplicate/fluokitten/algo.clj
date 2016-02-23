@@ -57,27 +57,23 @@
    (into (empty c)
          (apply map g c cs))))
 
-(defn group-entries [k ms]
-  (r/map val
-         (r/remove nil?
-                   (r/map #(find % k) ms))))
+(defn group-entries-xf [k]
+  (comp (map #(find % k)) (remove nil?) (map val)))
 
-(defn apply-key [g maps k]
-  [k (apply g (into [] (group-entries k maps)))])
-
-(defn map-fmap-r
-  ([m g]
-   (r/map (fn [[k v]] [k (g v)]) m))
-  ([m g ms]
-   (let [source (cons m ms)
-         keys (distinct (into [] (r/flatten (r/map keys source))))]
-     (r/map (partial apply-key g source) keys))))
+(defn map-fmap-xf
+  ([g ms]
+   (comp (mapcat keys)
+         (dedupe)
+         (map (fn [k] [k (apply g (into [] (group-entries-xf k) ms))])))))
 
 (defn map-fmap
   ([m g]
-   (into (empty m) (map-fmap-r m g)))
+   (into (empty m) (r/map (fn [[k v]] [k (g v)]) m)))
   ([m g ms]
-   (into (empty m) (map-fmap-r m g ms))))
+   (let [ms (cons m ms)]
+     (into (empty m)
+           (map-fmap-xf g ms)
+           ms))))
 
 (defn list-fmap
   ([l g]
@@ -145,8 +141,8 @@
     (r/remove
      nil?
      (r/map (fn [[kg vg]]
-              (if-let [vs (seq (into [] (group-entries
-                                         kg (cons mv mvs))))]
+              (if-let [vs (seq (into [] (group-entries-xf kg)
+                                     (cons mv mvs)))]
                 [kg (apply vg vs)]))
             mg)))))
 
@@ -210,30 +206,31 @@
    (into (empty c)
          (apply mapcat g c ss))))
 
-(defn map-join-r [m]
-  (r/mapcat (fn [[k x :as e]]
-              (if (map? x)
-                (r/map (fn [[kx vx]]
-                         [(if (and k kx)
-                            (vec (flatten [k kx]))
-                            (or k kx))
-                          vx])
-                       x)
-                [e]))
-            m))
+(let [flaten-key (fn [[k x :as e]]
+                   (if (map? x)
+                     (map (fn [[kx vx]]
+                            [(if (and k kx)
+                               (vec (flatten [k kx]))
+                               (or k kx))
+                             vx])
+                          x)
+                     [e]))]
 
-(defn map-join [m]
-  (into (empty m) (map-join-r m)))
+  (defn map-join [m]
+    (into (empty m) (mapcat flatten-keys m)))
 
-(defn map-bind
-  ([m g]
-   (into (empty m)
-         (map-join-r
-          (map-fmap-r m g))))
-  ([m g ms]
-   (into (empty m)
-         (map-join-r
-          (map-fmap-r m g ms)))))
+  (defn map-bind
+    ([m g]
+     (into (empty m)
+           (comp (map (fn [[k v]] [k (g v)]))
+                 (mapcat flatten-keys))
+           m))
+    ([m g ms]
+     (let [ms (cons m ms)]
+       (into (empty m)
+             (comp (map-fmap-xf g ms)
+                   (mapcat flatten-keys))
+             ms)))))
 
 (defn coll-bind
   ([c g]
@@ -424,7 +421,6 @@
       :bind lazyseq-bind}
      Magma
      {:op seq-op}))
-
 (defmacro extend-set [t]
   `(extend ~t
      Functor
