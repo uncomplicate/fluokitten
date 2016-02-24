@@ -86,6 +86,24 @@ contain the implementations of the protocols, by default jvm.
   ([f functor & functors]
    (p/fmap functor f functors)))
 
+(defn fmap!
+  "Impure, possibly destructive, version of fmap.
+  Typically reuses the argument functor for the result.
+  Convenient for functors such as Java arrays,
+  primitive vectors, matrices, etc.
+  Be warned, Haskell people will curse through the skies,
+  since this function is incompatible with their holy scriptures."
+  ([f x]
+   (p/fmap! x f))
+  ([f x y]
+   (p/fmap! x f y))
+  ([f x y z]
+   (p/fmap! x f y z))
+  ([f x y z w]
+   (p/fmap! x f y z w))
+  ([f x y z w & ws]
+   (p/fmap! x f y z w ws)))
+
 (defn pure
   "Takes any value x and wraps it in a minimal, default, context
    of the same type as the context of the applicative value.
@@ -165,11 +183,29 @@ contain the implementations of the protocols, by default jvm.
   "
   ([af]
    (fn [av & avs]
-     (apply fapply af av avs)))
+     (p/fapply av af avs)))
   ([af av]
-   (p/fapply af av))
+   (p/fapply av af))
   ([af av & avs]
-   (p/fapply af av avs)))
+   (p/fapply av af avs)))
+
+(defn fapply!
+  "Impure, possibly destructive, version of fapply.
+  Typically reuses the argument functor for the result.
+  Convenient for functors such as Java arrays, primitive vectors, matrices, etc.
+  Since this function is not puritan anyway, the implementation does not have
+  to insist that the contexts of av and af are exactly the same.
+  It is enough if the implementation of av can handle the similar
+  context for af. For example, av could be a ref while ag is an atom,
+  or av is a primitive array, while af is an array of function objects.
+  Be warned, Haskell people will complain mercilessly."
+  ([af]
+   (fn [av & avs]
+     (p/fapply! av af avs)))
+  ([af av]
+   (p/fapply! av af))
+  ([af av & avs]
+   (p/fapply! av af avs)))
 
 (defn <*>
   "Performs a Haskell-style left-associative fapply
@@ -184,9 +220,9 @@ contain the implementations of the protocols, by default jvm.
    (fn [a & as]
      (apply <*> af a as)))
   ([af av]
-   (p/fapply af av))
+   (p/fapply av af))
   ([af av & avs]
-   (reduce p/fapply af (cons av avs))))
+   (reduce fapply af (cons av avs))))
 
 (defn join
   "Flattens multiple monads nested in monadic into a single
@@ -202,6 +238,11 @@ contain the implementations of the protocols, by default jvm.
   "
   [monadic]
   (p/join monadic))
+
+(defn join!
+  "When surrounded by Haskell comandos, take out this sibling of join. "
+  [monadic]
+  (p/join! monadic))
 
 (defn return
   "A monad-agnostic version of pure, it is equivalent to
@@ -291,9 +332,22 @@ contain the implementations of the protocols, by default jvm.
    (utils/with-context monadic
      (p/bind monadic f)))
   ([monadic monadic2 & args]
+   (let [[f bl] (utils/split-last args)]
+     (utils/with-context monadic
+       (p/bind monadic f (cons monadic2 bl))))))
+
+(defn bind!
+  "An impure, heretic variant of bind that sacrifices kittens to C++ gods."
+  ([f]
+   (fn [monadic & ms]
+     (apply bind! monadic f ms)))
+  ([monadic f]
    (utils/with-context monadic
-     (p/bind monadic (last args)
-             (cons monadic2 (butlast args))))));;TODO Optimize to avoid traversing args twice
+     (p/bind! monadic f)))
+  ([monadic monadic2 & args]
+   (let [[f bl] (utils/split-last args)]
+     (utils/with-context monadic
+       (p/bind! monadic f (cons monadic2 bl))))))
 
 (defn >>=
   "Performs a Haskell-style left-associative bind

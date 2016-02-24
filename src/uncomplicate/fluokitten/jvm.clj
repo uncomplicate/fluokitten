@@ -103,7 +103,7 @@ run on JVM platform."
      Applicative
      ~'(pure [_ x]
          (CurriedFn. (fn [& _] x) 0))
-     ~'(fapply [cg cf]
+     ~'(fapply [cf cg]
          (CurriedFn.
           (fn
             ([x]
@@ -111,7 +111,7 @@ run on JVM platform."
             ([x & xs]
                ((apply cg x xs) (apply cf x xs))))
           1))
-     ~'(fapply [cg cf hs]
+     ~'(fapply [cf cg hs]
          (CurriedFn.
           (fn
             ([x]

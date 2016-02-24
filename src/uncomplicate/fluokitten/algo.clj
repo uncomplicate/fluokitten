@@ -106,22 +106,22 @@
 ;;================ Applicative implementations ==================
 ;;-------------- fapply implementations ----------------
 
-(defn collreduce-fapply [crg crv]
+(defn collreduce-fapply [crv crg]
   (r/mapcat #(r/map % crv) crg))
 
 (defn collreduce-pure [_ v]
   (r/map identity [v]))
 
 (defn reducible-fapply
-  ([cg cv]
+  ([cv cg]
    (into (empty cv)
-         (collreduce-fapply cg cv)))
-  ([cg cv cvs]
+         (collreduce-fapply cv cg)))
+  ([cv cg cvs]
    (into (empty cv)
          (r/mapcat #(apply map % cv cvs) cg))))
 
 (defn map-fapply
-  ([mg mv]
+  ([mv mg]
    (if-let [f (mg nil)]
      (into (empty mv)
            (r/map (fn [[kv vv]]
@@ -135,7 +135,7 @@
                           [kg (vg (val ev))])))
                  (remove nil?))
            mg)))
-  ([mg mv mvs]
+  ([mv mg mvs]
    (let [ms (cons mv mvs)]
      (if-let [f (mg nil)]
        (into (empty mv)
@@ -154,30 +154,30 @@
              mg)))))
 
 (defn list-fapply
-  ([cg cv]
+  ([cv cg]
    (with-meta
      (apply list (mapcat #(map % cv) cg))
      (meta cv)))
-  ([cg cv cvs]
+  ([cv cg cvs]
    (with-meta
      (apply list (mapcat #(apply map % cv cvs) cg))
      (meta cv))))
 
 (defn seq-fapply
-  ([cg cv]
+  ([cv cg]
    (with-meta
      (mapcat #(map % cv) cg)
      (meta cv)))
-  ([cg cv cvs]
+  ([cv cg cvs]
    (with-meta
      (mapcat #(apply map % cv cvs) cg)
      (meta cv))))
 
 (defn coll-fapply
-  ([cg cv]
+  ([cv cg]
    (into (empty cv)
          (mapcat #(map % cv) cg)))
-  ([cg cv cvs]
+  ([cv cg cvs]
    (into (empty cv)
          (mapcat #(apply map % cv cvs) cg))))
 
@@ -496,11 +496,11 @@
   (create-mapentry nil v))
 
 (defn mapentry-fapply
-  ([[kg vg] [ke ve :as e]]
+  ([[ke ve :as e] [kg vg]]
    (if (or (nil? kg) (= ke kg))
      (create-mapentry ke (vg ve))
      e))
-  ([[kg vg] [ke ve :as e] es]
+  ([[ke ve :as e] [kg vg] es]
    (if (or (nil? kg)
            (not (some (fn [[k _]]
                         (not= k kg))
@@ -638,14 +638,45 @@
 ;;====================== References =======================
 ;;----------------- Universal ------------------
 
+(defn reference-fmap
+  ([r g]
+   (pure r (g (deref r))))
+  ([r g rs]
+   (pure r (apply g (deref r) (map deref rs)))))
+
+(defn reference-fapply!
+  ([rv rg]
+   (fmap! rv (deref rg)))
+  ([rv rg rvs]
+   (apply fmap! rv (deref rg) rvs)))
+
 (defn reference-fapply
-  ([rg rv]
-   (fmap rv (deref rg)))
-  ([rg rv rvs]
-   (fmap rv (deref rg) rvs)))
+  ([rv rg]
+   (reference-fmap rv (deref rg)))
+  ([rv rg rvs]
+   (reference-fmap rv (deref rg) rvs)))
+
+(defn reference-join! [r]
+  (if (deref? @r)
+    (fmap! r deref)
+    r))
 
 (defn reference-join [r]
-  (fmap r #(if (deref? %) (deref %) %)))
+  (if (deref? @r)
+    (fmap r deref)
+    r))
+
+(defn reference-bind!
+  ([mv g]
+   (fmap! (fmap! mv g) deref))
+  ([mv g mvs]
+   (fmap! (apply fmap! mv g mvs) deref)))
+
+(defn reference-bind
+  ([mv g]
+   (fmap! (fmap mv g) deref))
+  ([mv g mvs]
+   (fmap! (fmap mv g mvs) deref)))
 
 (defn reference-op
   ([rx ry]
@@ -662,27 +693,59 @@
 (defn reference-foldmap [r g]
   (g (deref r)))
 
-;;----------------- Agent -----------------------
+;;----------------- Atom -----------------------
 
-(defn agent-fmap
+(defn atom-fmap!
   ([a g]
-   (do (swap! a g) a))
-  ([a g as]
-   (do (apply swap! a g (map deref as)) a)))
+   (do
+     (swap! a g)
+     a))
+  ([a g r1]
+   (do
+     (swap! a g @r1)
+     a))
+  ([a g r1 r2]
+   (do
+     (swap! a g @r1 @r2)
+     a))
+  ([a g r1 r2 r3]
+   (do
+     (swap! a g @r1 @r2 @r3)
+     a))
+  ([a g r1 r2 r3 rs]
+   (do
+     (apply swap! a g @r1 @r2 @r3 (map deref rs))
+     a)))
 
-(defn agent-pure [_ v]
+(defn atom-pure [_ v]
   (atom v))
 
 (defn atom-id [a]
-  (atom (id @a)))
+  (atom (id (deref a))))
 
 ;;------------------- Ref --------------------------
 
-(defn ref-fmap
+(defn ref-fmap!
   ([r g]
-   (do (alter r g) r))
-  ([r g rs]
-   (do (apply alter r g (map deref rs)) r)))
+   (do
+     (alter r g)
+     r))
+  ([r g r1]
+   (do
+     (alter r g @r1)
+     r))
+  ([r g r1 r2]
+   (do
+     (alter r g @r1 @r2)
+     r))
+  ([r g r1 r2 r3]
+   (do
+     (alter r g @r1 @r2 @r3)
+     r))
+  ([r g r1 r2 r3 rs]
+   (do
+     (apply alter r g @r1 @r2 @r3 (map deref rs))
+     r)))
 
 (defn ref-pure [_ v]
   (ref v))
@@ -695,13 +758,20 @@
 (defmacro extend-atom [t]
   `(extend ~t
      Functor
-     {:fmap agent-fmap}
+     {:fmap reference-fmap}
+     PseudoFunctor
+     {:fmap! atom-fmap!}
      Applicative
-     {:pure agent-pure
+     {:pure atom-pure
       :fapply reference-fapply}
+     PseudoApplicative
+     {:fapply! reference-fapply!}
      Monad
      {:join reference-join
-      :bind default-bind}
+      :bind reference-bind}
+     PseudoMonad
+     {:join! reference-join!
+      :bind! reference-bind!}
      Foldable
      {:fold reference-fold
       :foldmap reference-foldmap}
@@ -713,13 +783,20 @@
 (defmacro extend-ref [t]
   `(extend ~t
      Functor
-     {:fmap ref-fmap}
+     {:fmap reference-fmap}
+     PseudoFunctor
+     {:fmap! ref-fmap!}
      Applicative
      {:pure ref-pure
       :fapply reference-fapply}
+     PseudoApplicative
+     {:fapply! reference-fapply!}
      Monad
      {:join reference-join
-      :bind default-bind}
+      :bind reference-bind}
+     PseudoMonad
+     {:join! reference-join!
+      :bind! reference-bind!}
      Foldable
      {:fold reference-fold
       :foldmap reference-foldmap}
@@ -748,10 +825,10 @@
   Applicative
   (pure [_ x]
     (Just. x))
-  (fapply [_ jv]
-    (fmap jv v))
-  (fapply [_ jv jvs]
-    (fmap jv v jvs))
+  (fapply [this jg]
+    (and jg (fmap this (.v ^Just jg))))
+  (fapply [this jg jvs]
+    (and jg (fmap this (.v ^Just jg) jvs)))
   Monad
   (bind [_ g]
     (g v))

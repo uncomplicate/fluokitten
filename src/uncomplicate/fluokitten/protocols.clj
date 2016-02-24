@@ -58,6 +58,16 @@ code. The clent code should call the generic functions from Fluokitten core."
      arguments, normally supplied by core fmap's varargs
      (protocol methods do not support varargs)."))
 
+(defprotocol PseudoFunctor
+  "A variant of Functor that may be changed during the fmap!.
+  In a puritan sense, it is not a functor, but it behaves in
+  the analog way as proper functors. Typical use case is
+  fmapping a primitive array and overwriting each element with
+  the result of f."
+  (fmap! [x f] [x f y] [x f y z]
+    [x f y z v] [x f y z v ws]
+    "Impure version of Functor's fmap."))
+
 (defprotocol Applicative
   "Applicative (applicative functor) is an abstraction for a
    context (box, container, computation) along with the abiliity
@@ -103,7 +113,7 @@ code. The clent code should call the generic functions from Fluokitten core."
      in the most minimal context possible that has appropriate
      type. av is needed only for proper dispatching and is
      not changed in any way.")
-  (fapply [ag av] [ag av avs]
+  (fapply [av ag] [av ag avs]
     "Applies the function(s) inside ag's context to the value(s)
      inside av's context while preserving the context. Both contexts
      should be of the same (or compatible) type, and the type of
@@ -116,6 +126,14 @@ code. The clent code should call the generic functions from Fluokitten core."
      contains a sequence of all additional arguments, normally
      supplied by core fapply's varargs (protocol methods do not
      support varargs)."))
+
+(defprotocol PseudoApplicative
+  "A variant of Applicative that may be changed during the fapply!.
+  In a puritan sense, it is not an applicative functor, but it behaves in
+  an analog way. Typical use case is fapply-ing a Java array and overwriting
+  each element with the result of g."
+  (fapply! [av ag] [av ag avs]
+    "An impure version of fapply."))
 
 (defprotocol Monad
   "Monad is an abstraction for a context (box, container,
@@ -163,6 +181,16 @@ code. The clent code should call the generic functions from Fluokitten core."
   (join [mv]
     "Flattens multiple monads nested in monadic into a single
      flat monad that contains ordinary, non-monadic value."))
+
+(defprotocol PseudoMonad
+  "A dirty heretic cousin of Monad that may be changed during the bind! or join!
+  In a puritan sense, it is not a monad , but it behaves in an analog way.
+  Typical use case is binding a Java array and overwriting each
+  element with the result of g."
+  (bind! [mv g] [mv g mvs]
+    "Impure variant of bind.")
+  (join! [mv]
+    "Impure variant of join."))
 
 (defprotocol Magma
   "Magma is an abstraction of elements that have an operation op,

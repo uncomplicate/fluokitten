@@ -1191,46 +1191,46 @@
 (let [a1 (atom 1 :meta {:test true})
       a2 (atom 2 :meta {:test true})]
   (facts  "All atoms should preserve metadata."
-          (meta (fmap inc a1)) => {:test true}
-          (meta (fmap + a1 a2)) => {:test true}
+          (meta (fmap! inc a1)) => {:test true}
+          (meta (fmap! + a1 a2)) => {:test true}
 
-          (meta (fapply (pure a1 inc) a1))
+          (meta (fapply! (pure a1 inc) a1))
           => {:test true}
-          (meta (fapply (pure a1 +) a1 a2))
-          => {:test true}
-
-          (meta (bind a1 #(atom (inc %))))
-          => {:test true}
-          (meta (bind a1 a2 #(atom (+ %1 %2))))
+          (meta (fapply! (pure a1 +) a1 a2))
           => {:test true}
 
-          (meta (join (atom (atom 1) :meta {:test true})))
+          (meta (bind! a1 #(atom (inc %))))
+          => {:test true}
+          (meta (bind! a1 a2 #(atom (+ %1 %2))))
+          => {:test true}
+
+          (meta (join! (atom (atom 1) :meta {:test true})))
           => {:test true}))
 
 (let [r1 (ref 1 :meta {:test true})
       r2 (ref 2 :meta {:test true})]
-  (facts  "All atoms should preserve metadata."
+  (facts  "All refs should preserve metadata."
           (dosync
-           (meta (fmap inc r1))) => {:test true}
+           (meta (fmap! inc r1))) => {:test true}
           (dosync
-           (meta (fmap + r1 r2)) => {:test true})
+           (meta (fmap! + r1 r2)) => {:test true})
 
           (dosync
-           (meta (fapply (pure r1 inc) r1)))
+           (meta (fapply! (pure r1 inc) r1)))
           => {:test true}
           (dosync
-           (meta (fapply (pure r1 +) r1 r2)))
-          => {:test true}
-
-          (dosync
-           (meta (bind r1 #(ref (inc %)))))
-          => {:test true}
-          (dosync
-           (meta (bind r1 r2 #(ref (+ %1 %2)))))
+           (meta (fapply! (pure r1 +) r1 r2)))
           => {:test true}
 
           (dosync
-           (meta (join (ref (ref 1) :meta {:test true}))))
+           (meta (bind! r1 #(ref (inc %)))))
+          => {:test true}
+          (dosync
+           (meta (bind! r1 r2 #(ref (+ %1 %2)))))
+          => {:test true}
+
+          (dosync
+           (meta (join! (ref (ref 1) :meta {:test true}))))
           => {:test true}))
 
 ;; Reducers and MapEntry do not support metadata.

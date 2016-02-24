@@ -10,20 +10,20 @@ beyond what the compiler can assert."
   "Midje checker that check for the equality of contents in contexts such
    as references and reducibles."
   ([expected]
-     (fn [actual]
-       (check-eq expected actual)))
+   (fn [actual]
+     (check-eq expected actual)))
   ([expected actual]
-     (cond
-      (nil? expected)
-      (nil? actual)
-      (and (instance? (type expected) actual)
-           (deref? expected) (deref? actual))
-      (let [e (deref expected)
-            a (deref actual)]
-        (check-eq e a))
-      (reducible? expected)
-      (= (into [] expected) (into [] actual))
-      :else (= expected actual))))
+   (cond
+     (nil? expected)
+     (nil? actual)
+     (and (instance? (type expected) actual)
+          (deref? expected) (deref? actual))
+     (let [e (deref expected)
+           a (deref actual)]
+       (check-eq e a))
+     (reducible? expected)
+     (= (into [] expected) (into [] actual))
+     :else (= expected actual))))
 
 ;;=============== Functor tests ========================
 (defmacro functor-law2
@@ -38,9 +38,9 @@ beyond what the compiler can assert."
   "
   ([f x] `(functor-law2 ~f ~f ~x))
   ([f g x & xs]
-     `(facts "Second functor law."
-             (fmap (comp ~f ~g) ~x ~@xs) =>
-             (check-eq (fmap ~f (fmap ~g ~x ~@xs))))))
+   `(facts "Second functor law."
+           (fmap (comp ~f ~g) ~x ~@xs) =>
+           (check-eq (fmap ~f (fmap ~g ~x ~@xs))))))
 
 (defmacro fmap-keeps-type
   "Generates a test that checks if the functor x's implementation of
@@ -59,8 +59,8 @@ beyond what the compiler can assert."
   "
   [f x & xs]
   `(fact "First applicative law."
-        (fapply (pure ~x ~f) ~x ~@xs)
-        => (check-eq (fmap ~f ~x ~@xs))))
+         (fapply (pure ~x ~f) ~x ~@xs)
+         => (check-eq (fmap ~f ~x ~@xs))))
 
 (defmacro applicative-law2-identity
   "Generates a test that checks if the applicative functor x
@@ -109,7 +109,7 @@ beyond what the compiler can assert."
          (apply fapply (pure ~ap ~f) (pure ~ap ~x)
                 (map (pure ~ap) '~xs))
          => (check-eq (fapply (pure ~ap #(% ~x ~@xs))
-                 (pure ~ap ~f)))))
+                              (pure ~ap ~f)))))
 
 (defmacro fapply-keeps-type
   "Generates a test that checks if the applicative functor x's
@@ -200,15 +200,15 @@ beyond what the compiler can assert."
   [f1 f2 builder x y]
   `(facts  "All data structures should preserve metadata."
            (meta (fmap ~f1 (with-meta ~x
-                            {:test true})))
+                             {:test true})))
            => {:test true}
 
            (meta (fmap ~f2 (with-meta ~x
-                            {:test true}) ~y))
+                             {:test true}) ~y))
            => {:test true}
 
            (meta (fmap ~f1 (with-meta (empty ~x)
-                            {:test true})))
+                             {:test true})))
            => {:test true}
 
            (meta (fapply (pure ~x ~f1)
@@ -227,7 +227,7 @@ beyond what the compiler can assert."
            => {:test true}
 
            (meta (bind (with-meta ~x {:test true})
-                      #(~builder (~f1 %))))
+                       #(~builder (~f1 %))))
            => {:test true}
 
            (meta (bind (with-meta ~x
@@ -237,8 +237,8 @@ beyond what the compiler can assert."
            => {:test true}
 
            (meta (bind (with-meta (empty ~x)
-                           {:test true})
-                         #(~builder (~f1 %))))
+                         {:test true})
+                       #(~builder (~f1 %))))
            => {:test true}
 
            (meta (join (with-meta ~x

@@ -38,3 +38,9 @@
   (instance? clojure.core.protocols.CollReduce x))
 
 (declare deref?)
+
+(defn split-last [s]
+  (loop [ret [] s s]
+    (if (next s)
+      (recur (conj ret (first s)) (next s))
+      [(first s) ret])))
