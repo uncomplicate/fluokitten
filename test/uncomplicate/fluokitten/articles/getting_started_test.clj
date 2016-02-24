@@ -29,6 +29,8 @@
 
        (pure [] 3) => [3]
 
+       (pure [] 1 2 3) => [1 2 3]
+
        (pure (atom nil) 5) => (check-eq (atom 5))
 
        (bind [1 2 3] #(vector (inc %) (dec %)))

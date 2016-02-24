@@ -120,11 +120,6 @@
    (into (empty cv)
          (r/mapcat #(apply map % cv cvs) cg))))
 
-(defn ^:private apply-universal-f [mf m]
-  (if-let [f (mf nil)]
-    (map-fmap m f)
-    m))
-
 (defn map-fapply
   ([mg mv]
    (if-let [f (mg nil)]
@@ -186,14 +181,29 @@
    (into (empty cv)
          (mapcat #(apply map % cv cvs) cg))))
 
-(defn coll-pure [cv v]
-  (conj (empty cv) v))
+(defn coll-pure
+  ([cv v]
+   (conj (empty cv) v))
+  ([cv v vs]
+   (into (coll-pure cv v) vs)))
 
-(defn lazyseq-pure [cv v]
-  (lazy-seq (coll-pure cv v)))
+(defn lazyseq-pure
+  ([cv v]
+   (lazy-seq (coll-pure cv v)))
+  ([cv v vs]
+   (lazy-seq
+    (if v
+      (cons v (lazyseq-pure cv (first vs) (rest vs)))
+      (empty cv) ))))
 
-(defn map-pure [m v]
-  (coll-pure m [nil v]))
+(defn map-pure
+  ([m v]
+   (coll-pure m [nil v]))
+  ([m v vs]
+   (into (empty m)
+         (if (vector? v)
+           (cons v vs)
+           (apply hash-map v vs)))))
 
 ;;================== Monad Implementations ======================
 
@@ -229,7 +239,7 @@
                        [e]))]
 
   (defn map-join [m]
-    (into (empty m) (mapcat flatten-keys m)))
+    (into (empty m) (r/mapcat flatten-keys m)))
 
   (defn map-bind
     ([m g]
@@ -247,7 +257,7 @@
 (defn coll-bind
   ([c g]
    (into (empty c)
-         (mapcat g c)))
+         (mapcat g) c))
   ([c g ss]
    (into (empty c)
          (apply mapcat g c ss))))
@@ -315,7 +325,7 @@
   ([x y]
    (into x y))
   ([x y ys]
-   (reduce into (into x y) ys)))
+   (into x cat (cons y ys))))
 
 (defn collreduce-op
   ([x y]
@@ -433,6 +443,7 @@
       :bind lazyseq-bind}
      Magma
      {:op seq-op}))
+
 (defmacro extend-set [t]
   `(extend ~t
      Functor
@@ -479,9 +490,7 @@
   ([[ke ve] g]
    (create-mapentry ke (g ve)))
   ([[ke ve] g es]
-   (create-mapentry
-    ke
-    (apply g ve (vals es)))))
+   (create-mapentry ke (apply g ve (vals es)))))
 
 (defn mapentry-pure [e v]
   (create-mapentry nil v))
@@ -610,13 +619,12 @@
 
 (defn function-op
   ([x y]
-   (if (= identity x)
-     y
-     (if (= identity y)
-       x
-       (comp x y))))
+   (cond
+     (= identity x) y
+     (= identity y) x
+     :default (comp x y)))
   ([x y ys]
-   (reduce function-op x (cons y ys))))
+   (apply comp (remove identity (cons y ys)))))
 
 (defmacro extend-function [t]
   `(extend ~t
@@ -648,9 +656,11 @@
              (deref ry)
              (map deref rys)))))
 
-(defn reference-fold [r] @r)
+(defn reference-fold [r]
+  (deref r))
 
-(defn reference-foldmap [r g] (g @r))
+(defn reference-foldmap [r g]
+  (g (deref r)))
 
 ;;----------------- Agent -----------------------
 

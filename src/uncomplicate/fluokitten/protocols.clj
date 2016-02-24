@@ -97,7 +97,7 @@ code. The clent code should call the generic functions from Fluokitten core."
    from the implementation of this protocol if needed from
    other methods.
   "
-  (pure [av v]
+  (pure [av v] [av v vs]
     "Takes any context av and any value a, and puts
      the value a in the same type of context. a should be put
      in the most minimal context possible that has appropriate

@@ -106,6 +106,9 @@ contain the implementations of the protocols, by default jvm.
    (pure [] 1)
    => [1]
 
+   (pure [] 1 2 3)
+   => [1 2 3]
+
    ---- Example 2: a number in a pure curried function context:
    ((pure curried 1) 17)
    => 1
@@ -113,7 +116,9 @@ contain the implementations of the protocols, by default jvm.
   ([applicative]
    #(p/pure applicative %))
   ([applicative x]
-   (p/pure applicative x)))
+   (p/pure applicative x))
+  ([applicative x & xs]
+   (p/pure applicative x xs)))
 
 (defn fapply
   "Applies the function(s) inside af's context to the value(s)
@@ -223,9 +228,16 @@ contain the implementations of the protocols, by default jvm.
    (with-context []
      (f 1))
    => [1]
+
+   --- Example 3:
+   (with-context []
+     (return 1 2 3))
+   => [1 2 3]
    "
-  [x]
-  (p/pure (utils/get-context) x))
+  ([x]
+   (p/pure (utils/get-context) x))
+  ([x & xs]
+   (p/pure (utils/get-context) x xs)))
 
 (def unit
   "The same as return."

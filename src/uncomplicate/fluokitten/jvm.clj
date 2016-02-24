@@ -65,14 +65,14 @@ run on JVM platform."
                     (.getDeclaredMethods
                      ^java.lang.Class (class f)))))
 
-(defn ^:private  gen-invoke [^clojure.lang.IFn f arity n]
+(defn ^:private gen-invoke [^clojure.lang.IFn f arity n]
   (let [args (map #(symbol (str "a" %)) (range arity))]
         `(invoke [~'_ ~@args]
                  (if (> ~n ~arity)
                    (CurriedFn. (partial ~f ~@args) (- ~n ~arity))
                    (.invoke ~f ~@args)))))
 
-(defn ^:private  gen-applyto [^clojure.lang.IFn f n]
+(defn ^:private gen-applyto [^clojure.lang.IFn f n]
   `(applyTo [~'_ ~'args]
             (let [as# (- ~n (count ~'args))]
               (if (pos? as#)
