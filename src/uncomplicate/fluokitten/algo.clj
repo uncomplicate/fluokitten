@@ -57,10 +57,12 @@
    (into (empty c)
          (apply map g c cs))))
 
-(defn group-entries-xf [k]
-  (comp (map #(find % k)) (remove nil?) (map val)))
+(defn ^:private group-entries-xf [k]
+  (comp (map #(find % k))
+        (remove nil?)
+        (map val)))
 
-(defn map-fmap-xf
+(defn ^:private map-fmap-xf
   ([g ms]
    (comp (mapcat keys)
          (dedupe)
@@ -87,7 +89,9 @@
 
 (defn seq-fmap
   ([s g]
-   (with-meta (map g s) (meta s)))
+   (with-meta
+     (map g s)
+     (meta s)))
   ([s g ss]
    (with-meta
      (apply map g s ss)
@@ -106,7 +110,7 @@
   (r/mapcat #(r/map % crv) crg))
 
 (defn collreduce-pure [_ v]
-  (r/map identity  [v]))
+  (r/map identity [v]))
 
 (defn reducible-fapply
   ([cg cv]
@@ -116,35 +120,43 @@
    (into (empty cv)
          (r/mapcat #(apply map % cv cvs) cg))))
 
-(defn- apply-universal-f [mf m]
+(defn ^:private apply-universal-f [mf m]
   (if-let [f (mf nil)]
     (map-fmap m f)
     m))
 
 (defn map-fapply
   ([mg mv]
-   (into
-    (if-let [f (mg nil)]
-      (map-fmap mv f)
-      mv)
-    (r/remove
-     nil?
-     (r/map (fn [[kg vg]]
-              (if-let [[kv vv] (find mv kg)]
-                [kv (vg vv)]))
-            mg))))
+   (if-let [f (mg nil)]
+     (into (empty mv)
+           (r/map (fn [[kv vv]]
+                    (if-let [eg (find mg kv)]
+                      [kv ((val eg) vv)]
+                      [kv (f vv)]))
+                  mv))
+     (into mv
+           (comp (map (fn [[kg vg]]
+                        (if-let [ev (find mv kg)]
+                          [kg (vg (val ev))])))
+                 (remove nil?))
+           mg)))
   ([mg mv mvs]
-   (into
-    (if-let [f (mg nil)]
-      (map-fmap mv f mvs)
-      (apply merge mv mvs))
-    (r/remove
-     nil?
-     (r/map (fn [[kg vg]]
-              (if-let [vs (seq (into [] (group-entries-xf kg)
-                                     (cons mv mvs)))]
-                [kg (apply vg vs)]))
-            mg)))))
+   (let [ms (cons mv mvs)]
+     (if-let [f (mg nil)]
+       (into (empty mv)
+             (comp (mapcat keys)
+                   (dedupe)
+                   (map (fn [kv]
+                          (let [vs (into [] (group-entries-xf kv) ms)
+                                fun (if-let [eg (find mg kv)] (val eg) f)]
+                            [kv (apply fun vs)]))))
+             ms)
+       (into (apply merge mv mvs)
+             (comp (map (fn [[kg vg]]
+                          (if-let [vs (seq (into [] (group-entries-xf kg) ms))]
+                            [kg (apply vg vs)])))
+                   (remove nil?))
+             mg)))))
 
 (defn list-fapply
   ([cg cv]
@@ -206,15 +218,15 @@
    (into (empty c)
          (apply mapcat g c ss))))
 
-(let [flaten-key (fn [[k x :as e]]
-                   (if (map? x)
-                     (map (fn [[kx vx]]
-                            [(if (and k kx)
-                               (vec (flatten [k kx]))
-                               (or k kx))
-                             vx])
-                          x)
-                     [e]))]
+(let [flatten-keys (fn [[k x :as e]]
+                     (if (map? x)
+                       (map (fn [[kx vx]]
+                              [(if (and k kx)
+                                 (vec (flatten [k kx]))
+                                 (or k kx))
+                               vx])
+                            x)
+                       [e]))]
 
   (defn map-join [m]
     (into (empty m) (mapcat flatten-keys m)))
