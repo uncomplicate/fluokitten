@@ -391,16 +391,15 @@
 
    ((inc+ 1) 2) => (throws ClassCastException))
 
- (let [inc*3+2 (fmap inc (partial * 3) (partial + 2))
-       cinc*3+2 (fmap inc ((curry *) 3) ((curry +) 2))]
+ (let [+*3+2 (fmap + (partial * 3) (partial + 2))
+       **3+2 (fmap * ((curry *) 3) ((curry +) 2))]
 
-   (inc*3+2 7 3 1) => 40
+   (+*3+2 7 3 1) => 76
 
-   (cinc*3+2 7 3 1) => 40
+   (**3+2 7 3 1) => 819
 
-   ((inc*3+2) 2) => (throws ClassCastException)
-
-   ((cinc*3+2) 2) => 13))
+   ((**3+2) 2) => 24
+   ((+*3+2) 2) => (throws ClassCastException)))
 
 (facts
  "Functions: Applicative."
@@ -408,11 +407,11 @@
  (let [c+ (curry +)
        c* (curry *)]
 
-   (((pure curried inc) 100) 1) => 2
+   (((pure c* inc) 100) 1) => 2
 
-   ((fapply (fapply (pure curried c+) (c+ 3)) (c* 100)) 6) => 609
+   ((fapply (fapply (pure c* c+) (c+ 3)) (c* 100)) 6) => 609
 
-   ((<*> (pure curried c+) (c+ 3) (c* 100)) 6) => 609))
+   ((<*> (pure c* c+) (c+ 3) (c* 100)) 6) => 609))
 
 (facts
  "Functions: Monad."

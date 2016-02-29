@@ -3,7 +3,10 @@ categorical concepts have to satisfy. You should use these tests
 to check if your implementations of clojure protocols are valid
 beyond what the compiler can assert."
       :author "Dragan Djuric"} uncomplicate.fluokitten.test
-  (:use [uncomplicate.fluokitten core algo utils])
+  (:require [uncomplicate.fluokitten
+             [core :refer :all]
+             [algo :refer :all]
+             [utils :refer :all]])
   (:use [midje.sweet :exclude [just]]))
 
 (defn check-eq
@@ -188,7 +191,7 @@ beyond what the compiler can assert."
       (op (id x) x) => x
   "
   [x & xs]
-  `(fact "Monoid law 1."
+  `(fact "Monoid law 1 (identity law)."
          (op (id ~x) ~x) => (check-eq ~x)
          (op ~x (id ~x)) => (check-eq ~x)))
 

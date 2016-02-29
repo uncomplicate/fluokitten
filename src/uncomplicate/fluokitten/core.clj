@@ -222,7 +222,7 @@ contain the implementations of the protocols, by default jvm.
   ([af av]
    (p/fapply av af))
   ([af av & avs]
-   (reduce fapply af (cons av avs))))
+   (reduce fapply (fapply af av) avs)))
 
 (defn join
   "Flattens multiple monads nested in monadic into a single
@@ -484,8 +484,20 @@ contain the implementations of the protocols, by default jvm.
    (fold [1 2 3])
    => 6
   "
-  [foldable]
-  (p/fold foldable))
+  ([x]
+   (p/fold x))
+  ([f x]
+   (p/fold x f (f)))
+  ([f init x]
+   (p/fold x f init))
+  ([f init x y]
+   (p/fold x f init y))
+  ([f init x y z]
+   (p/fold x f init y z))
+  ([f init x y z w]
+   (p/fold x f init y z w))
+  ([f init x y z w & ws]
+   (p/fold x f init y z w ws)))
 
 (defn foldmap
   "Folds the contest of a foldable context by applying
@@ -502,10 +514,22 @@ contain the implementations of the protocols, by default jvm.
    by first using f to convert them to monoids.
   "
   ([f]
-   (fn [foldable]
-     (p/foldmap foldable f)))
-  ([f foldable]
-   (p/foldmap foldable f)))
+   (fn [x]
+     (p/foldmap x f)))
+  ([g x]
+   (p/foldmap x g))
+  ([f g x]
+   (p/foldmap x g f (f)))
+  ([f init g x]
+   (p/foldmap  x g f init))
+  ([f init g x y]
+   (p/foldmap x g f init y))
+  ([f init g x y z]
+   (p/foldmap x g f init y z))
+  ([f init g x y z w]
+   (p/foldmap x g f init y z w))
+  ([f init g x y z w & ws]
+   (p/foldmap x g f init y z w ws)))
 
 (defn op
   "Applies the monoid operation op determined by the type
@@ -526,10 +550,18 @@ contain the implementations of the protocols, by default jvm.
    (op \"some\" \"thing\")
    => \"something\"
   "
+  ([]
+   (op (utils/get-context)))
+  ([x]
+   (p/op (p/id x) x))
   ([x y]
    (p/op x y))
-  ([x y & ys]
-   (p/op x y ys)))
+  ([x y z]
+   (p/op x y z))
+  ([x y z w]
+   (p/op x y z w))
+  ([x y z w & ws]
+   (p/op x y z w ws)))
 
 (defn id
   "Returns the identity element of the monoid that x is
@@ -555,3 +587,29 @@ contain the implementations of the protocols, by default jvm.
   "Checks whether x is an instance of the type Just ."
   [x]
   (instance? uncomplicate.fluokitten.algo.Just x))
+
+(defn curry
+  "Creates an automatically curried version of the function f.
+   If arity is supplied, the function will be automatically
+   curried when called with less arguments. If arity is not
+   supplied, the default arity will depend on the arity of f.
+   arity defaults to 2 if f can support it, otherwise it is
+   1.
+
+   ---- Example: currying +
+   (((curry +) 3) 5)
+   => 8
+
+   ((((curry + 3) 3) 5) 7)
+   => 15
+
+   ((curry +) 3 5 7)
+   => 15
+  "
+  ([f]
+   (p/curry f))
+  ([f ^long arity]
+   (p/curry f arity)))
+
+(defn arity [f]
+  (p/arity f))

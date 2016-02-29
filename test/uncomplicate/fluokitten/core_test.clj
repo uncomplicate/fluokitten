@@ -208,10 +208,6 @@
       ((fmap (comp inc dec) +) 1 2 3)
       => ((fmap inc (fmap dec +)) 1 2 3))
 
-(fact "Second functor law - varargs"
-      ((fmap (comp inc dec) + (partial * 10)) 2 3 4)
-      => ((fmap inc (fmap dec + (partial * 10))) 2 3 4))
-
 (fact "Fmap keeps type." (fn? (fmap inc dec)))
 
 (fact "Fmap keeps type - varargs." (fn? (fmap inc dec +)))
@@ -244,37 +240,21 @@
                    (fmap (curry + 2) (curry + 2))) 1) 2) 3))
 
 (facts "How CurriedFn fmap works for variable args."
-       ((((fmap #(partial %)
-                (curry +)
-                (curry (partial * 10) 3)) 2 3) 5) 7)
-       => 307
-       ((((fmap (comp #(partial % 2) #(partial % 1))
-                (curry + 4)
-                (curry (partial * 10) 3)) 2 3) 5) 6)
-       => 309)
-
-(facts "Second functor law - varargs."
-       (((fmap (comp #(partial % 2) #(partial % 3))
+       (((fmap /
                (curry + 4)
-               (curry (partial * 10))) 2 3 5) 7)
-       => ((fmap #(partial % 2)
-                 (fmap #(partial % 3)
-                       (curry + 4)
-                       (curry (partial * 10)))) 2 3 5)
-
-       ((((fmap (comp #(partial % 2) #(partial % 3))
-                (curry + 4)
-                (curry (partial * 10) 3)) 2 3) 5) 6)
-       => ((((fmap #(partial % 2)
-                   (fmap #(partial % 3)
-                         (curry +)
-                         (curry (partial * 10) 3))) 2 3) 5) 6))
+               (curry (partial * 10) 3)) 2 3 5) 2)
+       => 1/50
+       (((fmap /
+               (curry + 4)
+               (curry (partial * 10) 3)
+               (curry (partial / 4) 1)) 2 3 5) 2)
+       => 3/10)
 
 (fact "Fmap keeps type."
-      (curried? (fmap inc (curry dec))))
+      (ifn? (fmap inc (curry dec))))
 
 (fact "Fmap keeps type - varargs."
-      (curried? (fmap inc (curry dec) (curry +))))
+      (ifn? (fmap inc (curry dec) (curry +))))
 
 
 ;;--------------- Vector ---------------
@@ -610,7 +590,8 @@
 ;;------------------- Curried Function ---------------------------
 
 (let [c+ (curry +)
-      c* (curry *)]
+      c* (curry *)
+      curried (curry identity)]
 
   (facts
    "Learn You a Haskell Applicative curried function example."
@@ -638,11 +619,11 @@
           2 3 4)
          => 260
 
-         ((-> (pure curried (curry comp))
-              (fapply c+)
-              (fapply c+)
-              (fapply (c* 10))) 7)
-         => 84
+         ((-> (pure (curry +) (curry  / 3))
+              (fapply (curry +))
+              (fapply (curry +))
+              (fapply ((curry *) 10))) 7 1)
+         => 1/70
 
          ((fapply c+ (pure curried 7)) 9)=> 16
 
@@ -844,12 +825,15 @@
 ;;------------------- Curried Function ---------------------------
 
 (let [c+ (curry +)
-      c* (curry *)]
+      c* (curry *)
+      curried (curry identity)]
 
   (facts "How bind for curried functions works."
-         ((bind c+ c*) 3 4) => 84
-         ((bind (pure curried 5) c*) 3) => 15
+         ((bind + (comp return (partial + 3))) 3 4 5) => 15
+         ((bind c+ (comp return inc)) 3 4) => 8
+         ((bind (pure identity 5) (comp return inc)) 3 1) => 6
 
+         ((bind (bind (c* 3) (comp return inc)) (comp return (c+ 17))) 7);;TODO it should work like the example at next line. That's why I created curry, to avoid comp returns. So, curried should be slightly diff than fn
          ((bind (bind (c* 3) c*) c+) 7) => 154)
 
   (facts "How join for curried function works."
@@ -1135,8 +1119,7 @@
        (fold [(ref 1) (ref 2) (ref 3)])
        => (check-eq (ref 6))
        (fold [(first {:a 1}) (first {:a 2}) (first {:b 3})])
-       => (check-eq (first {:aab 6}))
-       )
+       => (check-eq (first {:aab 6})))
 
 ;;===================== Foldable =====================
 
@@ -1157,7 +1140,7 @@
        (foldmap inc (list 1 2 3 4 5)) => 20
        (foldmap inc (lazy-seq (list 1 2 3 4 5))) => 20
        (foldmap inc (seq (list 1 2 3 4 5))) => 20
-       (foldmap val {:a 1 :b 2 :c 3}) => 6
+       (foldmap inc {:a 1 :b 2 :c 3}) => 9
        (foldmap inc #{1 2 3 4 5}) => 20)
 
 (fact "fold extract the value from the reference context."
@@ -1324,7 +1307,8 @@
 (facts
  "Automatic binding of context for return and unit"
 
- (let [returning-f (fn ([x]
+ (let [curried (curry identity)
+       returning-f (fn ([x]
                         (return (inc x)))
                      ([x & ys]
                       (return (apply + x ys))))]
@@ -1430,16 +1414,22 @@
        b [4 5 6]
        c [7 8 9]]
       (return (* a b c)))
- => (bind [1 2 3] (fn [a]
-                    (bind [4 5 6] (fn [b]
-                                    (bind [7 8 9] (fn [c]
-                                                    (pure [7 8 9] (* a b c))))))))
+ => (bind [1 2 3]
+          (fn [a]
+            (bind [4 5 6]
+                  (fn [b]
+                    (bind [7 8 9]
+                          (fn [c]
+                            (pure [7 8 9] (* a b c))))))))
 
  (mdo [a [1 2 3]
        b [4 5 6]
        c [7 8 9]]
       (unit (* a b c)))
- => (bind [1 2 3] (fn [a]
-                    (bind [4 5 6] (fn [b]
-                                    (bind [7 8 9] (fn [c]
-                                                    (pure [7 8 9] (* a b c)))))))))
+ => (bind [1 2 3]
+          (fn [a]
+            (bind [4 5 6]
+                  (fn [b]
+                    (bind [7 8 9]
+                          (fn [c]
+                            (pure [7 8 9] (* a b c)))))))))

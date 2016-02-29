@@ -5,13 +5,15 @@ of categorical concepts beyond those from Clojure core that Fluokitten
 itself extends to be categorical. To use your own implementations, you need
 to use or require the namespace where you define the implementations
 from the calling code's namespace, as well as to use or require Fluokitten
-core. Your implemntations are normally not called directly from the client
-code. The clent code should call the generic functions from Fluokitten core."
+core. Your implementations are normally not called directly from the client
+code. The client code should call the generic functions from Fluokitten core."
       :author "Dragan Djuric"}
     uncomplicate.fluokitten.protocols)
 
-(defprotocol Curried
-  (arity [f]))
+(defprotocol Curry
+  (arity [f])
+  (curry [f] [f arity])
+  (uncurry [f]))
 
 (defprotocol Functor
   "Functor is an abstraction for a context (box, container,
@@ -64,8 +66,7 @@ code. The clent code should call the generic functions from Fluokitten core."
   the analog way as proper functors. Typical use case is
   fmapping a primitive array and overwriting each element with
   the result of f."
-  (fmap! [x f] [x f y] [x f y z]
-    [x f y z v] [x f y z v ws]
+  (fmap! [x f] [x f y] [x f y z] [x f y z v] [x f y z v ws]
     "Impure version of Functor's fmap."))
 
 (defprotocol Applicative
@@ -215,10 +216,10 @@ code. The clent code should call the generic functions from Fluokitten core."
    from the implementation of this protocol if needed from
    other methods.
   "
-  (op [x y] [x y ys]
-    "Operation that combines elements x and y into an element
-     of the same type. If more elements are supplied in
-     a sequence ys, combines them all."))
+  (op [x y] [x y z] [x y z w] [x y z w ws]
+    "Operation that combines elements x and y (and optionally z, w)
+     into an element of the same type. If more elements are supplied in
+     a sequence ws, combines them all."))
 
 (defprotocol Monoid
   "Monoid is an abstraction of elements that are magmas whose
@@ -248,7 +249,7 @@ code. The clent code should call the generic functions from Fluokitten core."
    computation) along with the ability to extract the summary
    value of its contents. Foldable implementations  do not
    have to implement other categorical protocols, although
-   it is conveinent to view fold as an oposite of the function
+   it is convenient to view fold as an opposite of the function
    pure: pure puts values in minimal context, while fold
    gets the value outside of the context. With some Foldables,
    (such as Atom) context contains a single value that can be
@@ -264,12 +265,14 @@ code. The clent code should call the generic functions from Fluokitten core."
    from the implementation of this protocol if needed from
    other methods.
   "
-  (fold [foldable]
+  (fold [x] [x f init] [x f init y] [x f init y z]
+    [x f init y z w] [x f init y z w ws]
     "Extracts the value(s) from the context and returns it
      as one single value. Contexts that contain multiple values
      typically require that values are Monoids and use op
      to combine them.")
-  (foldmap [foldable g]
+  (foldmap [x g] [x g f init] [x g f init y] [x g f init y z]
+    [x g f init y z w] [x g f init y z w ws]
     "Similar to fold, but before returning the sole value
      from the context or combining multiple values into
      a summary, applies the function g to transform it

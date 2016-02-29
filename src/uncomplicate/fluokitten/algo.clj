@@ -1,32 +1,8 @@
 (ns uncomplicate.fluokitten.algo
-  (:use [uncomplicate.fluokitten protocols utils])
+  (:require [uncomplicate.fluokitten
+             [protocols :refer :all]
+             [utils :refer [with-context deref?]]])
   (:require [clojure.core.reducers :as r]))
-
-(extend-type nil
-  Functor
-  (fmap
-    ([_ _] nil)
-    ([_ _ _] nil))
-  Applicative
-  (pure [_ _] nil)
-  (fapply
-    ([_ _] nil)
-    ([_ _ _] nil))
-  Monad
-  (bind
-    ([_ _] nil)
-    ([_ _ _] nil))
-  (join [_] nil)
-  Foldable
-  (fold [_] nil)
-  (foldmap [_ _] nil)
-  Magma
-  (op
-    ([_ y] y)
-    ([_ y ys]
-     (reduce op y ys)))
-  Monoid
-  (id [_] nil))
 
 (extend-type Object
   Functor
@@ -324,53 +300,137 @@
 (defn coll-op
   ([x y]
    (into x y))
-  ([x y ys]
-   (into x cat (cons y ys))))
+  ([x y z]
+   (into x cat [y z]))
+  ([x y z w]
+   (into x cat [y z w]))
+  ([x y z w ws]
+   (into (coll-op x y z w) cat ws)))
 
 (defn collreduce-op
   ([x y]
    (if (instance? clojure.core.protocols.CollReduce y)
      (r/cat x y)
      (into x y)))
-  ([x y ys]
-   (r/reduce collreduce-op (collreduce-op x y) ys)))
+  ([x y z]
+   (collreduce-op x (collreduce-op y z)))
+  ([x y z w]
+   (collreduce-op x (collreduce-op y z w)))
+  ([x y z w ws]
+   (r/fold (constantly (collreduce-op x y z w)) collreduce-op ws)))
 
 (defn reducible-op
   ([x y]
-   (into (empty x) (collreduce-op x y)))
-  ([x y ys]
-   (into (empty x) (collreduce-op x y ys))))
+   (into x y))
+  ([x y z]
+   (into x (collreduce-op y z)))
+  ([x y z w]
+   (into x (collreduce-op y z w)))
+  ([x y z w ws]
+   (into x (collreduce-op y z w ws))))
 
 (defn seq-op
   ([x y]
    (concat x y))
-  ([x y ys]
-   (apply concat x y ys)))
+  ([x y z]
+   (concat x y z))
+  ([x y z w]
+   (concat x y z w))
+  ([x y z w ws]
+   (apply concat x y z w ws)))
 
 (defn list-op
   ([x y]
    (apply list (seq-op x y)))
-  ([x y ys]
-   (apply list (seq-op x y ys))))
+  ([x y z]
+   (apply list (seq-op x y z)))
+  ([x y z w]
+   (apply list (seq-op x y z w)))
+  ([x y z w ws]
+   (apply list (seq-op x y z w ws))))
 
 ;;================== Foldable ===================================
+(defn ^:private fmap*
+  ([x g & xs]
+   (apply fmap x g xs)))
 
-(defn collection-fold [c]
-  (let [ide (id (first c))]
-    (r/fold (fn [] ide) op c)))
+(defn default-foldmap
+  ([x g]
+   (fold (fmap x g)))
+  ([x g f init]
+   (fold (fmap x g) f init))
+  ([x g f init y]
+   (fold (fmap* x g y) f init))
+  ([x g f init y z]
+   (fold (fmap* x g y z) f init))
+  ([x g f init y z w]
+   (fold (fmap* x g y z w) f init))
+  ([x g f init y z w ws]
+   (fold (fmap* x g y z w ws) f init)))
 
-(defn collection-foldmap [c g]
-  (fold (r/map g c)))
+(defn collection-foldmap
+  ([c g]
+   (collection-foldmap c g op (id (first c))))
+  ([c g f init]
+   (r/fold (constantly init) f (r/map g c)))
+  ([cx g f init cy]
+   (loop [acc init cx cx cy cy]
+     (if cx
+       (recur (f acc (g (first cx) (first cy))) (next cx) (next cy))
+       acc)))
+  ([cx g f init cy cz]
+   (loop [acc init cx cx cy cy cz cz]
+     (if cx
+       (recur (f acc (g (first cx) (first cy) (first cz)))
+              (next cx) (next cy) (next cz))
+       acc)))
+  ([cx g f init cy cz cw]
+   (loop [acc init cx cx cy cy cz cz cw cw]
+     (if cx
+       (recur (f acc (g (first cx) (first cy) (first cz) (first cw)))
+              (next cx) (next cy) (next cz) (next cw))
+       acc)))
+  ([cx g f init cy cz cw cws]
+   (loop [acc init cx cx cy cy cz cz cw cw cws cws]
+     (if cx
+       (recur (f acc (apply g (first cx) (first cy) (first cz) (first cw)
+                            (map first cws)))
+              (next cx) (next cy) (next cz) (next cw) (map next cws))
+       acc))))
 
-(defn map-fold [m]
-  (collection-fold (vals m)))
+(defn collection-fold
+  ([c]
+   (collection-fold c op (id (first c))))
+  ([c f init]
+   (r/fold (constantly init) f c))
+  ([cx f init cy]
+   (collection-foldmap cx op f init cy))
+  ([cx f init cy cz]
+   (collection-foldmap cx op f init cy cz))
+  ([cx f init cy cz cw]
+   (collection-foldmap cx op f init cy cz cw))
+  ([cx f init cy cz cw cws]
+   (collection-foldmap cx op f init cy cz cw cws)))
 
-(defn map-foldmap [m g]
-  (collection-foldmap (seq m) g))
+(defn map-fold
+  ([m]
+   (collection-fold (vals m)))
+  ([m f init]
+   (collection-fold (vals m) f init))
+  ([mx f init my]
+   (collection-fold (vals mx) f init (vals my)))
+  ([mx f init my mz]
+   (collection-fold (vals mx) f init (vals my) (vals mz)))
+  ([mx f init my mz mw]
+   (collection-fold (vals mx) f init (vals my) (vals mz) (vals mw)))
+  ([mx f init my mz mw mws]
+   (collection-fold (vals mx) f init (vals my) (vals mz) (vals mw) (map vals mws))))
 
-(defn collfold-fold [c]
-  (let [ide (id (first (into [] (r/take 1 c))))]
-    (r/fold (fn [] ide) op c)))
+(defn collfold-fold
+  ([c]
+   (collection-fold c op (id (first (into [] (r/take 1 c)))) ))
+  ([c f init]
+   (collection-fold c f init)))
 
 ;;================== Collections Extensions =====================
 
@@ -386,7 +446,7 @@
       :bind coll-bind}
      Foldable
      {:fold collection-fold
-      :foldmap collection-foldmap}
+      :foldmap default-foldmap}
      Magma
      {:op coll-op}
      Monoid
@@ -467,7 +527,7 @@
       :bind map-bind}
      Foldable
      {:fold map-fold
-      :foldmap map-foldmap}))
+      :foldmap default-foldmap}))
 
 (extend clojure.core.protocols.CollReduce
   Functor
@@ -482,7 +542,7 @@
 (extend clojure.core.reducers.CollFold
   Foldable
   {:fold collfold-fold
-   :foldmap collection-foldmap})
+   :foldmap default-foldmap})
 
 (declare create-mapentry)
 
@@ -523,12 +583,41 @@
 (defn mapentry-op
   ([[kx vx] [ky vy]]
    (create-mapentry (op kx ky) (op vx vy)))
-  ([[kx vx] [ky vy] es]
-   (create-mapentry (op kx ky (map key es))
-                    (op vx vy (map val es)))))
+  ([[kx vx] [ky vy] [kz vz]]
+   (create-mapentry (op kx ky kz) (op vx vy vz)))
+  ([[kx vx] [ky vy] [kz vz] [kw vw]]
+   (create-mapentry (op kx ky kz kw) (op vx vy vz vw)))
+  ([[kx vx] [ky vy] [kz vz] [kw vw] es]
+   (create-mapentry (op kx ky kz kw (map key es))
+                    (op vx vy kz kw (map val es)))))
 
-(defn mapentry-fold [[_ v]]
-  v)
+(defn mapentry-foldmap
+  ([e g]
+   (mapentry-foldmap e g op (val e) ))
+  ([e g f init]
+   (f init (g (val e))))
+  ([e g f init e1]
+   (f init (g (val e) (val e1))))
+  ([e g f init e1 e2]
+   (f init (g (val e) (val e1) (val e2))))
+  ([e g f init e1 e2 e3]
+   (f init (g (val e) (val e1) (val e2) (val e3))))
+  ([e g f init e1 e2 e3 es]
+   (f init (g (val e) (val e1) (val e2) (val e3) (map val es)))))
+
+(defn mapentry-fold
+  ([e]
+   (val e))
+  ([e f init]
+   (f init (val e)))
+  ([e f init e1]
+   (mapentry-foldmap e op f init e1))
+  ([e f init e1 e2]
+   (mapentry-foldmap e op f init e1 e2))
+  ([e f init e1 e2 e3]
+   (mapentry-foldmap e op f init e1 e2 e3))
+  ([e f init e1 e2 e3 es]
+   (mapentry-foldmap e op f init e1 e2 e3 es)))
 
 (defmacro extend-mapentry [t]
   `(extend ~t
@@ -545,23 +634,51 @@
      Monoid
      {:id mapentry-id}
      Foldable
-     {:fold mapentry-fold}))
+     {:fold mapentry-fold
+      :foldmap mapentry-foldmap}))
 
 ;;===================== Literals Extensions ================
+
+(defn ^:private deref-resolve [s]
+  (deref (resolve (symbol (name s)))))
+
+(defn ^:private to-string
+  ([s]
+   (if (sequential? s)
+     (apply str s)
+     (str s)))
+  ([s ss]
+   (apply str (to-string s) (map to-string ss))))
 
 (extend-type String
   Functor
   (fmap
     ([s g]
-     (apply str (g s)))
+     (to-string (g s)))
     ([s g ss]
-     (apply str (apply g s ss))))
+     (to-string (apply g s ss))))
+  Applicative
+  (fapply
+    ([sv sg]
+     (fmap sv (deref-resolve sg)))
+    ([sv sg svs]
+     (fmap sv (deref-resolve sg) svs)))
+  (pure
+    ([_ x]
+     (to-string x)
+     (str x))
+    ([_ x xs]
+     (to-string x xs)))
   Magma
   (op
     ([x y]
      (str x y))
-    ([x y ys]
-     (apply str x y ys)))
+    ([x y z]
+     (str x y z))
+    ([x y z w]
+     (str x y z w))
+    ([x y z w ws]
+     (apply str x y z w ws)))
   Monoid
   (id [s] ""))
 
@@ -570,8 +687,12 @@
   (op
     ([x y]
      (+ x y))
-    ([x y ys]
-     (apply + x y ys)))
+    ([x y z]
+     (+ x y z))
+    ([x y z w]
+     (+ x y z w))
+    ([x y z w ws]
+     (apply + x y z w ws)))
   Monoid
   (id [x] 0))
 
@@ -579,43 +700,45 @@
   ([k g]
    (keyword (fmap (name k) g)))
   ([k g ks]
-   (keyword (fmap (name k) g
-                  (map name ks)))))
+   (keyword (fmap (name k) g (map name ks)))))
 
-(let [empty-keyword (keyword "")]
-  (defn keyword-id [_]
-    empty-keyword))
+(defn keyword-pure
+  ([k v]
+   (keyword (str v)))
+  ([k v vs]
+   (keyword (apply str v vs))))
+
+(defn keyword-fapply
+  ([kv kg]
+   (keyword-fmap kv (deref-resolve kg)))
+  ([kv kg kvs]
+   (keyword-fmap kv (deref-resolve kg) kvs)))
+
+(def keyword-id (constantly (keyword "")))
 
 (defn keyword-op
-  ([_] keyword-id)
   ([x y]
    (keyword (str (name x) (name y))))
-  ([x y ys]
-   (keyword (apply str
-                   (name x)
-                   (name y)
-                   (map name ys)))))
+  ([x y z]
+   (keyword (str (name x) (name y) (name z))))
+  ([x y z w]
+   (keyword (str (name x) (name y) (name z) (name w))))
+  ([x y z w ws]
+   (keyword (apply str (name x) (name y) (name z) (name w) ws))))
 
 (defmacro extend-keyword [t]
   `(extend ~t
      Functor
      {:fmap keyword-fmap}
+     Applicative
+     {:fapply keyword-fapply
+      :pure keyword-pure}
      Magma
      {:op keyword-op}
      Monoid
      {:id keyword-id}))
 
 ;;===================== Function ===========================
-;;-------------------- clojure.lang.IFn -------------------
-
-(defn function-fmap
-  ([f g]
-   (comp g f))
-  ([f g gs]
-   (apply comp g f gs)))
-
-(defn function-id [_]
-  identity)
 
 (defn function-op
   ([x y]
@@ -623,17 +746,100 @@
      (= identity x) y
      (= identity y) x
      :default (comp x y)))
-  ([x y ys]
-   (apply comp (remove identity (cons y ys)))))
+  ([x y z]
+   (if (= identity z)
+     (function-op x y)
+     (comp (function-op x y) z)))
+  ([x y z w]
+   (function-op (function-op x y) (op z w)))
+  ([x y z w ws]
+   (apply comp (function-op x y z w) (filter (partial = identity) ws))))
+
+(defn function-fmap
+  ([f g]
+   (function-op g f))
+  ([f g hs]
+   (fn
+     ([]
+      (apply g (f) (map #(%) hs)))
+     ([x]
+      (apply g (f x) (map #(% x) hs)))
+     ([x & xs]
+      (apply g (apply f x xs) (map #(apply % x xs) hs))))))
+
+(defn function-fapply
+  ([f g]
+   (if (= identity g)
+     f
+     (fn
+       ([]
+        ((g) (f)))
+       ([x]
+        ((g x) (f x)))
+       ([x & xs]
+        ((apply g x xs) (apply f x xs))))))
+  ([f g hs]
+   (fn
+     ([]
+      (apply (g) (f) (map #(%) hs)))
+     ([x]
+      (apply (g x) (f x) (map #(% x) hs)))
+     ([x & xs]
+      (apply (apply g x xs) (apply f x xs) (map #(apply % x xs) hs))))))
+
+(defn function-pure [f x]
+  (fn [& _]
+    x))
+
+(defn function-join [f]
+  (fn
+    ([]
+     (with-context f
+       ((f))))
+    ([x]
+     (with-context f
+       ((f x) x)))
+    ([x & xs]
+     (with-context f
+       (apply (apply f x xs) x xs)))))
+
+(defn function-bind
+  ([f g]
+   (join (fmap f g)))
+  ([f g hs]
+   (join (fmap f g hs))))
+
+(defn function-fold
+  ([fx]
+   (fx))
+  ([fx f init]
+   (f init (fx)))
+  ([fx f init fy]
+   (f init (op (fx) (fy))))
+  ([fx f init fy fz]
+   (f init (op (fx) (fy) (fz))))
+  ([fx f init fy fz fw]
+   (f init (op (fx) (fy) (fz) (fw))))
+  ([fx f init fy fz fw fws]
+   (f init (op (fx) (fy) (fz) (fw) (map #(%) fws)))))
 
 (defmacro extend-function [t]
   `(extend ~t
      Functor
      {:fmap function-fmap}
+     Applicative
+     {:fapply function-fapply
+      :pure function-pure}
+     Monad
+     {:join function-join
+      :bind function-bind}
+     Foldable
+     {:fold function-fold
+      :foldmap default-foldmap}
      Magma
      {:op function-op}
      Monoid
-     {:id function-id}))
+     {:id (constantly identity)}))
 
 ;;====================== References =======================
 ;;----------------- Universal ------------------
@@ -680,18 +886,41 @@
 
 (defn reference-op
   ([rx ry]
-   (pure rx (op (deref rx) (deref ry))))
-  ([rx ry rys]
-   (pure rx (op
-             (deref rx)
-             (deref ry)
-             (map deref rys)))))
+   (pure rx (op @rx @ry)))
+  ([rx ry rz]
+   (pure rx (op @rx @ry @rz)))
+  ([rx ry rz rw]
+   (pure rx (op @rx @ry @rz @rw)))
+  ([rx ry rz rw rws]
+   (pure rx (op @rx @ry @rz @rw (map deref rws)))))
 
-(defn reference-fold [r]
-  (deref r))
+(defn reference-foldmap
+  ([rx g]
+   (g @rx))
+  ([rx g f init]
+   (f init (g @rx)))
+  ([rx g f init ry]
+   (f init (g @rx @ry)))
+  ([rx g f init ry rz]
+   (f init (g @rx @ry @rz)))
+  ([rx g f init ry rz rw]
+   (f init (g @rx @ry @rz @rw)))
+  ([rx g f init ry rz rw rws]
+   (f init (g @rx @ry @rz @rw (map deref rws)))))
 
-(defn reference-foldmap [r g]
-  (g (deref r)))
+(defn reference-fold
+  ([r]
+   (deref r))
+  ([r f init]
+   (f init (deref r)))
+  ([rx f init ry]
+   (reference-foldmap rx op f init ry))
+  ([rx f init ry rz]
+   (reference-foldmap rx op f init ry rz))
+  ([rx f init ry rz rw]
+   (reference-foldmap rx op f init ry rz rw))
+  ([rx f init ry rz rw rws]
+   (reference-foldmap rx op f init ry rz rw rws)))
 
 ;;----------------- Atom -----------------------
 
@@ -700,22 +929,22 @@
    (do
      (swap! a g)
      a))
-  ([a g r1]
+  ([ax g ry]
    (do
-     (swap! a g @r1)
-     a))
-  ([a g r1 r2]
+     (swap! ax g @ry)
+     ax))
+  ([ax g ry rz]
    (do
-     (swap! a g @r1 @r2)
-     a))
-  ([a g r1 r2 r3]
+     (swap! ax g @ry @rz)
+     ax))
+  ([ax g ry rz rw]
    (do
-     (swap! a g @r1 @r2 @r3)
-     a))
-  ([a g r1 r2 r3 rs]
+     (swap! ax g @ry @rz @rw)
+     ax))
+  ([ax g ry rz rw rws]
    (do
-     (apply swap! a g @r1 @r2 @r3 (map deref rs))
-     a)))
+     (apply swap! ax g @ry @rz @rw (map deref rws))
+     ax)))
 
 (defn atom-pure [_ v]
   (atom v))
@@ -726,26 +955,26 @@
 ;;------------------- Ref --------------------------
 
 (defn ref-fmap!
-  ([r g]
+  ([rx g]
    (do
-     (alter r g)
-     r))
-  ([r g r1]
+     (alter rx g)
+     rx))
+  ([rx g ry]
    (do
-     (alter r g @r1)
-     r))
-  ([r g r1 r2]
+     (alter rx g @ry)
+     rx))
+  ([rx g ry rz]
    (do
-     (alter r g @r1 @r2)
-     r))
-  ([r g r1 r2 r3]
+     (alter rx g @ry @rz)
+     rx))
+  ([rx g ry rz rw]
    (do
-     (alter r g @r1 @r2 @r3)
-     r))
-  ([r g r1 r2 r3 rs]
+     (alter rx g @ry @rz @rw)
+     rx))
+  ([rx g ry rz rw rws]
    (do
-     (apply alter r g @r1 @r2 @r3 (map deref rs))
-     r)))
+     (apply alter rx g @ry @rz @rw (map deref rws))
+     rx)))
 
 (defn ref-pure [_ v]
   (ref v))
@@ -805,7 +1034,14 @@
      Monoid
      {:id ref-id}))
 
-;;================== Maybe Just ===========================
+;;================== Maybe  ===========================
+
+(declare ^:private just-value)
+
+(defn ^:private just-op* [v y]
+  (if y
+    (op v (just-value y))
+    v))
 
 (deftype Just [v]
   Object
@@ -814,41 +1050,150 @@
   (equals [this that]
     (or (identical? this that)
         (and (instance? Just that)
-             (= v (fold that)))))
+             (= v (just-value that)))))
+  (toString [_]
+    (format "#Just[%s]" v))
   Functor
   (fmap [_ g]
     (Just. (g v)))
   (fmap [_ g jvs]
     (if (some nil? jvs)
       nil
-      (Just. (apply g v (map fold jvs)))))
+      (Just. (apply g v (map just-value jvs)))))
   Applicative
   (pure [_ x]
     (Just. x))
   (fapply [this jg]
-    (and jg (fmap this (.v ^Just jg))))
+    (if jg
+      (fmap this (just-value jg))
+      nil))
   (fapply [this jg jvs]
-    (and jg (fmap this (.v ^Just jg) jvs)))
+    (if jg
+      (fmap this (just-value jg) jvs)
+      nil))
   Monad
   (bind [_ g]
     (g v))
   (bind [_ g jvs]
     (if (some nil? jvs)
       nil
-      (apply g v (map fold jvs))))
+      (apply g v (map just-value jvs))))
   (join [jjv]
-    (if (or (nil? v) (instance? Just v)) v jjv))
+    (if (or (not v) (instance? Just v)) v jjv))
   Foldable
-  (fold [_] v)
-  (foldmap [_ g] (g v))
+  (fold [_]
+    v)
+  (fold [x f init]
+    (f init v))
+  (fold [x f init y]
+    (f init (op x y)))
+  (fold [x f init y z]
+    (f init (op x y z)))
+  (fold [x f init y z w]
+    (f init (op x y z w)))
+  (fold [x f init y z w ws]
+    (f init (op x y z w ws)))
+  (foldmap [_ g]
+    (g v))
+  (foldmap [_ g f init]
+    (f init (g v)))
+  (foldmap [_ g f init y]
+    (if y
+      (f init (g v (just-value y)))
+      nil))
+  (foldmap [_ g f init y z]
+    (if (and y z)
+      (f init (g v (just-value y) (just-value z)))
+      nil))
+  (foldmap [_ g f init y z w]
+    (if (and y z w)
+      (f init (g v (just-value y) (just-value z) (just-value w)))
+      nil))
+  (foldmap [_ g f init y z w ws]
+    (if (and y z w (not (some nil? ws)))
+      (f init (g v (just-value y) (just-value z) (just-value w)
+                 (map just-value ws)))))
   Magma
   (op [x y]
-    (if-not (nil? y)
-      (Just. (op v (fold y)))
-      x))
-  (op [x y ys]
-    (if-let [ys* (map fold (remove nil? (cons y ys)))]
-      (Just. (op v (first ys*) (rest ys*)))
-      x))
+    (if y (Just. (just-op* v y)) x))
+  (op [x y z]
+    (let [res (just-op* (just-op* v y) z)]
+      (if (= v res) x (Just. res))))
+  (op [x y z w]
+    (let [res (-> (just-op* v y) (just-op* z) (just-op* w))]
+      (if (= v res) x (Just. res))))
+  (op [x y z w ws]
+    (let [res (reduce just-op*
+                      (-> (just-op* v y) (just-op* z) (just-op* w))
+                      ws)]
+      (if (= v res) x (Just. res))))
+  Monoid
+  (id [_] nil))
+
+(defn ^:private just-value [^Just j]
+  (.v j))
+
+(defmethod print-method Just
+  [x ^java.io.Writer w]
+  (.write w (str x)))
+
+(extend-type nil
+  Functor
+  (fmap
+    ([_ _] nil)
+    ([_ _ _] nil))
+  PseudoFunctor
+  (fmap!
+    ([_ _] nil)
+    ([_ _ _] nil)
+    ([_ _ _ _] nil)
+    ([_ _ _ _ _] nil)
+    ([_ _ _ _ _ _] nil))
+  Applicative
+  (pure
+    ([_ x]
+     (Just. x)))
+  (fapply
+    ([_ _] nil)
+    ([_ _ _] nil))
+  PseudoApplicative
+  (fapply!
+    ([_ _] nil)
+    ([_ _ _] nil))
+  Monad
+  (bind
+    ([_ _] nil)
+    ([_ _ _] nil))
+  (join [_] nil)
+  PseudoMonad
+  (bind!
+    ([_ _] nil)
+    ([_ _ _] nil))
+  (join! [_] nil)
+  Foldable
+  (fold
+    ([_] nil)
+    ([_ _ _] nil)
+    ([_ _ _ _] nil)
+    ([_ _ _ _ _] nil)
+    ([_ _ _ _ _ _] nil)
+    ([_ _ _ _ _ _ _] nil))
+  (foldmap
+    ([_ _] nil)
+    ([_ _ _ _] nil)
+    ([_ _ _ _ _] nil)
+    ([_ _ _ _ _ _] nil)
+    ([_ _ _ _ _ _ _] nil)
+    ([_ _ _ _ _ _ _ _] nil))
+  Magma
+  (op
+    ([_ y]
+     y)
+    ([_ y z]
+     (op y z))
+    ([_ y z w]
+     (op y z w))
+    ([_ y z w ws]
+     (op y z w (first ws) (rest ws))))
   Monoid
   (id [_] nil))

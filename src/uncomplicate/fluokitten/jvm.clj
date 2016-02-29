@@ -3,23 +3,26 @@ fluokitten protocols. Defines curried functions. Need to be
 used or required for enabling Fluokitten on projects that
 run on JVM platform."
       :author "Dragan Djuric"}
-  uncomplicate.fluokitten.jvm
-  (:use [uncomplicate.fluokitten protocols algo utils]))
+    uncomplicate.fluokitten.jvm
+  (:require [uncomplicate.fluokitten
+             [protocols :refer :all]
+             [algo :refer :all]
+             [utils :refer [split-last with-context]]]))
 
 (set! *warn-on-reflection* true)
 
 ;;======== Set appropriate platform specific vars in algo. ======
 
-(ns uncomplicate.fluokitten.utils)
+(in-ns 'uncomplicate.fluokitten.utils)
 
 (defn deref?
   "Checks whether x is dereferencible. On JVM it checks if it is
    an instance of clojure.lang.IDeref, on other platforms it may
    be implemented in a similar or a completely different way."
   [x]
-  (instance? clojure.lang.IDeref x))
+  (clojure.core/instance? clojure.lang.IDeref x))
 
-(ns uncomplicate.fluokitten.algo)
+(in-ns 'uncomplicate.fluokitten.algo)
 
 (defn create-mapentry
   "Creates a map entry with the supplied key and value. On JVM it
@@ -27,7 +30,7 @@ run on JVM platform."
   [k v]
   (clojure.lang.MapEntry. k v))
 
-(ns uncomplicate.fluokitten.jvm)
+(in-ns 'uncomplicate.fluokitten.jvm)
 
 ;;======== Clojure JVM-specific Extensions =====================
 
@@ -67,10 +70,10 @@ run on JVM platform."
 
 (defn ^:private gen-invoke [^clojure.lang.IFn f arity n]
   (let [args (map #(symbol (str "a" %)) (range arity))]
-        `(invoke [~'_ ~@args]
-                 (if (> ~n ~arity)
-                   (CurriedFn. (partial ~f ~@args) (- ~n ~arity))
-                   (.invoke ~f ~@args)))))
+    `(invoke [~'_ ~@args]
+             (if (> ~n ~arity)
+               (CurriedFn. (partial ~f ~@args) (- ~n ~arity))
+               (.invoke ~f ~@args)))))
 
 (defn ^:private gen-applyto [^clojure.lang.IFn f n]
   `(applyTo [~'_ ~'args]
@@ -79,13 +82,8 @@ run on JVM platform."
                 (CurriedFn. (apply partial ~f ~'args) as#)
                 (.applyTo ~f ~'args)))))
 
-(declare curriedfn-monoidf
-         cidentity)
-
 (defmacro ^:private deftype-curried-fn []
-  `(deftype ~'CurriedFn ~'[^clojure.lang.IFn f n]
-     Curried
-     ~'(arity [_] n)
+  `(deftype ~'CurriedFn ~'[^clojure.lang.IFn f ^long n]
      clojure.lang.IFn
      ~@(map #(gen-invoke 'f % 'n) (range 22))
      ~(gen-applyto 'f 'n)
@@ -94,99 +92,83 @@ run on JVM platform."
          (if (pos? n) f (.call f)))
      java.lang.Runnable
      ~'(run [_]
-         (if (pos? n) f (.run f)))
-     Functor
-     ~'(fmap [_ g]
-         (CurriedFn. (comp g f) n))
-     ~'(fmap [cf g cfs]
-         (reduce fmap (into (list cf g) (seq cfs))))
-     Applicative
-     ~'(pure [_ x]
-         (CurriedFn. (fn [& _] x) 0))
-     ~'(fapply [cf cg]
-         (CurriedFn.
-          (fn
-            ([x]
-               ((cg x) (cf x)))
-            ([x & xs]
-               ((apply cg x xs) (apply cf x xs))))
-          1))
-     ~'(fapply [cf cg hs]
-         (CurriedFn.
-          (fn
-            ([x]
-               (apply (cg x) (cf x) (map #(% x) hs)))
-            ([x & xs]
-               (apply (apply cg x xs) (apply cf x xs)
-                      (map #(apply % x xs) hs))))
-          1))
-     Monad
-     ~'(bind [cf cg]
-         (CurriedFn.
-          (fn
-            ([x]
-               (with-context cf
-                 ((cg (cf x)) x)))
-            ([x & xs]
-               (with-context cf
-                 (apply (cg (apply cf x xs)) x xs))))
-          1))
-     ~'(bind [cf cg hs]
-         (CurriedFn.
-          (fn
-            ([x]
-               (with-context cf
-                 ((apply cg (cf x) (map #(% x) hs)) x)))
-            ([x & xs]
-               (with-context cf
-                 (apply (apply cg (apply cf x xs)
-                               (map #(apply % x xs) hs))
-                        x xs))))
-          1))
-     ~'(join [cf] (bind cf identity))
-     Foldable
-     ~'(fold [_] f)
-     ~'(foldmap [_ g] (g f))
-     Magma
-     ~'(op [x y]
-         (if (= identity f)
-           y
-           (if (= identity (fold y))
-             x
-             (fmap x y))))
-     ~'(op [x y ys]
-         (reduce op x (cons y ys)))
-     Monoid
-     ~'(id [_] cidentity)))
+         (if (pos? n) f (.run f)))))
 
 (deftype-curried-fn)
 
-(def ^{:doc "Checks whether an object is a curried function."}
-  curried? (partial instance? CurriedFn))
+(defn curried-arity [^CurriedFn cf]
+  (.n cf))
 
-(defn curry
-  "Creates an automatically curried version of the function f.
-   If arity is supplied, the function will be automatically
-   curried when called with less arguments. If arity is not
-   supplied, the default arity will depend on the arity of f.
-   arity defaults to 2 if f can support it, otherwise it is
-   1.
+(defn curried-curry
+  ([cf]
+   cf)
+  ([^CurriedFn cf ^long art]
+   (if (< 0 arity)
+     (->CurriedFn (.f cf) art)
+     cf)))
 
-   ---- Example: currying +
-   (((curry +) 3) 5)
-   => 8
+(defn curried-uncurry [^CurriedFn cf]
+  (.f cf))
 
-   ((((curry + 3) 3) 5) 7)
-   => 15
+(defn curried-op
+  ([x y]
+   (if (= identity y)
+     x
+     (->CurriedFn (comp x y) (arity y))))
+  ([x y z]
+   (if (= identity z)
+     (curried-op x y)
+     (curried-op (function-op x y) z)))
+  ([x y z w]
+   (curried-op (function-op x y z) w))
+  ([x y z w ws]
+   (let [[f fs] (split-last ws)]
+     (curried-op (function-op x y z w fs) f))))
 
-   ((curry +) 3 5 7)
-   => 15
-  "
-  ([f] (curry f (min 2 (apply max (arg-counts f)))))
-  ([f arity]
-     (if (and (fn? f) (pos? arity))
-       (->CurriedFn f arity)
-       f)))
+(defn curried-fmap
+  ([cf g]
+   (curried-op g cf))
+  ([cf g chs]
+   (->CurriedFn (function-fmap cf g chs) (apply max (arity cf) (map arity chs)))))
 
-(def curried (CurriedFn. identity 1))
-(def cidentity curried)
+(defn curried-fapply
+  ([cf cg]
+   (->CurriedFn (function-fapply cf cg) 1));;TODO arity
+  ([cf cg chs]
+   (->CurriedFn (function-fapply cf cg chs) 1)))
+
+(extend CurriedFn
+  Curry
+  {:arity curried-arity
+   :curry curried-curry
+   :uncurry curried-uncurry}
+  Functor
+  {:fmap curried-fmap}
+  Applicative
+  {:fapply curried-fapply
+   :pure function-pure}
+  Monad
+  {:join function-join
+   :bind function-bind}
+  Foldable
+  {:fold function-fold
+   :foldmap default-foldmap}
+  Magma
+  {:op curried-op}
+  Monoid
+  {:id (constantly identity)})
+
+;; ====================== Functions as Curry =======================
+(defn fn-curry
+  ([f]
+   (curry f (min 2 (apply max (arg-counts f)))))
+  ([f ^long arity]
+   (if (< 0 arity)
+     (->CurriedFn f arity)
+     f)))
+
+(extend clojure.lang.IFn
+  Curry
+  {:arity (constantly 0)
+   :curry fn-curry
+   :uncurry identity})
