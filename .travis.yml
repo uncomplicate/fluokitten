@@ -2,5 +2,4 @@ language: clojure
 lein: lein2
 script: lein2 midje
 jdk:
-  - openjdk8
   - oraclejdk8
