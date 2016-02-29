@@ -1052,7 +1052,7 @@
         (and (instance? Just that)
              (= v (just-value that)))))
   (toString [_]
-    (format "#Just[%s]" v))
+    (format "#just[%s]" v))
   Functor
   (fmap [_ g]
     (Just. (g v)))

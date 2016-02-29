@@ -84,6 +84,16 @@ run on JVM platform."
 
 (defmacro ^:private deftype-curried-fn []
   `(deftype ~'CurriedFn ~'[^clojure.lang.IFn f ^long n]
+     java.lang.Object
+     ~'(hashCode [_]
+         (clojure.lang.Util/hashCombine f (Long/hashCode n)))
+     ~'(equals [x y]
+         (or
+          (identical? x y)
+          (and (instance? CurriedFn y)
+               (= n (.n ^CurriedFn  y)) (= f (.f ^CurriedFn y)))))
+     ~'(toString [_]
+         (format "#curried-function[arity: %d, %s]" n f))
      clojure.lang.IFn
      ~@(map #(gen-invoke 'f % 'n) (range 22))
      ~(gen-applyto 'f 'n)
@@ -96,15 +106,19 @@ run on JVM platform."
 
 (deftype-curried-fn)
 
+(defmethod print-method CurriedFn
+  [cf ^java.io.Writer w]
+  (.write w (str cf)))
+
 (defn curried-arity [^CurriedFn cf]
   (.n cf))
 
 (defn curried-curry
   ([cf]
    cf)
-  ([^CurriedFn cf ^long art]
+  ([^CurriedFn cf ^long arity]
    (if (< 0 arity)
-     (->CurriedFn (.f cf) art)
+     (->CurriedFn (.f cf) arity)
      cf)))
 
 (defn curried-uncurry [^CurriedFn cf]
