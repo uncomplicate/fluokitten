@@ -12,7 +12,8 @@ contain the implementations of the protocols, by default jvm.
     uncomplicate.fluokitten.core
   (:require [uncomplicate.fluokitten.protocols :as p])
   (:require [uncomplicate.fluokitten.algo :as algo])
-  (:require [uncomplicate.fluokitten.utils :as utils]))
+  (:require [uncomplicate.fluokitten.utils :as utils])
+  (:require [uncomplicate.fluokitten.jvm :as jvm]))
 
 (defn fmap
   "Applies a function f to the value(s) inside functor's context
@@ -78,7 +79,7 @@ contain the implementations of the protocols, by default jvm.
   ([f functor]
    (p/fmap functor f))
   ([f]
-   (if (= identity f)
+   (if (identical? identity f)
      identity
      (fn
        ([functor & functors]
@@ -391,8 +392,8 @@ contain the implementations of the protocols, by default jvm.
       (apply >>= (apply f x xs) g hs)))))
 
 (defn <=<
-  "Composes monadic functions from right to left, in the reverse
-   order than >=>.
+  "Composes monadic functions from right to left, same as comp,
+  in the reverse order than >=>.
   "
   ([f]
    (fn [g & gs]
@@ -581,12 +582,12 @@ contain the implementations of the protocols, by default jvm.
 (def just
   "Creates the context of Maybe monad and puts
    the supplied value in it."
-  algo/->Just)
+  jvm/->Just)
 
-(defn just?
+(defn maybe?
   "Checks whether x is an instance of the type Just ."
   [x]
-  (instance? uncomplicate.fluokitten.algo.Just x))
+  (satisfies? p/Maybe x))
 
 (defn curry
   "Creates an automatically curried version of the function f.

@@ -91,7 +91,7 @@ run on JVM platform."
          (or
           (identical? x y)
           (and (instance? CurriedFn y)
-               (= n (.n ^CurriedFn  y)) (= f (.f ^CurriedFn y)))))
+               (= n (.n ^CurriedFn  y)) (identical? f (.f ^CurriedFn y)))))
      ~'(toString [_]
          (format "#curried-function[arity: %d, %s]" n f))
      clojure.lang.IFn
@@ -126,11 +126,11 @@ run on JVM platform."
 
 (defn curried-op
   ([x y]
-   (if (= identity y)
+   (if (identical? identity y)
      x
      (->CurriedFn (comp x y) (arity y))))
   ([x y z]
-   (if (= identity z)
+   (if (identical? identity z)
      (curried-op x y)
      (curried-op (function-op x y) z)))
   ([x y z w]
@@ -186,3 +186,37 @@ run on JVM platform."
   {:arity (constantly 0)
    :curry fn-curry
    :uncurry identity})
+
+;; ====================== Maybe Just ==============================
+
+(deftype Just [v]
+  Object
+  (hashCode [_]
+    (hash v))
+  (equals [this that]
+    (or (identical? this that)
+        (and (instance? Just that)
+             (= v (value that)))))
+  (toString [_]
+    (format "#just[%s]" v))
+  Maybe
+  (value [_]
+    v))
+
+(defmethod print-method Just
+  [x ^java.io.Writer w]
+  (.write w (str x)))
+
+(defn just-pure [x v]
+  (Just. v))
+
+(extend-just Just just-pure)
+
+(defn nil-fapply
+ ([_ _] nil)
+ ([_ _ _] nil))
+
+(extend nil
+  Applicative
+  {:pure just-pure
+   :fapply nil-fapply})

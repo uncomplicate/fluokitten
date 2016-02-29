@@ -743,17 +743,17 @@
 (defn function-op
   ([x y]
    (cond
-     (= identity x) y
-     (= identity y) x
+     (identical? identity x) y
+     (identical? identity y) x
      :default (comp x y)))
   ([x y z]
-   (if (= identity z)
+   (if (identical? identity z)
      (function-op x y)
      (comp (function-op x y) z)))
   ([x y z w]
    (function-op (function-op x y) (op z w)))
   ([x y z w ws]
-   (apply comp (function-op x y z w) (filter (partial = identity) ws))))
+   (apply comp (function-op x y z w) (filter (partial identical? identity) ws))))
 
 (defn function-fmap
   ([f g]
@@ -769,7 +769,7 @@
 
 (defn function-fapply
   ([f g]
-   (if (= identity g)
+   (if (identical? identity g)
      f
      (fn
        ([]
@@ -1036,106 +1036,111 @@
 
 ;;================== Maybe  ===========================
 
-(declare ^:private just-value)
+(defn just-fmap
+ ([jv g]
+  (pure jv (g (value jv))))
+ ([jv g jvs]
+  (if (some nil? jvs)
+    nil
+    (pure jv (apply g (value jv) (map value jvs))))))
+
+(defn just-fapply
+  ([jv jg]
+   (if jg
+     (fmap jv (value jg))
+     nil))
+  ([jv jg jvs]
+   (if jg
+     (fmap jv (value jg) jvs)
+     nil)))
+
+(defn just-bind
+  ([jv g]
+   (g (value jv)))
+  ([jv g jvs]
+   (if (some nil? jvs)
+     nil
+     (apply g (value jv) (map value jvs)))))
+
+(defn just-join [jjv]
+  (let [v (value jjv)]
+    (if (or (not v) (satisfies? Maybe v)) v jjv)))
+
+(defn just-fold
+  ([x]
+   (value x))
+  ([x f init]
+   (f init (value x)))
+  ([x f init y]
+   (f init (op x y)))
+  ([x f init y z]
+   (f init (op x y z)))
+  ([x f init y z w]
+   (f init (op x y z w)))
+  ([x f init y z w ws]
+   (f init (op x y z w ws))))
+
+(defn just-foldmap
+  ([x g]
+   (g (value x)))
+  ([x g f init]
+   (f init (g (value x))))
+  ([x g f init y]
+   (if y
+     (f init (g (value x) (value y)))
+     nil))
+  ([x g f init y z]
+   (if (and y z)
+     (f init (g (value x) (value y) (value y)))
+     nil))
+  ([x g f init y z w]
+   (if (and y z w)
+     (f init (g (value x) (value y) (value z) (value w)))
+     nil))
+  ([x g f init y z w ws]
+   (if (and y z w (not (some nil? ws)))
+     (f init (g (value x) (value y) (value z) (value w) (map value ws))))))
 
 (defn ^:private just-op* [v y]
   (if y
-    (op v (just-value y))
+    (op v (value y))
     v))
 
-(deftype Just [v]
-  Object
-  (hashCode [_]
-    (hash v))
-  (equals [this that]
-    (or (identical? this that)
-        (and (instance? Just that)
-             (= v (just-value that)))))
-  (toString [_]
-    (format "#just[%s]" v))
-  Functor
-  (fmap [_ g]
-    (Just. (g v)))
-  (fmap [_ g jvs]
-    (if (some nil? jvs)
-      nil
-      (Just. (apply g v (map just-value jvs)))))
-  Applicative
-  (pure [_ x]
-    (Just. x))
-  (fapply [this jg]
-    (if jg
-      (fmap this (just-value jg))
-      nil))
-  (fapply [this jg jvs]
-    (if jg
-      (fmap this (just-value jg) jvs)
-      nil))
-  Monad
-  (bind [_ g]
-    (g v))
-  (bind [_ g jvs]
-    (if (some nil? jvs)
-      nil
-      (apply g v (map just-value jvs))))
-  (join [jjv]
-    (if (or (not v) (instance? Just v)) v jjv))
-  Foldable
-  (fold [_]
-    v)
-  (fold [x f init]
-    (f init v))
-  (fold [x f init y]
-    (f init (op x y)))
-  (fold [x f init y z]
-    (f init (op x y z)))
-  (fold [x f init y z w]
-    (f init (op x y z w)))
-  (fold [x f init y z w ws]
-    (f init (op x y z w ws)))
-  (foldmap [_ g]
-    (g v))
-  (foldmap [_ g f init]
-    (f init (g v)))
-  (foldmap [_ g f init y]
-    (if y
-      (f init (g v (just-value y)))
-      nil))
-  (foldmap [_ g f init y z]
-    (if (and y z)
-      (f init (g v (just-value y) (just-value z)))
-      nil))
-  (foldmap [_ g f init y z w]
-    (if (and y z w)
-      (f init (g v (just-value y) (just-value z) (just-value w)))
-      nil))
-  (foldmap [_ g f init y z w ws]
-    (if (and y z w (not (some nil? ws)))
-      (f init (g v (just-value y) (just-value z) (just-value w)
-                 (map just-value ws)))))
-  Magma
-  (op [x y]
-    (if y (Just. (just-op* v y)) x))
-  (op [x y z]
-    (let [res (just-op* (just-op* v y) z)]
-      (if (= v res) x (Just. res))))
-  (op [x y z w]
-    (let [res (-> (just-op* v y) (just-op* z) (just-op* w))]
-      (if (= v res) x (Just. res))))
-  (op [x y z w ws]
-    (let [res (reduce just-op*
-                      (-> (just-op* v y) (just-op* z) (just-op* w))
-                      ws)]
-      (if (= v res) x (Just. res))))
-  Monoid
-  (id [_] nil))
+(defn just-op
+  ([x y]
+   (if y (pure x (just-op* (value x) y)) x))
+  ([x y z]
+   (let [v (value x)
+         res (just-op* (just-op* v y) z)]
+     (if (= v res) x (pure x res))))
+  ([x y z w]
+   (let [v (value x)
+         res (-> (just-op* v y) (just-op* z) (just-op* w))]
+     (if (= v res) x (pure x res))))
+  ([x y z w ws]
+   (let [v (value x)
+         res (reduce just-op*
+                     (-> (just-op* v y) (just-op* z) (just-op* w))
+                     ws)]
+     (if (= v res) x (pure x res)))))
 
-(defn ^:private just-value [^Just j]
-  (.v j))
-
-(defmethod print-method Just
-  [x ^java.io.Writer w]
-  (.write w (str x)))
+(defmacro extend-just [t just-pure]
+  `(extend ~t
+     Functor
+     {:fmap just-fmap}
+     Applicative
+     {:pure ~just-pure
+      :fapply just-fapply}
+     Monad
+     {:join just-join
+      :bind just-bind}
+     Foldable
+     {:fold just-fold
+      :foldmap just-foldmap}
+     Magma
+     {:op just-op}
+     Monoid
+     {:id (constantly nil)}))
 
 (extend-type nil
   Functor
@@ -1149,13 +1154,6 @@
     ([_ _ _ _] nil)
     ([_ _ _ _ _] nil)
     ([_ _ _ _ _ _] nil))
-  Applicative
-  (pure
-    ([_ x]
-     (Just. x)))
-  (fapply
-    ([_ _] nil)
-    ([_ _ _] nil))
   PseudoApplicative
   (fapply!
     ([_ _] nil)

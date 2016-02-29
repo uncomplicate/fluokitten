@@ -277,3 +277,6 @@ code. The client code should call the generic functions from Fluokitten core."
      from the context or combining multiple values into
      a summary, applies the function g to transform it
      (to a Monoid if needed)."))
+
+(defprotocol Maybe
+  (value [m]))

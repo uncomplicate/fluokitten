@@ -56,7 +56,7 @@
 
  (defn apply-maybe [m f]
    (cond (nil? m) nil
-         (just? m) (f (fold m))))
+         (maybe? m) (f (fold m))))
 
  (apply-maybe (just 3) (fn [x] (just (+ x 1))))
  => (just 4)

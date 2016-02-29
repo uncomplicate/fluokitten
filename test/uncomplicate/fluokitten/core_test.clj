@@ -833,7 +833,7 @@
          ((bind c+ (comp return inc)) 3 4) => 8
          ((bind (pure identity 5) (comp return inc)) 3 1) => 6
 
-         ((bind (bind (c* 3) (comp return inc)) (comp return (c+ 17))) 7);;TODO it should work like the example at next line. That's why I created curry, to avoid comp returns. So, curried should be slightly diff than fn
+         ((bind (bind (c* 3) (comp return inc)) (comp return (c+ 17))) 7)
          ((bind (bind (c* 3) c*) c+) 7) => 154)
 
   (facts "How join for curried function works."
