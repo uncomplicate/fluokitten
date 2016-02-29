@@ -1194,4 +1194,6 @@
     ([_ y z w ws]
      (op y z w (first ws) (rest ws))))
   Monoid
-  (id [_] nil))
+  (id [_] nil)
+  Maybe
+  (value [_] nil))
