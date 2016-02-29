@@ -30,7 +30,7 @@
   (equals [this that]
     (or (identical? this that)
         (and (instance? Prob that)
-             (= xs (.xs that)))))
+             (= xs (.xs ^Prob that)))))
   protocols/Functor
   (fmap [_ f]
     (Prob. (fmap (fn [[x p]]
@@ -43,8 +43,8 @@
   (join [_]
     (let [multi-all (fn [[innerxs p]]
                       (map (fn [[x r]]
-                              [x (* p r)])
-                            (.xs innerxs)))]
+                             [x (* p r)])
+                           (.xs innerxs)))]
       (Prob. (apply concat (map multi-all xs)))))
   (bind [p f]
     (join (fmap f p)))

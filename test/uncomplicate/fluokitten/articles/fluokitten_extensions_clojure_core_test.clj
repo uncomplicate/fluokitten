@@ -1,5 +1,5 @@
 (ns uncomplicate.fluokitten.articles.fluokitten-extensions-clojure-core-test
-   "These expressions are used as examples in the
+  "These expressions are used as examples in the
     Fluokitten Extensions of Clojure Core
     article at the Fluokitten web site."
   (:use [uncomplicate.fluokitten jvm core test utils])

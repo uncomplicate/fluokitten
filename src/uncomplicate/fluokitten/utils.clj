@@ -1,6 +1,6 @@
 (ns ^{:doc "TODO"
       :author "Dragan Djuric"}
-  uncomplicate.fluokitten.utils
+    uncomplicate.fluokitten.utils
   (:require [clojure.core.reducers :as r]))
 
 (def ^{:dynamic true :private true} *pure-context*)

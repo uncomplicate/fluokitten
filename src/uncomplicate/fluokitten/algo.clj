@@ -257,13 +257,15 @@
     (meta c)))
 
 (defn collreduce-join [c]
-  (let [combinef (fn [x y]
-                   (if (coll? x)
-                     (join-op x y)
-                     (if (coll? y)
-                       (conj y x)
-                       [x y])))]
-    (r/fold (fn [] []) combinef c)))
+  (let [combinef (fn
+                   ([] [])
+                   ([x y]
+                    (if (coll? x)
+                      (join-op x y)
+                      (if (coll? y)
+                        (conj y x)
+                        [x y]))))]
+    (r/fold combinef c)))
 
 (defn reducible-join [c]
   (into (empty c)
@@ -566,7 +568,7 @@
                         (not= k kg))
                       (cons e es))))
      (create-mapentry ke (apply vg ve (map val es)))
-     e)));;TODO e should be represented with Nothing once Maybe is implemented
+     e)))
 
 (defn mapentry-join [[k x :as e]]
   (if (vector? x)
@@ -1037,12 +1039,12 @@
 ;;================== Maybe  ===========================
 
 (defn just-fmap
- ([jv g]
-  (pure jv (g (value jv))))
- ([jv g jvs]
-  (if (some nil? jvs)
-    nil
-    (pure jv (apply g (value jv) (map value jvs))))))
+  ([jv g]
+   (pure jv (g (value jv))))
+  ([jv g jvs]
+   (if (some nil? jvs)
+     nil
+     (pure jv (apply g (value jv) (map value jvs))))))
 
 (defn just-fapply
   ([jv jg]

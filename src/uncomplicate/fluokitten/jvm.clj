@@ -147,7 +147,7 @@ run on JVM platform."
 
 (defn curried-fapply
   ([cf cg]
-   (->CurriedFn (function-fapply cf cg) 1));;TODO arity
+   (->CurriedFn (function-fapply cf cg) 1))
   ([cf cg chs]
    (->CurriedFn (function-fapply cf cg chs) 1)))
 
@@ -213,8 +213,8 @@ run on JVM platform."
 (extend-just Just just-pure)
 
 (defn nil-fapply
- ([_ _] nil)
- ([_ _ _] nil))
+  ([_ _] nil)
+  ([_ _ _] nil))
 
 (extend nil
   Applicative

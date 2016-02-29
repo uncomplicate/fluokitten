@@ -1,5 +1,5 @@
 (ns uncomplicate.fluokitten.articles.functors-applicatives-monads-pictures-test
-   "These expressions are used as examples in the
+  "These expressions are used as examples in the
         Functors, Applicatives, and Monads in Pictures
         article at the Fluokitten web site."
   (:use [uncomplicate.fluokitten jvm core test])
@@ -51,7 +51,7 @@
 (facts
  "Applicatives"
 
-  (let [add3 (partial + 3)]
+ (let [add3 (partial + 3)]
 
    (just add3) => (just add3)
 
