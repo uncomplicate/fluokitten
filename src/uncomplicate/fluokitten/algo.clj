@@ -4,16 +4,84 @@
              [utils :refer [with-context deref?]]])
   (:require [clojure.core.reducers :as r]))
 
-(extend-type Object
+
+;;====================== Default functions ==========
+
+(defn ^:private fmap*
+  ([x g & xs]
+   (apply fmap x g xs)))
+
+(defn default-foldmap
+  ([x g]
+   (fold (fmap x g)))
+  ([x g f init]
+   (fold (fmap x g) f init))
+  ([x g f init y]
+   (fold (fmap* x g y) f init))
+  ([x g f init y z]
+   (fold (fmap* x g y z) f init))
+  ([x g f init y z w]
+   (fold (fmap* x g y z w) f init))
+  ([x g f init y z w ws]
+   (fold (fmap* x g y z w ws) f init)))
+
+(defn default-bind
+  ([m g]
+   (join (fmap m g)))
+  ([m g ms]
+   (join (fmap m g ms))))
+
+;; ==================== Object =====================
+
+(defn object-fmap
+  ([o f]
+   (f o))
+  ([o f os]
+   (apply f o os)))
+
+(defn object-pure [o x]
+  x)
+
+(defn object-foldmap
+  ([x g]
+   (g x))
+  ([x g f init]
+   (f init (g x)))
+  ([x g f init y]
+   (f init (g x y)))
+  ([x g f init y z]
+   (f init (g x y z)))
+  ([x g f init y z w]
+   (f init (g x y z w)))
+  ([x g f init y z w ws]
+   (f init (g x y z w ws))))
+
+(defn object-fold
+  ([x]
+   x)
+  ([x f init]
+   (f init x))
+  ([x f init y]
+   (f init (op x y)))
+  ([x f init y z]
+   (f init (op x y z)))
+  ([x f init y z w]
+   (f init (op x y z w)))
+  ([x f init y z w ws]
+   (f init (op x y z w ws))))
+
+(extend Object
   Functor
-  (fmap
-    ([o f]
-     (f o))
-    ([o f os]
-     (apply f o os)))
+  {:fmap object-fmap}
+  Applicative
+  {:fapply object-fmap
+   :pure object-pure}
+  Monad
+  {:join identity
+   :bind default-bind}
   Foldable
-  (fold [o] o)
-  (foldmap [o g] (g o)))
+  {:fold object-fold
+   :foldmap object-foldmap})
 
 ;;=============== Functor implementations =========================
 ;;--------------- fmap implementations ---------------
@@ -190,12 +258,6 @@
    (throw (ex-info "bind for reducibles does not support varargs."
                    {:exception-type :unsupported-operation}))))
 
-(defn default-bind
-  ([m g]
-   (join (fmap m g)))
-  ([m g ms]
-   (join (fmap m g ms))))
-
 (defn reducible-bind
   ([c g]
    (into (empty c)
@@ -352,23 +414,6 @@
    (apply list (seq-op x y z w ws))))
 
 ;;================== Foldable ===================================
-(defn ^:private fmap*
-  ([x g & xs]
-   (apply fmap x g xs)))
-
-(defn default-foldmap
-  ([x g]
-   (fold (fmap x g)))
-  ([x g f init]
-   (fold (fmap x g) f init))
-  ([x g f init y]
-   (fold (fmap* x g y) f init))
-  ([x g f init y z]
-   (fold (fmap* x g y z) f init))
-  ([x g f init y z w]
-   (fold (fmap* x g y z w) f init))
-  ([x g f init y z w ws]
-   (fold (fmap* x g y z w ws) f init)))
 
 (defn collection-foldmap
   ([c g]
