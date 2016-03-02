@@ -18,7 +18,6 @@
   :profiles {:dev {:dependencies [[midje "1.8.3"]
                                   [criterium "0.4.4"]]
                    :global-vars {*warn-on-reflection* true
-                                 *unchecked-math* :warn-on-boxed
                                  *print-length* 128}
                    :plugins [[lein-midje "3.1.3"]
                              [lein-codox "0.9.4"]]}})

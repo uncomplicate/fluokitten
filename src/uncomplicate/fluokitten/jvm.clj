@@ -117,7 +117,7 @@ run on JVM platform."
   ([cf]
    cf)
   ([^CurriedFn cf ^long arity]
-   (if (< 0 arity)
+   (if (pos? arity)
      (->CurriedFn (.f cf) arity)
      cf)))
 
@@ -177,7 +177,7 @@ run on JVM platform."
   ([f]
    (curry f (min 2 (apply max (arg-counts f)))))
   ([f ^long arity]
-   (if (< 0 arity)
+   (if (pos? arity)
      (->CurriedFn f arity)
      f)))
 

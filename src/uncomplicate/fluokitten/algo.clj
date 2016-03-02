@@ -1,5 +1,6 @@
 (ns uncomplicate.fluokitten.algo
-  (:require [uncomplicate.fluokitten
+  (:require [clojure.string :as cs]
+            [uncomplicate.fluokitten
              [protocols :refer :all]
              [utils :refer [with-context deref?]]])
   (:require [clojure.core.reducers :as r]))
@@ -605,9 +606,9 @@
      e))
   ([[ke ve :as e] [kg vg] es]
    (if (or (nil? kg)
-           (not (some (fn [[k _]]
-                        (not= k kg))
-                      (cons e es))))
+           (not-any? (fn [[k _]]
+                       (not= k kg))
+                     (cons e es)))
      (create-mapentry ke (apply vg ve (map val es)))
      e)))
 
@@ -688,7 +689,7 @@
 (defn ^:private to-string
   ([s]
    (if (sequential? s)
-     (apply str s)
+     (cs/join s)
      (str s)))
   ([s ss]
    (apply str (to-string s) (map to-string ss))))
@@ -1083,26 +1084,22 @@
   ([jv g]
    (pure jv (g (value jv))))
   ([jv g jvs]
-   (if (some nil? jvs)
-     nil
+   (when-not (some nil? jvs)
      (pure jv (apply g (value jv) (map value jvs))))))
 
 (defn just-fapply
   ([jv jg]
-   (if jg
-     (fmap jv (value jg))
-     nil))
+   (when jg
+     (fmap jv (value jg))))
   ([jv jg jvs]
-   (if jg
-     (fmap jv (value jg) jvs)
-     nil)))
+   (when jg
+     (fmap jv (value jg) jvs))))
 
 (defn just-bind
   ([jv g]
    (g (value jv)))
   ([jv g jvs]
-   (if (some nil? jvs)
-     nil
+   (when-not (some nil? jvs)
      (apply g (value jv) (map value jvs)))))
 
 (defn just-join [jjv]
@@ -1129,19 +1126,16 @@
   ([x g f init]
    (f init (g (value x))))
   ([x g f init y]
-   (if y
-     (f init (g (value x) (value y)))
-     nil))
+   (when y
+     (f init (g (value x) (value y)))))
   ([x g f init y z]
-   (if (and y z)
-     (f init (g (value x) (value y) (value y)))
-     nil))
+   (when (and y z)
+     (f init (g (value x) (value y) (value y)))))
   ([x g f init y z w]
-   (if (and y z w)
-     (f init (g (value x) (value y) (value z) (value w)))
-     nil))
+   (when (and y z w)
+     (f init (g (value x) (value y) (value z) (value w)))))
   ([x g f init y z w ws]
-   (if (and y z w (not (some nil? ws)))
+   (when (and y z w (not-any? nil? ws))
      (f init (g (value x) (value y) (value z) (value w) (map value ws))))))
 
 (defn ^:private just-op* [v y]
