@@ -7,23 +7,19 @@
 
 ;;====================== Default functions ==========
 
-(defn ^:private fmap*
-  ([x g & xs]
-   (apply fmap x g xs)))
-
 (defn default-foldmap
   ([x g]
    (fold (fmap x g)))
   ([x g f init]
    (fold (fmap x g) f init))
   ([x g f init y]
-   (fold (fmap* x g y) f init))
+   (fold (fmap x g [y]) f init))
   ([x g f init y z]
-   (fold (fmap* x g y z) f init))
+   (fold (fmap x g [y z]) f init))
   ([x g f init y z w]
-   (fold (fmap* x g y z w) f init))
+   (fold (fmap x g [y z w]) f init))
   ([x g f init y z w ws]
-   (fold (fmap* x g y z w ws) f init)))
+   (fold (fmap x g (cons y (cons z (cons w ws)))) f init)))
 
 (defn default-bind
   ([m g]
@@ -493,7 +489,7 @@
       :bind coll-bind}
      Foldable
      {:fold collection-fold
-      :foldmap default-foldmap}
+      :foldmap collection-foldmap}
      Magma
      {:op coll-op}
      Monoid

@@ -4,7 +4,7 @@
   (:require [clojure.string :as s]
             [clojure.core.reducers :as r]))
 
-;;=============== Curried tests ========================
+;;=============== Curry tests ========================
 
 (facts
  ((curry + 3) 1 2 3) => 6
@@ -13,11 +13,18 @@
 (fact "First functor law."
       (fmap identity) => identity)
 
+;;=============== Functior ===========================
+
 ;;--------------- nil ---------------
 
 (functor-law2 inc + nil)
 
 (functor-law2 inc + nil 99 0)
+
+(facts "nil as functor."
+       (fmap identity nil) => nil
+       (fmap + nil) => nil
+       (fmap + nil 1 2 3) => nil)
 
 ;;--------------- literals ---------------
 ;; Functor operations on any Object, if more particular
