@@ -65,6 +65,8 @@
 
  (pure [4 5] 1) => [1]
 
+ (pure [4 5] 1 2 3) => [1 2 3]
+
  (pure (list) 1) => (list 1)
 
  (pure (seq [3]) 1) => (seq [1])
@@ -74,6 +76,8 @@
  (pure #{} 1) => #{1}
 
  (pure {} 1) => {nil 1}
+
+ (pure {} 1 2 3 4) => {1 2 3 4}
 
  (pure (first {1 1}) 1) => (first {nil 1})
 
@@ -329,7 +333,36 @@
 
  (fold {:a 1 :b 2 :c 3}) => 6
 
- (fold (first {:a 1})) => 1)
+ (fold (first {:a 1})) => 1
+
+ (fold + 3 [1 2 3]) => 9
+
+ (fold + 0 [1 2 3] [4 5 6]) => 21
+
+ (fold * 1 [1 2 3] [4 5 6]) => 315
+
+ (fold * 2 [1 2 3] [4 5 6] [7 8 9] [1 2 1] [3 2 1]) => 12160)
+
+(facts
+ "Data structures: foldmap."
+
+ (foldmap str [1 2 3 4 5 6]) => "123456"
+
+ (foldmap (fn [^String s] (.toUpperCase s))
+          (list "a" "b" "c"))
+ => "ABC"
+
+ (foldmap str (seq [:a :b :c])) => ":a:b:c"
+
+ (foldmap str {:a 1 :b 2 :c 3}) => "123"
+
+ (foldmap str (first {:a 1})) => "1"
+
+ (foldmap + 3 inc [1 2 3]) => 12
+
+ (foldmap * 5 / [1 2 3] [4 5 6]) => 1/4
+
+ (foldmap * 2 / [1 2 3] [4 5 6] [7 8 9] [1 2 1] [3 2 1]) => 1/60480)
 
 (facts
  "Object: Functor and Foldable."
@@ -378,6 +411,8 @@
 
  ((fmap inc +) 1 2 3) => ((comp inc +) 1 2 3)
 
+ ((fmap + * /) 1 2 3) => (+ (* 1 2 3) (/ 1 2 3))
+
  (let [inc+ (fmap inc +)
        cinc+ (fmap inc (curry +))]
 
@@ -404,6 +439,9 @@
 (facts
  "Functions: Applicative."
 
+ (((pure identity inc)) 1) => 2
+ ((<*> (pure identity inc) (pure identity 1))) => 2
+
  (let [c+ (curry +)
        c* (curry *)]
 
@@ -417,6 +455,46 @@
  "Functions: Monad."
 
  ((bind (curry +) (curry *)) 3 4) => 84)
+
+(facts
+ "Mutable references"
+
+ (let [a (atom 3)]
+   (fmap! inc a) => a)
+
+ (let [r (ref 5)]
+   (dosync
+    (fmap! inc r) => r))
+
+ (fmap! + (atom 3) (atom 4) (ref 5)) => (check-eq (atom 12))
+
+ (dosync
+  (fmap! + (ref 5) (atom 6) (ref 7)) => (check-eq (ref 18)))
+
+ (fapply! (atom inc) (atom 1)) => (check-eq (atom 2))
+
+ (dosync (fapply! (ref inc) (ref 2))) => (check-eq (ref 3))
+
+ (fapply! (atom +) (atom 1) (ref 2) (atom 3)) => (check-eq (atom 6))
+
+ (dosync (fapply! (ref +) (ref 1) (atom 2) (atom 3)))
+ => (check-eq (ref 6))
+
+ (join! (atom (ref (atom 33)))) => (check-eq (atom (atom 33)))
+
+ (dosync (join! (ref (ref (atom 33)))))
+ => (check-eq (ref (atom 33)))
+
+ (bind! (atom 8) increment) => (check-eq (atom 9))
+
+ (dosync (bind! (ref 8) increment))
+ => (check-eq (ref 9))
+
+ (bind! (atom 8) (ref 9) (atom 10) add)
+ => (check-eq (atom 27))
+
+ (dosync (bind! (ref 18) (ref 19) (atom 20) add))
+ => (check-eq (ref 57)))
 
 (facts
  "References"

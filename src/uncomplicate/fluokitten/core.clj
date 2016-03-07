@@ -514,15 +514,15 @@ contain the implementations of the protocols, by default jvm.
    that can fold a foldable that contains non-monoid values
    by first using f to convert them to monoids.
   "
-  ([f]
+  ([g]
    (fn [x]
-     (p/foldmap x f)))
+     (p/foldmap x g)))
   ([g x]
    (p/foldmap x g))
   ([f g x]
    (p/foldmap x g f (f)))
   ([f init g x]
-   (p/foldmap  x g f init))
+   (p/foldmap x g f init))
   ([f init g x y]
    (p/foldmap x g f init y))
   ([f init g x y z]

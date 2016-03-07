@@ -50,7 +50,8 @@
        (fmap inc 1) => 2
        (fmap str 1) => "1"
        (fmap str \a) => "a"
-       (fmap  + \a) => (throws ClassCastException))
+       (fmap  + \a) => (throws ClassCastException)
+       (fmap str \a \b 1) => "ab1")
 
 ;;--------------- String ---------------
 
@@ -61,6 +62,10 @@
 (fmap-keeps-type s/reverse "something")
 
 (fmap-keeps-type str "something" "else")
+
+(facts "Strings as functors"
+       (fmap (fn [^String s] (.toUpperCase s)) "abc") => "ABC"
+       (fmap str "abc" "def") => "abcdef")
 
 ;;--------------- Vector ---------------
 
@@ -76,6 +81,11 @@
 (fmap-keeps-type + [100 0 -999]
                  (list 44 0 -54))
 
+(facts "Vectors as functiors"
+       (fmap inc [1 2 3]) => [2 3 4]
+       (fmap + [1 2 3] [4 5 6]) => [5 7 9]
+       (fmap + [1 2 3] [4 5 6] [7 8 9]) => [12 15 18])
+
 ;;--------------- List ---------------
 
 (functor-law2 inc (partial * 100)
@@ -89,6 +99,11 @@
 
 (fmap-keeps-type + (list 77 0 -39)
                  (list 88 -8 8))
+
+(facts "Vectors as functiors"
+       (fmap inc (list 1 2 3)) => (list 2 3 4)
+       (fmap + '(1 2 3) '(4 5 6)) => '(5 7 9)
+       (fmap + '(1 2 3) '(4 5 6) '(7 8 9)) => '(12 15 18))
 
 ;;--------------- Set ---------------
 
@@ -206,6 +221,9 @@
  (fmap-keeps-type + (ref 47) (ref 4) (atom 7)))
 
 ;;--------------- Function ---------------
+
+(fact "First functor law."
+      (fmap identity) => identity)
 
 (fact "Second functor law."
       ((fmap (comp inc dec) inc) 1)
@@ -593,6 +611,31 @@
 
 (dosync
  (applicative-law5-interchange (ref 6) + 5 3 4 5))
+
+;;------------------- Function ---------------------------
+
+(facts "First applicative law."
+       ((fapply (pure identity inc) (pure identity 1)) 6)
+       => ((fmap inc (pure identity 1)) 7)
+
+       ((fapply (pure identity +) (pure identity 1)) 7 9 11 13)
+       => ((fmap + (pure identity 1)) 7 9 11 13))
+
+(facts "Identity applicative law."
+       ((fapply (pure identity identity) (curry inc)) 7) => 8
+       ((fapply (pure identity identity) +) 7 8 2) => 17)
+
+(facts "How fapply works for functions"
+
+       ((fapply (pure identity +) (pure identity 7)))=> 7
+
+       ((fapply (pure identity +) (pure identity 1)
+                (pure identity 2) (pure identity 3)) 11)
+       => 6
+
+       ((fapply (pure identity +) (pure identity 1)
+                (pure identity 2) (pure identity 3)) 11 33)
+       => 6)
 
 ;;------------------- Curried Function ---------------------------
 
@@ -1140,6 +1183,14 @@
        (fold (seq (list 1 2 3 4 5))) => 15
        (fold {:a 1 :b 2 :c 3}) => 6
        (fold #{1 2 3 4 5}) => 15
+
+       (fold + [1 2 3 4]) => 10
+       (fold * [1 2 3 4]) => 24
+       (fold + 0 [1 2 3] [4 5 6]) => 21
+       (fold * 1 [1 2 3] [4 5 6]) => 315
+       (fold * 2 [1 2 3] [4 5 6] [7 8 9] [1 2 1] [3 2 1]) => 12160
+       (fold * 2 [1 2 3 4] [4 5 6] [7 8 9] [1 2 1] [3 2 1]) => 12160
+
        (foldmap inc [1 2 3 4 5]) => 20
        (foldmap inc []) => nil
        (foldmap inc (list 1 2 3 4 5))= > 20
@@ -1148,7 +1199,9 @@
        (foldmap inc (lazy-seq (list 1 2 3 4 5))) => 20
        (foldmap inc (seq (list 1 2 3 4 5))) => 20
        (foldmap inc {:a 1 :b 2 :c 3}) => 9
-       (foldmap inc #{1 2 3 4 5}) => 20)
+       (foldmap inc #{1 2 3 4 5}) => 20
+
+       (foldmap * 2 + [1 2 3] [4 5 6] [7 8 9] [1 2 1] [3 2 1]) => 12160)
 
 (fact "fold extract the value from the reference context."
       (fold (atom :something)) => :something

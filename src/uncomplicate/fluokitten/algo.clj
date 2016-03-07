@@ -414,7 +414,7 @@
 
 (defn collection-foldmap
   ([c g]
-   (collection-foldmap c g op (id (first c))))
+   (collection-foldmap c g op (if-let [fc (first c)] (id (g fc)))))
   ([c g f init]
    (r/fold (constantly init) f (r/map g c)))
   ([cx g f init cy]
@@ -454,7 +454,11 @@
   ([cx f init cy cz cw]
    (collection-foldmap cx op f init cy cz cw))
   ([cx f init cy cz cw cws]
-   (collection-foldmap cx op f init cy cz cw cws)))
+   (loop [acc init cx cx cy cy cz cz cw cw cws cws]
+     (if (and cx cy cz cw (not-any? empty? cws))
+       (recur (f acc (op (first cx) (first cy) (first cz) (first cw) (map first cws)))
+              (next cx) (next cy) (next cz) (next cw) (map next cws))
+       acc))))
 
 (defn map-fold
   ([m]
@@ -637,7 +641,7 @@
 
 (defn mapentry-foldmap
   ([e g]
-   (mapentry-foldmap e g op (val e) ))
+   (mapentry-foldmap e g op (id (g (val e)))))
   ([e g f init]
    (f init (g (val e))))
   ([e g f init e1]
@@ -647,7 +651,7 @@
   ([e g f init e1 e2 e3]
    (f init (g (val e) (val e1) (val e2) (val e3))))
   ([e g f init e1 e2 e3 es]
-   (f init (g (val e) (val e1) (val e2) (val e3) (map val es)))))
+   (f init (apply g (val e) (val e1) (val e2) (val e3) (map val es)))))
 
 (defn mapentry-fold
   ([e]
@@ -661,7 +665,7 @@
   ([e f init e1 e2 e3]
    (mapentry-foldmap e op f init e1 e2 e3))
   ([e f init e1 e2 e3 es]
-   (mapentry-foldmap e op f init e1 e2 e3 es)))
+   (f init (op (val e) (val e1) (val e2) (val e3) (map val es)))))
 
 (defmacro extend-mapentry [t]
   `(extend ~t
@@ -950,7 +954,7 @@
   ([rx g f init ry rz rw]
    (f init (g @rx @ry @rz @rw)))
   ([rx g f init ry rz rw rws]
-   (f init (g @rx @ry @rz @rw (map deref rws)))))
+   (f init (apply g @rx @ry @rz @rw (map deref rws)))))
 
 (defn reference-fold
   ([r]
@@ -964,7 +968,7 @@
   ([rx f init ry rz rw]
    (reference-foldmap rx op f init ry rz rw))
   ([rx f init ry rz rw rws]
-   (reference-foldmap rx op f init ry rz rw rws)))
+   (f init (f @rx @ry @rz @rw (map deref rws)))))
 
 ;;----------------- Atom -----------------------
 
@@ -1136,7 +1140,7 @@
      (f init (g (value x) (value y) (value z) (value w)))))
   ([x g f init y z w ws]
    (when (and y z w (not-any? nil? ws))
-     (f init (g (value x) (value y) (value z) (value w) (map value ws))))))
+     (f init (apply g (value x) (value y) (value z) (value w) (map value ws))))))
 
 (defn ^:private just-op* [v y]
   (if y
