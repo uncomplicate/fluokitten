@@ -20,4 +20,5 @@
                    :global-vars {*warn-on-reflection* true
                                  *print-length* 128}
                    :plugins [[lein-midje "3.1.3"]
-                             [lein-codox "0.9.4"]]}})
+                             [lein-codox "0.9.4"]]}}
+  :javac-options ["-target" "1.8" "-source" "1.8" "-Xlint:-options"])
