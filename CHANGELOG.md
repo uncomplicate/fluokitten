@@ -1,5 +1,20 @@
 # [Fluokitten](http://fluokitten.uncomplicate.org) - notable changes between versions
 
+## 0.4.0
+
+New features:
+
+* Added PseudoFunctor, PseudoApplicative, and PseudoMonad, to support destructive operations in Neanderthal.
+* Better support for functions and curried functions.
+* fold, foldmap, and op much improved with variadic versions.
+* Varargs versions of pure, return, and unit.
+
+Changes:
+
+* fmap implementation for function changed to be in line with bind; supports multi-arity functions and offer super-comp.
+* Collections use reducers where appropriate.
+* op, fold, foldmap, support multiple arguments, have better implementations.
+
 ## 0.3.0
 
 New features:
