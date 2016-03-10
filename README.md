@@ -16,7 +16,7 @@ With Bundler:
 
     ./bin/jekyll serve --watch
 
-then navigate to [localhost:4000](http://localhost:4000)
+then navigate to [localhost:4002](http://localhost:4002)
 
 ## How to regenerate the site
 
@@ -25,4 +25,4 @@ then navigate to [localhost:4000](http://localhost:4000)
 
 ## License & Copyright
 
-Copyright (C) 2013 Dragan Djuric.
+Copyright (C) 2013-2016 Dragan Djuric.

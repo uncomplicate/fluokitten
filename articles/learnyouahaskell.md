@@ -5,8 +5,6 @@ layout: article
 
 FIXME - To be written. LOTS OF CODE IS ALREADY [HERE](https://github.com/uncomplicate/fluokitten/blob/master/test/uncomplicate/fluokitten/articles)
 
-# Learn You a Haskell for Great Good - in Clojure
-
 This tutorial is a Clojure version of the book [Learn You a Haskell for Great Good](http://learnyouahaskell.com). This article is not self-contained: it is ment to be read side-by-side with the [book](http://learnyouahaskell.com), and used as a commentary and reference for the Clojure version of the examples. Due to the differences in typing, data structures, support for varargs and currying, there are differences in how the concepts that the original article explains are implemented in Haskell and Clojure.
 
 It is recommended that you first read the article [Functors, Applicatives, and Monads in Pictures - in Clojure](/articles/functors_applicatives_monads_in_pictures.html) before reading this article.

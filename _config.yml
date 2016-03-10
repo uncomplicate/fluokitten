@@ -1,9 +1,14 @@
 source:      .
 destination: ./_site
-plugins:     ./_plugins
-exclude: [bin, CNAME, Gemfile, Gemfile.lock, README.md]
+plugins_dir:     ./_plugins
+exclude: [bin, CNAME, Gemfile, Gemfile.lock, README.md, Dockerfile, fig.yml]
 permalink: /:title
-pygments: true
-markdown: redcarpet
-redcarpet:
-  extensions: ["no_intra_emphasis", "fenced_code_blocks", "autolink", "tables", "with_toc_data"]
+highlighter: rouge
+markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+  auto_ids:       true
+gems:
+  - jekyll-sitemap
+port: 4002

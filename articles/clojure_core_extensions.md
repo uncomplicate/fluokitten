@@ -3,8 +3,6 @@ title: "Fluokitten Extensions of Clojure Core"
 layout: article
 ---
 
-# Fluokitten Extensions of Clojure Core
-
 This article is a guide to using Clojure core artifacts as implementations of Fluokitten protocols. By requiring `org.uncomplicate.fluokitten.jvm` namespace in your namespace, you activate Fluokitten's extensions to Clojure core types so they can act as functors, applicatives, monads etc.
 
 To be able to follow this article, you'll have to have Clojure installed and Fluokitten library included as a dependency in your project, as described in [Getting Started Guide](/articles/getting_started.html). Obviously, you'll need a reasonable knowledge of Clojure (you don't have to be an expert, though). So, after checking out [Getting Started Guide](/articles/getting_started.html), start up Clojure REPL and open this article and we are ready to go.
@@ -18,7 +16,7 @@ Generally, any data structure can be considered as a specific context that can h
 
 ### Functor
 
-`fmap` behaves in the same way as `map` for most data structures, but takes care that the resulting data structure is of the same type as the first argument after the function. You have to provide as many additional arguments as the function support.
+`fmap` behaves in the same way as `map` for most data structures, but takes care that the resulting data structure is of the same type as the first argument after the function. The number of arguments that the function can accept have to match the number of functors.
 
 ```clojure
 (fmap inc [])
@@ -102,11 +100,14 @@ Finally, Clojure's [reducibles](http://clojure.com/blog/2012/05/15/anatomy-of-re
 
 ### Applicative
 
-For most core structures, `pure` produces a collection of the required type, with the supplied value as its only element:
+For most core structures, `pure` produces a collection of the required type, with the supplied value(s) as its element(s):
 
 ```clojure
 (pure [4 5] 1)
 ;=> [1]
+
+(pure [4 5] 1 2 3)
+;=> [1 2 3]
 
 (pure (list) 1)
 ;=> (list 1)
@@ -129,6 +130,14 @@ For maps and map entries, `pure` uses nil to generate the default key for the pu
 
 (pure (first {1 1}) 1)
 ;=> (first {nil 1})
+
+```
+
+If you provide enough elements to pure, it will put them in the appropriate structure.
+
+``` clojure
+(pure {} 1 2 3 4)
+;=> {1 2 3 4}
 ```
 
 `pure` handles Clojure [reducibles](http://clojure.com/blog/2012/05/15/anatomy-of-reducer.html):
@@ -151,7 +160,7 @@ We can establish an implicit context with the `utils/with-context macro`, and us
 
 ```
 
-`fapply` is pretty straightforward for most structures (except for maps and map entries, where it has a more complex behavior). It expect two structures of the same type as arguments: a function(s) structure and a data structure. Then it applies the functions to the data. The actual matching of the functions and the data depends on the data structure. For most core structures, it applies all combinations of functions and data:
+`fapply` is pretty straightforward for most structures, except for maps and map entries, where it has a more complex behavior. It expect two structures of the same type as arguments: a function(s) structure and a data structure. Then it applies the functions to the data. The actual matching of the functions and the data depends on the data structure. For most core structures, it applies all combinations of functions and data:
 
 ```clojure
 (fapply [] [])
@@ -266,7 +275,7 @@ In the case of maps and map entries, it matches the functions and the data by ma
 
 ### Monad
 
-Similarily to the previous examples, `bind` behaves in a straightforward way for most core data structures, except maps and map entries that are a bit specific. It requires one or more data structures, and a function as the last parameter. That function should accept elements extracted from all provided data structures (one by one), and wrap the result(s) in the same type of structure.
+Similarly to the previous examples, `bind` works as expected for most core data structures, except maps and map entries that are a bit specific. It requires one or more data structures, and a function as the last parameter. That function should accept elements extracted from all provided data structures (one by one), and wrap the result(s) in the same type of structure.
 The bind function is automatically and transparently aware of the implicit context, so we can use `return` or `unit` to create agnostic monadic functions that can be applied to any monad. In the following example, the `increment` and `add` functions' results will be packaged in appropriate contexts transparently.
 
 Here are typical examples of sequences and friends:
@@ -451,7 +460,7 @@ The `join` function flattens one nesting level of the the data structure if it c
 
 ### Foldable
 
-The `fold` function aggregates the content of the core data structures into one value. All elements in the data structure must belong to the same monoid, i.e. they have the same type that implements Monoid protocol, or of types compatible with the first element's type for the Magma's `op` function.
+The `fold` function aggregates the content of the core data structures into one value. All elements in the data structure must belong to the same monoid, i.e. they have the same type that implements Monoid protocol, or of types compatible with the first element's type for the Magma's `op` function. It is similar to Clojure's reduce, but does not require the reduction function (since Monoid's `op` is used).
 
 ```clojure
 (fold [1 2 3 4 5 6])
@@ -474,6 +483,56 @@ The `fold` function aggregates the content of the core data structures into one 
 
 (fold (first {:a 1}))
 ;=> 1
+```
+
+The `fold` function does not have to use `op` for folding (reducing). If you supply the function and an init value, it works as you'd expect from `reduce`.
+
+``` clojure
+(fold + 3 [1 2 3])
+;=> 9
+```
+
+`fold` can handle multiple foldable data structures. In that case, it works as Clojure's `reduce` on steroids - the folding (reduction) function is applied to the result of applying `op` to the corresponding elements of supplied collections.
+
+
+``` clojure
+ (fold + 0 [1 2 3] [4 5 6])
+ ;=> 21
+
+ (fold * 1 [1 2 3] [4 5 6])
+ ;=> 315
+
+ (fold * 2 [1 2 3] [4 5 6] [7 8 9] [1 2 1] [3 2 1])
+ ;=> 12160
+```
+
+Sometimes the collection(s) that we would like to fold hold elements that are not Magmas - they do not have `op`. In that case, we can fold them with `foldmap`, which is a variant of `fold` that accept an additional function, which is applied to the elements of the collection being folded before folding. Of course, foldmap is useful even when elements have `op` - when we need to use some alternative function instead of `op`.
+
+``` clojure
+(foldmap str [1 2 3 4 5 6])
+;=> "123456"
+
+ (foldmap (fn [^String s] (.toUpperCase s))
+          (list "a" "b" "c"))
+ ;=> "ABC"
+
+ (foldmap str (seq [:a :b :c]))
+ ;=> ":a:b:c"
+
+ (foldmap str {:a 1 :b 2 :c 3})
+ ;=> "123"
+
+ (foldmap str (first {:a 1}))
+ ;=> "1"
+
+ (foldmap + 3 inc [1 2 3])
+ ;=> 12
+
+ (foldmap * 5 / [1 2 3] [4 5 6])
+ ;=> 1/4
+
+ (foldmap * 2 / [1 2 3] [4 5 6] [7 8 9] [1 2 1] [3 2 1])
+ ;=> 1/60480
 ```
 
 ## Objects
@@ -620,7 +679,9 @@ Numbers are functors, magmas, monoids and foldables.
 
 ## Functions
 
-In Haskell, functions are functors, monads, and many other categorical types. However, with Clojure functions, there is one big caveat: ordinary Clojure functions are not automatically [curried](http://en.wikipedia.org/wiki/Currying), so the well known implementations of most categorical types, when translated to Clojure, do not obey the necessary laws that monads, applicatives, etc. have to observe. Fortunately, Fluokitten provides the `curried` function that creates a curried version of any Clojure function. Such curried functions implement all categorical protocols, while plain Clojure functions implement only some, which will be noted explicitly in the following text.
+In Haskell, functions are functors, monads, and many other categorical types. However, with Clojure functions, there is one big caveat: ordinary Clojure functions are not automatically [curried](http://en.wikipedia.org/wiki/Currying), so the well known implementations of most categorical types, when translated to Clojure, do not obey all laws that monads, applicatives, etc. have to observe. Fortunately, Fluokitten provides the `curry` function that creates a curried version of any Clojure function.
+
+While both ordinary Clojure functions and those curried by `curry` implement Fluokitten protocols, and can be used with all appropriate functions from Fluokitten core, only curried functions satisfy all appropriate laws. Most of the time, you can use fluokitten on ordinary functions regardless. However, be warned that those are not "kosher" and "halal" from the point of view of Haskellers, and may not be able to give the full benefit of "monadic" programming. The most obvious case would be if you translate examples that rely on Haskell's currying.
 
 ### Functor
 
@@ -629,6 +690,13 @@ Both plain and curried functions implement the `Functor` protocol. `fmap` compos
 ```clojure
 ((fmap inc +) 1 2 3)
 ;=> ((comp inc +) 1 2 3)
+```
+
+What's more, when used with multiple arguments, fmap offers a more advanced composition unavailable in Clojure:
+
+``` clojure
+((fmap + * /) 1 2 3)
+;=> (+ (* 1 2 3) (/ 1 2 3))
 ```
 
 Curried functions work in the following way, compared to plain functions:
@@ -641,7 +709,7 @@ Curried functions work in the following way, compared to plain functions:
 ;=> a curried inc function
 ```
 
-In the following example, we create two functions by using `fmap`. `inc+` is a plain Clojure function created by appling the `inc` function to the result of applying the `+` function, in context. It first sums its arguments and then increments the sum. `cinc+` does the same thing, but if called with insufficient number of arguments (two in this example, may be created with any arity) it fixes the provided arguments and creates a new curried function that expects the missing ones. This is in contrast with the plain function, which either accepts any number of arguments, or throws a Clojure compiler exception if called with less than minimal number of arguments.
+In the following example, we create two functions by using `fmap`. `inc+` is a plain Clojure function created by applying the `inc` function to the result of applying the `+` function, in context. It first sums its arguments and then increments the sum. `cinc+` does the same thing, but if called with insufficient number of arguments (two in this example, may be created with any arity) it fixes the provided arguments and creates a new curried function that expects the missing ones. This is in contrast with the plain function, which either accepts any number of arguments, or throws a Clojure compiler exception if called with less than minimal number of arguments.
 
 ```clojure
 (let [inc+ (fmap inc +)
@@ -684,9 +752,26 @@ Called with multiple arguments, `fmap` creates appropriate compositions, dependi
 
 ### Applicative
 
-Plain functions are not applicative functors, but curried functions are. The behavior is a bit tricky to understand, so we give a simple example that is clear once you understand how `fapply` works with (curried) functions, but if this is the first time you are reading about this, we recommend that you check out a chapter 11 from [Learn You a Haskell for Great Good](/articles/learnyouahaskell.html), which is dedicated to this topic.
+
+`pure` creates a function that ignores its arguments and returns the content of its context.
 
 ```clojure
+
+(((pure identity inc)) 1)
+;=> 2
+
+((pure curried c+) 13 2)
+;=> c+
+
+```
+
+The behavior of funciton as Applicatives is a bit tricky to understand, so we give a simple example that is clear once you understand how `fapply` works with (curried) functions, but if this is the first time you are reading about this, we recommend that you check out a chapter 11 from [Learn You a Haskell for Great Good](/articles/learnyouahaskell.html), which is dedicated to this topic.
+
+```clojure
+
+((<*> (pure identity inc) (pure identity 1)))
+;=> 2
+
 (((pure curried inc) 100) 1)
 ;=> 2
 
@@ -697,16 +782,9 @@ Plain functions are not applicative functors, but curried functions are. The beh
 ;=> 609
 ```
 
-`pure` creates a function that ignores its arguments and returns the content of its context.
-
-```clojure
-((pure curried c+) 13 2)
-;=> c+
-```
-
 ### Monad
 
-Plain functions are not monads, but curried functions are. As in the case of applicatives, the behavior of bind, you need some experience to understand how it works with (curried) functions, so we recommend that you check out [Learn You a Haskell for Great Good](/articles/learnyouahaskell.html), and just give an example here for the reference.
+As in the case of applicatives, the behavior of bind, you need some experience to understand how it works with (curried) functions, so we recommend that you check out [Learn You a Haskell for Great Good](/articles/learnyouahaskell.html), and just give an example here for the reference.
 
 ```clojure
 ((bind (curry +) (curry *)) 3 4)
@@ -715,7 +793,7 @@ Plain functions are not monads, but curried functions are. As in the case of app
 
 ### Magma
 
-Both plain and curried functions are magmas - `op` composes its arguments, just as fmap does.
+Both plain and curried functions are magmas - `op` composes its arguments.
 
 ### Monoid
 
@@ -727,11 +805,13 @@ Plain functions are foldable just as any object is - `fold` returns its argument
 
 ## References
 
-Clojure synchronous references (atoms and refs) implement all categorical protocols. The reference is the (mutable!) context that hold an imutable value. Keep in mind that in this case, the functions that work on the content are mutable, since they change the reference, instead of producing a new one.
+Clojure synchronous references (atoms and refs) implement all categorical protocols. The reference is the (mutable!) context that hold an immutable value. Keep in mind that in this case, the preferred functions that work on the content are mutable (`fmap!`, `fapply!` etc.) , since they change the reference, instead of producing a new one (`fmap` etc.).
+
+First, we describe regular `fmap`, `fapply` etc., but keep in mind that these do not make much sense with references, since the point of references is that they should mutate instead of producing new instances.
 
 ### Functor
 
-With refs and atoms, `fmap` is analoguous to `alter` and `swap!`. The main difference from these, reference specific methods is that it returns the updated reference (context) itself, not tne new value, consistently with other `fmap` implementations described earlier.
+With refs and atoms, `fmap` is analogous to `alter` and `swap!`. The main difference from these, reference specific methods is that it returns the updated reference (context) itself, not the new value, consistently with other `fmap` implementations described earlier.
 
 ```clojure
 (fmap inc (atom 3))
@@ -760,7 +840,7 @@ With refs and atoms, `fmap` is analoguous to `alter` and `swap!`. The main diffe
 ;=> (ref 2)
 ```
 
-`fapply` expects a function and its argument to be inside references, extracts thir contents, and updates the first value reference with the result of applying the function to the values.
+`fapply` expects a function and its argument to be inside references, extracts their contents, and updates the first value reference with the result of applying the function to the values.
 
 ```clojure
 (fapply (atom inc) (atom 1))
@@ -846,6 +926,45 @@ Both refs and atoms form a semigroup with `op` working on their contents, as in 
 ;=> 2
 ```
 
-## Tell Us What You Think!
+### Mutable functions
 
-Please take some time to tell us about your experience with the library and this site. [Let us know](/articles/community.html) what we should be explaining or is not clear enough. If you are willing to contribute improvements, even better!
+``` clojure
+
+ (let [a (atom 3)]
+   (fmap! inc a) => a)
+
+ (let [r (ref 5)]
+   (dosync
+    (fmap! inc r) => r))
+
+ (fmap! + (atom 3) (atom 4) (ref 5)) => (check-eq (atom 12))
+
+ (dosync
+  (fmap! + (ref 5) (atom 6) (ref 7)) => (check-eq (ref 18)))
+
+ (fapply! (atom inc) (atom 1)) => (check-eq (atom 2))
+
+ (dosync (fapply! (ref inc) (ref 2))) => (check-eq (ref 3))
+
+ (fapply! (atom +) (atom 1) (ref 2) (atom 3)) => (check-eq (atom 6))
+
+ (dosync (fapply! (ref +) (ref 1) (atom 2) (atom 3)))
+ => (check-eq (ref 6))
+
+ (join! (atom (ref (atom 33)))) => (check-eq (atom (atom 33)))
+
+ (dosync (join! (ref (ref (atom 33)))))
+ => (check-eq (ref (atom 33)))
+
+ (bind! (atom 8) increment) => (check-eq (atom 9))
+
+ (dosync (bind! (ref 8) increment))
+ => (check-eq (ref 9))
+
+ (bind! (atom 8) (ref 9) (atom 10) add)
+ => (check-eq (atom 27))
+
+ (dosync (bind! (ref 18) (ref 19) (atom 20) add))
+ => (check-eq (ref 57)
+
+```

@@ -3,7 +3,9 @@ title: "Fluokitten: Community"
 layout: article
 ---
 
-## Mailing List
+## Where to contact me
+
+[I hang around at Slack Clojurians Uncomplicate](https://clojurians.slack.com/messages/uncomplicate/details/)
 
 [Fluokitten has a mailing list](https://groups.google.com/forum/#!forum/uncomplicate). Feel free to join it and ask any questions you may have.
 
@@ -13,9 +15,14 @@ To subscribe for announcements of releases, important changes and so on, please 
 
 ## What is Uncomplicate?
 
-Fluokitten is currently the only part of the future group of Uncomplicate libraries.
+A collection of Clojure libraries, currently containing:
 
-# Get Involved
+* [ClojureCL](http://clojurecl.uncomplicate.org) - a Clojure library for parallell computations with OpenCL.
+* [Neanderthal](http://neanderthal.uncomplicate.org) - Fast matrix computations and linear algebra in Clojure (CPU and GPU).
+* [Fluokitten](http://fluokitten.uncomplicate.org) - Category Theory in idiomatic Clojure.
+
+
+## Get Involved
 
 I welcome anyone who is willing to contribute, no mather the level of experience. Please contact me through the [Uncomplicate mailing list](https://groups.google.com/forum/#!forum/uncomplicate).
 Here are some ways in which you can help:

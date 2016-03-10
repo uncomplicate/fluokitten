@@ -1,9 +1,7 @@
 ---
-title: "Fluokitten: all documentation guides"
+title: "Fluokitten: Guide List"
 layout: article
 ---
-
-# Guide list
 
 Fluokitten documentation is organized as a number of guides, articles and API docs. The recommended way to use it is:
 
@@ -43,7 +41,3 @@ A Fluokitten version of an excellent visual introductory article [Functors, Appl
 ### [Learn You a Haskell for Great Good](/articles/learnyouahaskell.html)
 
 A Fluokitten Clojure code version of the sections of [Learn You A Haskell for Great Good](http://learnyouahaskell.com) dedicated to Functors, Applicatives, Monads, etc. with comments and directions on how to use them together.
-
-## Tell Us What You Think!
-
-Please take some time to tell us about your experience with the library and this site. [Let us know](/articles/community.html) what we should be explaining or is not clear enough. If you are willing to contribute improvements, even better!
