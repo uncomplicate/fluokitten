@@ -17,7 +17,7 @@ There is a lot of documentation and tutorials at [Fluokitten Website](http://flu
 Add the following dependency to your `project.clj` file:
 
 ```clojure
-[uncomplicate/fluokitten "0.3.0"]
+[uncomplicate/fluokitten "0.4.0"]
 ```
 
 Fluokitten artifacts are distributed through Clojars, so they will be downloaded by leiningen by default. If you are using other tools for dependency management, you can download Fluokitten from Clojars.org, or build it from the source by running `lein jar`.
@@ -65,6 +65,6 @@ Once it reaches version 1.0.0 it will be considered stable, and more considerati
 
 ## License
 
-Copyright © 2013 Dragan Djuric
+Copyright © 2013-2016 Dragan Djuric
 
 Distributed under the Eclipse Public License, the same as Clojure
