@@ -744,6 +744,34 @@
   Monoid
   (id [x] 0))
 
+(extend-type Double
+  Magma
+  (op
+    ([x y]
+     (+ (double x) (double y)))
+    ([x y z]
+     (+ (double x) (double y) (double z)))
+    ([x y z w]
+     (+ (double x) (double y) (double z) (double w)))
+    ([x y z w ws]
+     (apply + (+ (double x) (double y) (double z) (double w)) ws)))
+  Monoid
+  (id [x] 0))
+
+(extend-type Float
+  Magma
+  (op
+    ([x y]
+     (+ (float x) (float y)))
+    ([x y z]
+     (+ (float x) (float y) (float z)))
+    ([x y z w]
+     (+ (float x) (float y) (float z) (float w)))
+    ([x y z w ws]
+     (apply + (+ (float x) (float y) (float z) (float w)) ws)))
+  Monoid
+  (id [x] 0))
+
 (defn keyword-fmap
   ([k g]
    (keyword (fmap (name k) g)))
