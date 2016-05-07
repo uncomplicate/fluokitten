@@ -756,7 +756,7 @@
     ([x y z w ws]
      (apply + (+ (double x) (double y) (double z) (double w)) ws)))
   Monoid
-  (id [x] 0))
+  (id [x] 0.0))
 
 (extend-type Float
   Magma
@@ -770,7 +770,7 @@
     ([x y z w ws]
      (apply + (+ (float x) (float y) (float z) (float w)) ws)))
   Monoid
-  (id [x] 0))
+  (id [x] 0.0))
 
 (defn keyword-fmap
   ([k g]
