@@ -376,7 +376,7 @@
   ([x y z]
    (collreduce-op x (collreduce-op y z)))
   ([x y z w]
-   (collreduce-op x (collreduce-op y z w)))
+   (collreduce-op (collreduce-op x y) (collreduce-op z w)))
   ([x y z w ws]
    (r/fold (constantly (collreduce-op x y z w)) collreduce-op ws)))
 
@@ -388,7 +388,7 @@
   ([x y z w]
    (into x (collreduce-op y z w)))
   ([x y z w ws]
-   (into x (collreduce-op y z w ws))))
+   (into x (collreduce-op y z w (first ws) (rest ws)))))
 
 (defn seq-op
   ([x y]

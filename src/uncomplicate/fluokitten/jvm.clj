@@ -173,6 +173,7 @@ run on JVM platform."
   {:id (constantly identity)})
 
 ;; ====================== Functions as Curry =======================
+
 (defn fn-curry
   ([f]
    (curry f (min 2 (long (apply max (arg-counts f))))))

@@ -1,5 +1,9 @@
 # [Fluokitten](http://fluokitten.uncomplicate.org) - notable changes between versions
 
+## 0.5.0-SNAPSHOT
+
+* Fixed apply op bug for vectors (in algo/reducible-op)
+
 ## 0.5.0
 
 * Performance improvement of op for Double and Float
