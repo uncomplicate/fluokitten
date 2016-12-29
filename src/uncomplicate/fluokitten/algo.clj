@@ -13,7 +13,6 @@
              [utils :refer [with-context deref?]]])
   (:require [clojure.core.reducers :as r]))
 
-
 ;;====================== Default functions ==========
 
 (defn default-foldmap
@@ -323,15 +322,15 @@
     (apply list (seq-join c))
     (meta c)))
 
-(defn collreduce-join [c]
-  (let [combinef (fn
-                   ([] [])
-                   ([x y]
-                    (if (coll? x)
-                      (join-op x y)
-                      (if (coll? y)
-                        (conj y x)
-                        [x y]))))]
+(let [combinef (fn
+                 ([] [])
+                 ([x y]
+                  (if (coll? x)
+                    (join-op x y)
+                    (if (coll? y)
+                      (conj y x)
+                      [x y]))))]
+  (defn collreduce-join [c]
     (r/fold combinef c)))
 
 (defn reducible-join [c]
@@ -366,17 +365,26 @@
 
 ;;======== Algebraic structures implementations ==================
 
-(defn coll-op
-  ([x y]
-   (into x y))
-  ([x y z]
-   (into x cat [y z]))
-  ([x y z w]
-   (into x cat [y z w]))
-  ([x y z w ws]
-   (into (coll-op x y z w) cat ws)))
+(defn coll-op* [zero]
+  (fn coll-op
+    ([]
+     zero)
+    ([x]
+     coll-op)
+    ([x y]
+     (into x y))
+    ([x y z]
+     (into x cat [y z]))
+    ([x y z w]
+     (into x cat [y z w]))
+    ([x y z w ws]
+     (into x cat (into [y z w] ws)))))
 
 (defn collreduce-op
+  ([]
+   [])
+  ([x]
+   collreduce-op)
   ([x y]
    (if (instance? clojure.core.protocols.CollReduce y)
      (r/cat x y)
@@ -386,9 +394,13 @@
   ([x y z w]
    (collreduce-op (collreduce-op x y) (collreduce-op z w)))
   ([x y z w ws]
-   (r/fold (constantly (collreduce-op x y z w)) collreduce-op ws)))
+   (collreduce-op (collreduce-op x y z w) (r/fold collreduce-op ws))))
 
 (defn reducible-op
+  ([]
+   [])
+  ([x]
+   reducible-op)
   ([x y]
    (into x y))
   ([x y z]
@@ -398,33 +410,44 @@
   ([x y z w ws]
    (into x (collreduce-op y z w (first ws) (rest ws)))))
 
-(defn seq-op
-  ([x y]
-   (concat x y))
-  ([x y z]
-   (concat x y z))
-  ([x y z w]
-   (concat x y z w))
-  ([x y z w ws]
-   (apply concat x y z w ws)))
+(defn seq-op* [zero]
+  (fn seq-op
+    ([]
+     zero)
+    ([x]
+     seq-op)
+    ([x y]
+     (concat x y))
+    ([x y z]
+     (concat x y z))
+    ([x y z w]
+     (concat x y z w))
+    ([x y z w ws]
+     (apply concat x y z w ws))))
 
 (defn list-op
+  ([]
+   (list))
+  ([x]
+   list-op)
   ([x y]
-   (apply list (seq-op x y)))
+   (apply list (concat x y)))
   ([x y z]
-   (apply list (seq-op x y z)))
+   (apply list (concat x y z)))
   ([x y z w]
-   (apply list (seq-op x y z w)))
+   (apply list (concat x y z w)))
   ([x y z w ws]
-   (apply list (seq-op x y z w ws))))
+   (apply list (apply concat x y z w ws))))
 
 ;;================== Foldable ===================================
 
 (defn collection-foldmap
   ([c g]
-   (collection-foldmap c g op (if-let [fc (first c)] (id (g fc)))))
+   (if-let [e (first c)]
+     (let [ge (g e)]
+       (r/fold (op ge) (r/map g c)))))
   ([c g f init]
-   (r/fold (constantly init) f (r/map g c)))
+   (f init (r/fold f (r/map g c))))
   ([cx g f init cy]
    (loop [acc init cx cx cy cy]
      (if cx
@@ -452,9 +475,10 @@
 
 (defn collection-fold
   ([c]
-   (collection-fold c op (id (first c))))
+   (if-let [e (first c)]
+     (r/fold (op e) c)))
   ([c f init]
-   (r/fold (constantly init) f c))
+   (f init (r/fold f c)))
   ([cx f init cy]
    (collection-foldmap cx op f init cy))
   ([cx f init cy cz]
@@ -484,7 +508,8 @@
 
 (defn collfold-fold
   ([c]
-   (collection-fold c op (id (first (into [] (r/take 1 c)))) ))
+   (if-let [e (first (into [] (r/take 1 c)))]
+     (collection-fold c (op e) (id e) )))
   ([c f init]
    (collection-fold c f init)))
 
@@ -504,7 +529,7 @@
      {:fold collection-fold
       :foldmap collection-foldmap}
      Magma
-     {:op coll-op}
+     {:op (coll-op* [])}
      Monoid
      {:id empty}))
 
@@ -545,7 +570,7 @@
      {:join seq-join
       :bind seq-bind}
      Magma
-     {:op seq-op}))
+     {:op (seq-op* (list))}))
 
 (defmacro extend-lazyseq [t]
   `(extend ~t
@@ -558,7 +583,7 @@
      {:join seq-join
       :bind lazyseq-bind}
      Magma
-     {:op seq-op}))
+     {:op (seq-op* (lazy-seq))}))
 
 (defmacro extend-set [t]
   `(extend ~t
@@ -569,7 +594,9 @@
       :fapply reducible-fapply}
      Monad
      {:join coll-join
-      :bind reducible-bind}))
+      :bind reducible-bind}
+     Magma
+     {:op (coll-op* #{})}))
 
 (defmacro extend-map [t]
   `(extend ~t
@@ -583,7 +610,9 @@
       :bind map-bind}
      Foldable
      {:fold map-fold
-      :foldmap default-foldmap}))
+      :foldmap default-foldmap}
+     Magma
+     {:op (coll-op* {})}))
 
 (extend clojure.core.protocols.CollReduce
   Functor
@@ -593,7 +622,9 @@
    :fapply collreduce-fapply}
   Monad
   {:join collreduce-join
-   :bind collreduce-bind})
+   :bind collreduce-bind}
+  Magma
+  {:op collreduce-op})
 
 (extend clojure.core.reducers.CollFold
   Foldable
@@ -636,7 +667,20 @@
 (defn mapentry-id [[kx vx]]
   (create-mapentry (id kx) (id vx)))
 
+(defn ^:private op-id [x]
+  (let [zero (id x)]
+    (fn
+      ([] zero)
+      ([x]
+       op-id)
+      ([x y] (op x y))
+      ([x y z] (op x y z))
+      ([x y z v] (op x y z v))
+      ([x y z v ws] (op x y z v ws)))))
+
 (defn mapentry-op
+  ([x]
+   (op-id x))
   ([[kx vx] [ky vy]]
    (create-mapentry (op kx ky) (op vx vy)))
   ([[kx vx] [ky vy] [kz vz]]
@@ -727,6 +771,8 @@
      (to-string x xs)))
   Magma
   (op
+    ([x]
+     str)
     ([x y]
      (str x y))
     ([x y z]
@@ -741,6 +787,7 @@
 (extend-type Number
   Magma
   (op
+    ([x] +)
     ([x y]
      (+ x y))
     ([x y z]
@@ -755,6 +802,7 @@
 (extend-type Double
   Magma
   (op
+    ([x] +)
     ([x y]
      (+ (double x) (double y)))
     ([x y z]
@@ -769,6 +817,7 @@
 (extend-type Float
   Magma
   (op
+    ([x] +)
     ([x y]
      (+ (float x) (float y)))
     ([x y z]
@@ -801,6 +850,9 @@
 (def keyword-id (constantly (keyword "")))
 
 (defn keyword-op
+  ([] (keyword ""))
+  ([x]
+   keyword-op)
   ([x y]
    (keyword (str (name x) (name y))))
   ([x y z]
@@ -825,6 +877,8 @@
 ;;===================== Function ===========================
 
 (defn function-op
+  ([] identity)
+  ([x] function-op)
   ([x y]
    (cond
      (identical? identity x) y
@@ -968,15 +1022,19 @@
   ([mv g mvs]
    (fmap! (fmap mv g mvs) deref)))
 
-(defn reference-op
-  ([rx ry]
-   (pure rx (op @rx @ry)))
-  ([rx ry rz]
-   (pure rx (op @rx @ry @rz)))
-  ([rx ry rz rw]
-   (pure rx (op @rx @ry @rz @rw)))
-  ([rx ry rz rw rws]
-   (pure rx (op @rx @ry @rz @rw (map deref rws)))))
+(defn reference-op* [zero]
+  (fn reference-op
+    ([] zero)
+    ([x]
+     (reference-op* (id x)))
+    ([rx ry]
+     (pure rx (op @rx @ry)))
+    ([rx ry rz]
+     (pure rx (op @rx @ry @rz)))
+    ([rx ry rz rw]
+     (pure rx (op @rx @ry @rz @rw)))
+    ([rx ry rz rw rws]
+     (pure rx (op @rx @ry @rz @rw (map deref rws))))))
 
 (defn reference-foldmap
   ([rx g]
@@ -1089,7 +1147,7 @@
      {:fold reference-fold
       :foldmap reference-foldmap}
      Magma
-     {:op reference-op}
+     {:op (reference-op* nil)}
      Monoid
      {:id atom-id}))
 
@@ -1114,7 +1172,7 @@
      {:fold reference-fold
       :foldmap reference-foldmap}
      Magma
-     {:op reference-op}
+     {:op (reference-op* nil)}
      Monoid
      {:id ref-id}))
 
@@ -1184,6 +1242,8 @@
     v))
 
 (defn just-op
+  ([] nil)
+  ([x] just-op)
   ([x y]
    (if y (pure x (just-op* (value x) y)) x))
   ([x y z]
@@ -1262,14 +1322,11 @@
     ([_ _ _ _ _ _ _ _] nil))
   Magma
   (op
-    ([_ y]
-     y)
-    ([_ y z]
-     (op y z))
-    ([_ y z w]
-     (op y z w))
-    ([_ y z w ws]
-     (op y z w (first ws) (rest ws))))
+    ([_] op)
+    ([_ y] y)
+    ([_ y z] (op y z))
+    ([_ y z w] (op y z w))
+    ([_ y z w ws] (op y z w (first ws) (rest ws))))
   Monoid
   (id [_] nil)
   Maybe

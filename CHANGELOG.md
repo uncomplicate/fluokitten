@@ -1,5 +1,9 @@
 # [Fluokitten](http://fluokitten.uncomplicate.org) - notable changes between versions
 
+## 0.5.2
+
+* Fix #20
+
 ## 0.5.1
 
 * Fixed apply op bug for vectors (in algo/reducible-op)

@@ -1183,6 +1183,7 @@
 
 (facts "How Foldable collections work."
        (fold [1 2 3 4 5]) => 15
+       (fold (vec (range 999))) => 498501
        (fold []) => nil
        (fold (list 1 2 3 4 5))= > 15
        (fold (r/map inc [1 2 3 4 5])) => 20

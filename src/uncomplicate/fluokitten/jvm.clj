@@ -133,6 +133,10 @@ run on JVM platform."
   (.f cf))
 
 (defn curried-op
+  ([]
+   identity)
+  ([x]
+   curried-op)
   ([x y]
    (if (identical? identity y)
      x

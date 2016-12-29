@@ -223,8 +223,12 @@ code. The client code should call the generic functions from Fluokitten core."
    directly by the caller, although you should use it directly
    from the implementation of this protocol if needed from
    other methods.
+
+   If called with only one argument, returns a convenient
+   op function, that, when called with no arguments, returns
+   the id element.
   "
-  (op [x y] [x y z] [x y z w] [x y z w ws]
+  (op [x] [x y] [x y z] [x y z w] [x y z w ws]
     "Operation that combines elements x and y (and optionally z, w)
      into an element of the same type. If more elements are supplied in
      a sequence ws, combines them all."))

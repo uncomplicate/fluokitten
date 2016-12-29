@@ -13,9 +13,7 @@ libraries that implement Fluokitten protocols.
 Intended use: use or require this namespace and other namespaces that
 contain the implementations of the protocols, by default jvm.
 
----- Example:
-(ns test
-  (:use [uncomplicate.fluokitten core jvm]))"
+"
       :author "Dragan Djuric"}
     uncomplicate.fluokitten.core
   (:require [uncomplicate.fluokitten.protocols :as p])
