@@ -1,5 +1,10 @@
 # [Fluokitten](http://fluokitten.uncomplicate.org) - notable changes between versions
 
+## 0.6.0
+
+Changes:
+* protocols/op now returns the monoid operation instead of evaluating it.
+
 ## 0.5.2
 
 * Fix #20

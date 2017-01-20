@@ -543,16 +543,13 @@ contain the implementations of the protocols, by default jvm.
    of monoids x and y. Since op is closed on that monoid,
    the result is also in the same monoid and can be further
    combined by op with other elemens of the same monoid.
-
    The vararg version is equivalent with (op (op x y) z),
    but the actual algorithm for a given monoid depends
    on the implementation. For example, (+ 1 2 3) is used
    for numbers instead of (+ (1 2) 3)
-
    ---- Example 1: numbers as monoids
    (op 1 2 3)
    => 6
-
    ---- Example 2: strings ar monoids
    (op \"some\" \"thing\")
    => \"something\"
@@ -560,15 +557,15 @@ contain the implementations of the protocols, by default jvm.
   ([]
    (op (utils/get-context)))
   ([x]
-   (p/op (p/id x) x))
+   x)
   ([x y]
-   (p/op x y))
+   ((p/op x) x y))
   ([x y z]
-   (p/op x y z))
+   ((p/op x) x y z))
   ([x y z w]
-   (p/op x y z w))
+   ((p/op x) x y z w))
   ([x y z w & ws]
-   (p/op x y z w ws)))
+   (apply (p/op x) x y z w ws)))
 
 (defn id
   "Returns the identity element of the monoid that x is

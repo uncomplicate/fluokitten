@@ -211,10 +211,12 @@ code. The client code should call the generic functions from Fluokitten core."
    You create a new magma type by extending the Magma protocol
    and implementing op method while observing the following laws:
 
-   1. op is closed: (instance? (type x) (op x y)) => true
+   1. closed: (instance? (type x) ((op x) x y)) => true
 
    2. associativity (only for semigroups):
-      (op (op a b)) => (op a (op b c))
+      (let [f (op a)]
+        (f (f a b) c) => (f a (f b c)))
+
 
    Fluokitten's test library contains macros that generate
    tests for checking whether op is closed and/or associative.
@@ -223,15 +225,13 @@ code. The client code should call the generic functions from Fluokitten core."
    directly by the caller, although you should use it directly
    from the implementation of this protocol if needed from
    other methods.
-
-   If called with only one argument, returns a convenient
-   op function, that, when called with no arguments, returns
-   the id element.
   "
-  (op [x] [x y] [x y z] [x y z w] [x y z w ws]
-    "Operation that combines elements x and y (and optionally z, w)
-     into an element of the same type. If more elements are supplied in
-     a sequence ws, combines them all."))
+  (op [x]
+    "Returns the function (operation) that combines elements x and y
+     (and optionally z, w, ...) into an element of the same type.
+     When that function is called with no arguments, it should return
+     the id element of the monoid (if the magma is also a Monoid).
+    "))
 
 (defprotocol Monoid
   "Monoid is an abstraction of elements that are magmas whose
