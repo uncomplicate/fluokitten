@@ -26,7 +26,7 @@ Fluokitten is a Clojure library that enables programming paradigms derived from 
 
 The most straightforward way to include Fluokitten in your project is with Leiningen. Add the following dependency to nyour `project.clj`:
 
-![](http://clojars.org/uncomplicate/clojurecl/latest-version.svg)
+![](https://clojars.org/uncomplicate/fluokitten/latest-version.svg)
 
 ### Requirements
 
