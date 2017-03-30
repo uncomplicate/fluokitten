@@ -174,7 +174,7 @@
          {:a 1 :b 2 :c 3 :d 4 nil 5})
  => {:a 2 :b 1 :c 30 :d 40 nil 50}
 
- (fapply {nil /  :a + :b *} {:a 1 :c 2} {:a 3 :b 4} {:c 2 :d 5})
+ (fapply {nil / :a + :b *} {:a 1 :c 2} {:a 3 :b 4} {:c 2 :d 5})
  => {:a 4 :b 4 :c 1 :d 1/5}
 
  (fapply (first {:a inc}) (first {:b 1}))
@@ -237,7 +237,7 @@
  (bind {:a 1} increment)
  => {:a 2}
 
- (bind {:a 1  :b 2 :c 3} #(hash-map :increment (inc %)))
+ (bind {:a 1 :b 2 :c 3} #(hash-map :increment (inc %)))
  => {[:a :increment] 2 [:b :increment] 3 [:c :increment] 4}
 
  (bind {:a 1} {:a 2 :b 3} {:b 4 :c 5}

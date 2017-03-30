@@ -456,8 +456,7 @@ contain the implementations of the protocols, by default jvm.
                (fn [~sym]
                  (mdo ~(subvec bindings 2) ~body))))
       body)
-    (throw (IllegalArgumentException.
-            "bindings has to be a vector with even number of elements."))))
+    (throw (IllegalArgumentException. "bindings has to be a vector with even number of elements."))))
 
 (defn fold
   "Folds all the contents of a foldable context by either

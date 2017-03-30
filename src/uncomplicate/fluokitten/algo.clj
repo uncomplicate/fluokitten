@@ -94,8 +94,7 @@
   ([cr g]
    (r/map g cr))
   ([_ _ _]
-   (throw (java.lang.UnsupportedOperationException.
-           "fmap for reducibles does not support varargs."))))
+   (throw (UnsupportedOperationException. "fmap for reducibles does not support varargs."))))
 
 (defn reducible-fmap
   ([c g]
@@ -259,8 +258,7 @@
   ([cr g]
    (r/mapcat g cr))
   ([cr g ss]
-   (throw (ex-info "bind for reducibles does not support varargs."
-                   {:exception-type :unsupported-operation}))))
+   (throw (UnsupportedOperationException. "bind for reducibles does not support varargs."))))
 
 (defn reducible-bind
   ([c g]
@@ -506,7 +504,7 @@
 (defn collfold-fold
   ([c]
    (if-let [e (first (into [] (r/take 1 c)))]
-     (collection-fold c (op e) (id e) )))
+     (collection-fold c (op e) (id e))))
   ([c f init]
    (collection-fold c f init)))
 
