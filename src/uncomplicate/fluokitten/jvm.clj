@@ -188,7 +188,7 @@ run on JVM platform."
 
 (defn fn-curry
   ([f]
-   (curry f (min 2 (long (apply max (arg-counts f))))))
+   (curry f (min 2 ^long (apply max (arg-counts f)))))
   ([f ^long arity]
    (if (pos? arity)
      (->CurriedFn f arity)
