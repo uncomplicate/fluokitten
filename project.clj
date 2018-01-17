@@ -6,7 +6,7 @@
 ;;   the terms of this license.
 ;;   You must not remove this notice, or any other, from this software.
 
-(defproject uncomplicate/fluokitten "0.6.1-SNAPSHOT"
+(defproject uncomplicate/fluokitten "0.6.1"
   :description "Category theory concepts in Clojure - Functors, Applicatives, Monads, Monoids and more."
   :url "https://github.com/uncomplicate/fluokitten"
   :scm {:name "git"
@@ -24,11 +24,12 @@
           :exclude [uncomplicate.fluokitten.algo]
           :output-path "docs/codox"}
 
-  :profiles {:dev {:dependencies [[midje "1.9.0"]
+  :profiles {:dev {:dependencies [[midje "1.9.1"]
                                   [criterium "0.4.4"]]
                    :global-vars {*warn-on-reflection* true
                                  *print-length* 128}
                    :plugins [[lein-midje "3.2.1"]
-                             [lein-codox "0.10.3"]]}}
+                             [lein-codox "0.10.3"]]
+                   :jvm-opts ^:replace [#_"--add-opens=java.base/jdk.internal.ref=ALL-UNNAMED"]}}
 
   :javac-options ["-target" "1.8" "-source" "1.8" "-Xlint:-options"])
