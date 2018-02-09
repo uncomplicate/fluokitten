@@ -17,9 +17,9 @@ To subscribe for announcements of releases, important changes and so on, please 
 
 A collection of Clojure libraries, currently containing:
 
-* [ClojureCL](http://clojurecl.uncomplicate.org) - a Clojure library for parallell computations with OpenCL.
-* [Neanderthal](http://neanderthal.uncomplicate.org) - Fast matrix computations and linear algebra in Clojure (CPU and GPU).
-* [Fluokitten](http://fluokitten.uncomplicate.org) - Category Theory in idiomatic Clojure.
+* [ClojureCL](https://clojurecl.uncomplicate.org) - a Clojure library for parallell computations with OpenCL.
+* [Neanderthal](https://neanderthal.uncomplicate.org) - Fast matrix computations and linear algebra in Clojure (CPU and GPU).
+* [Fluokitten](https://fluokitten.uncomplicate.org) - Category Theory in idiomatic Clojure.
 
 
 ## Get Involved

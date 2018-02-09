@@ -86,7 +86,7 @@ Map entries are functors, too. The modifying function is applied to the value(s)
         (first {:b 6}))
 ;=> (first {:a 10})
 ```
-Finally, Clojure's [reducibles](http://clojure.com/blog/2012/05/15/anatomy-of-reducer.html) are also properly handled by `fmap` (but it can only accept one reducible at a time):
+Finally, Clojure's [reducibles](https://clojure.com/blog/2012/05/15/anatomy-of-reducer.html) are also properly handled by `fmap` (but it can only accept one reducible at a time):
 
 ```clojure
 (into [] (fmap inc (r/map identity  [1 2 3])))
@@ -140,7 +140,7 @@ If you provide enough elements to pure, it will put them in the appropriate stru
 ;=> {1 2 3 4}
 ```
 
-`pure` handles Clojure [reducibles](http://clojure.com/blog/2012/05/15/anatomy-of-reducer.html):
+`pure` handles Clojure [reducibles](https://clojure.com/blog/2012/05/15/anatomy-of-reducer.html):
 
 ```clojure
 (into (list) (pure (r/map identity [2 3]) 1))
@@ -679,7 +679,7 @@ Numbers are functors, magmas, monoids and foldables.
 
 ## Functions
 
-In Haskell, functions are functors, monads, and many other categorical types. However, with Clojure functions, there is one big caveat: ordinary Clojure functions are not automatically [curried](http://en.wikipedia.org/wiki/Currying), so the well known implementations of most categorical types, when translated to Clojure, do not obey all laws that monads, applicatives, etc. have to observe. Fortunately, Fluokitten provides the `curry` function that creates a curried version of any Clojure function.
+In Haskell, functions are functors, monads, and many other categorical types. However, with Clojure functions, there is one big caveat: ordinary Clojure functions are not automatically [curried](https://en.wikipedia.org/wiki/Currying), so the well known implementations of most categorical types, when translated to Clojure, do not obey all laws that monads, applicatives, etc. have to observe. Fortunately, Fluokitten provides the `curry` function that creates a curried version of any Clojure function.
 
 While both ordinary Clojure functions and those curried by `curry` implement Fluokitten protocols, and can be used with all appropriate functions from Fluokitten core, only curried functions satisfy all appropriate laws. Most of the time, you can use fluokitten on ordinary functions regardless. However, be warned that those are not "kosher" and "halal" from the point of view of Haskellers, and may not be able to give the full benefit of "monadic" programming. The most obvious case would be if you translate examples that rely on Haskell's currying.
 
