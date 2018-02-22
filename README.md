@@ -3,7 +3,7 @@
 
 Fluokitten is a Clojure library that implements category theory concepts, such as functors, applicative functors, monads, monoids etc. in idiomatic Clojure.
 
-There is a lot of documentation and tutorials at [Fluokitten Website](http://fluokitten.uncomplicate.org). Please make sure to check it out.
+There is a lot of documentation and tutorials at [Fluokitten Website](https://fluokitten.uncomplicate.org). Please make sure to check it out.
 
 ## Project Goals
 
@@ -15,8 +15,8 @@ There is a lot of documentation and tutorials at [Fluokitten Website](http://flu
 ## Documentation & Examples
 
 The project is documented in the following ways:
-* [API documentation](http://fluokitten.uncomplicate.org/codox).
-* Learning resources on the [Fluokitten Homepage](http://fluokitten.uncomplicate.org)
+* [API documentation](https://fluokitten.uncomplicate.org/codox).
+* Learning resources on the [Fluokitten Homepage](https://fluokitten.uncomplicate.org)
 * Code examples that are parts of the test suite.
 
 ## Project Maturity
@@ -26,6 +26,6 @@ Once it reaches version 1.0.0 it will be considered stable, and more considerati
 
 ## License
 
-Copyright © 2013-2017 Dragan Djuric
+Copyright © 2013-2018 Dragan Djuric
 
 Distributed under the Eclipse Public License, the same as Clojure
