@@ -21,7 +21,7 @@
 (fact "First functor law."
       (fmap identity) => identity)
 
-;;=============== Functior ===========================
+;;=============== Functor ===========================
 
 ;;--------------- nil ---------------
 
@@ -89,10 +89,26 @@
 (fmap-keeps-type + [100 0 -999]
                  (list 44 0 -54))
 
-(facts "Vectors as functiors"
+(facts "Vectors as functors"
        (fmap inc [1 2 3]) => [2 3 4]
        (fmap + [1 2 3] [4 5 6]) => [5 7 9]
        (fmap + [1 2 3] [4 5 6] [7 8 9]) => [12 15 18])
+
+;; ------- Primitive Java arrays ---------------
+
+(functor-law2 inc (partial * 100) (double-array [1 -199 9]))
+
+(functor-law2 inc (partial * 100) (float-array [1 -199 9]) (float-array [1 -66 9]))
+
+(fmap-keeps-type inc (int-array [77 0 -39]))
+
+(fmap-keeps-type + (short-array [77 0 -39]) (short-array [88 -8 8]))
+
+(facts "Primitive arrays as functors"
+       (fmap inc (long-array [1 2 3])) => (check-eq (long-array [2 3 4]))
+       (fmap + (float-array [1 2 3]) (float-array [4 5 6])) => (check-eq (float-array [5 7 9]))
+       (fmap + (byte-array [1 2 3]) (byte-array [4 5 6]) (byte-array [7 8 9]))
+       => (check-eq (byte-array [12 15 18])))
 
 ;;--------------- List ---------------
 
@@ -108,7 +124,7 @@
 (fmap-keeps-type + (list 77 0 -39)
                  (list 88 -8 8))
 
-(facts "Vectors as functiors"
+(facts "Lists as functors"
        (fmap inc (list 1 2 3)) => (list 2 3 4)
        (fmap + '(1 2 3) '(4 5 6)) => '(5 7 9)
        (fmap + '(1 2 3) '(4 5 6) '(7 8 9)) => '(12 15 18))
@@ -205,12 +221,22 @@
 
 (functor-law2 inc (partial * 100) (atom 34))
 
-(functor-law2 inc (partial * 100)
-              (atom 35) (atom 5))
+(functor-law2 inc (partial * 100) (atom 35) (atom 5))
 
 (fmap-keeps-type  inc (atom 36))
 
 (fmap-keeps-type  + (atom 37) (atom 5))
+
+
+;;--------------- Volatile ---------------
+
+(functor-law2 inc (partial * 100) (volatile! 34))
+
+(functor-law2 inc (partial * 100) (volatile! 35) (volatile! 5))
+
+(fmap-keeps-type  inc (volatile! 36))
+
+(fmap-keeps-type  + (volatile! 37) (volatile! 5))
 
 ;;--------------- Ref ---------------
 
@@ -218,9 +244,7 @@
  (functor-law2 inc (partial * 100) (ref 44)))
 
 (dosync
- (functor-law2 inc
-               (partial * 100) (ref 45)
-               (atom 3) (ref 7)))
+ (functor-law2 inc (partial * 100) (ref 45) (atom 3) (ref 7)))
 
 (dosync
  (fmap-keeps-type inc (ref 46)))
@@ -289,6 +313,7 @@
 (fact "Fmap keeps type - varargs."
       (ifn? (fmap inc (curry dec) (curry +))))
 
+;; ========== Applicative Functors ==============================
 
 ;;--------------- Vector ---------------
 
@@ -315,6 +340,27 @@
 
 (fapply-keeps-type inc  [1 -4 9])
 (fapply-keeps-type + [1 -4 9] [2 -3 -4])
+
+;;--------------- Java Arrays ---------------
+
+(applicative-law1 inc (double-array [1 -2 5]))
+
+(applicative-law1 + (float-array [1 -2 5]) (float-array [8 98 0]))
+
+(applicative-law2-identity (int-array [1 445 -4]))
+
+(applicative-law3-composition [inc] [(partial * 10)] (long-array [1 -34343444]))
+
+(applicative-law3-composition [inc] [(partial * 10)] (long-array [1 -34343444]) (long-array [1 78]))
+
+(applicative-law4-homomorphism (double-array 0) inc 1)
+(applicative-law4-homomorphism (byte-array 0) + 1 55 6)
+
+(applicative-law5-interchange (int-array 0) inc 1)
+(applicative-law5-interchange (int-array 0) + 1 54 -2)
+
+(fapply-keeps-type inc  (long-array [1 -4 9]))
+(fapply-keeps-type + (double-array [1 -4 9]) (double-array [2 -3 -4]))
 
 ;;--------------- CollReduce ---------------
 
@@ -582,6 +628,26 @@
 
 (applicative-law5-interchange (atom 6) + 5 3 4 5)
 
+;;-------------- Volatile -----------
+
+(applicative-law1 inc (volatile! 6))
+
+(applicative-law1 + (volatile! 6) (volatile! 9) (volatile! -77) (volatile! -1))
+
+(applicative-law2-identity (volatile! 6))
+
+(applicative-law3-composition (volatile! inc) (volatile! (partial * 10)) (volatile! 6))
+
+(applicative-law3-composition (volatile! inc) (volatile! (partial * 10)) (volatile! 6) (volatile! -2))
+
+(applicative-law4-homomorphism (volatile! 6) inc 5)
+
+(applicative-law4-homomorphism (volatile! 6) + 5 -4 5)
+
+(applicative-law5-interchange (volatile! 6) inc 5)
+
+(applicative-law5-interchange (volatile! 6) + 5 3 4 5)
+
 ;;-------------- Ref -----------
 
 (dosync
@@ -717,9 +783,19 @@
 
 (monad-law2-right-identity [1 2 -33])
 
-(monad-law3-associativity (comp vector inc)
-                          (comp vector (partial * 10))
-                          [1 -3 -88])
+(monad-law3-associativity (comp vector inc) (comp vector (partial * 10)) [1 -3 -88])
+
+;;--------------- Primitive Java Arrays --------------------------------
+
+(monad-law1-left-identity (double-array 0) (comp (pure (double-array 0)) inc) 1)
+
+(monad-law1-left-identity (int-array 0) (comp (pure (int-array 0)) +) 1 2 3)
+
+(monad-law2-right-identity (short-array [1 2 -33]))
+
+(monad-law3-associativity (comp (pure (float-array 0)) inc)
+                          (comp (pure (float-array 0)) (partial * 10))
+                          (float-array [1 -3 -88]))
 
 ;;--------------- CollReduce ---------------------------------
 
@@ -855,9 +931,21 @@
 
 (monad-law2-right-identity (atom 9))
 
-(monad-law3-associativity (comp atom inc)
-                          (comp atom (partial * 10))
-                          (atom 9))
+(monad-law3-associativity (comp atom inc) (comp atom (partial * 10)) (atom 9))
+
+;;--------------- Atom ----------------------------
+
+(facts "Join function for volatiles."
+       (join (volatile! 1)) => (check-eq (volatile! 1))
+       (join (volatile! (volatile! 2))) => (check-eq (volatile! 2)))
+
+(monad-law1-left-identity (volatile! 9) (comp volatile! inc) 1)
+
+(monad-law1-left-identity (volatile! 9) (comp volatile! +) 1 2 3)
+
+(monad-law2-right-identity (volatile! 9))
+
+(monad-law3-associativity (comp volatile! inc) (comp volatile! (partial * 10)) (volatile! 9))
 
 ;;--------------- Ref ----------------------------
 
@@ -929,63 +1017,55 @@
 
 (monoid-identity-law [1 2])
 
+;;----------------------- Primitive Java Arrays --------------------------
+
+(magma-op-keeps-type (double-array [1 2]) (double-array [3 4]))
+
+(magma-op-keeps-type (float-array [1 2]) (float-array [3 4]) (float-array [5 6]))
+
+(semigroup-op-associativity (int-array [1 2]) (int-array  [3 4]))
+
+(semigroup-op-associativity (short-array [1 2]) (short-array [3 4]) (short-array [5 6]))
+
+(monoid-identity-law (long-array [1 2]))
+
 ;;----------------------- List --------------------------
 
-(magma-op-keeps-type (list 1 2)
-                     (list 3 4))
+(magma-op-keeps-type (list 1 2) (list 3 4))
 
-(magma-op-keeps-type (list 1 2)
-                     (list 3 4)
-                     (list 5 6)
-                     (list 7 8))
+(magma-op-keeps-type (list 1 2) (list 3 4) (list 5 6) (list 7 8))
 
-(semigroup-op-associativity (list 1 2)
-                            (list 3 4))
+(semigroup-op-associativity (list 1 2) (list 3 4))
 
-(semigroup-op-associativity (list 1 2)
-                            (list 3 4)
-                            (list 5 6)
-                            (list 7 8))
+(semigroup-op-associativity (list 1 2) (list 3 4) (list 5 6) (list 7 8))
 
 (monoid-identity-law (list 1 2))
 
 ;;----------------------- LazySeq --------------------------
 
-(magma-op-keeps-type (lazy-seq (list 1 2))
-                     (lazy-seq (list 3 4)))
+(magma-op-keeps-type (lazy-seq (list 1 2)) (lazy-seq (list 3 4)))
 
-(magma-op-keeps-type (lazy-seq (list 1 2))
-                     (lazy-seq (list 3 4))
-                     (lazy-seq (list 5 6))
-                     (lazy-seq (list 7 8)))
+(magma-op-keeps-type (lazy-seq (list 1 2)) (lazy-seq (list 3 4))
+                     (lazy-seq (list 5 6)) (lazy-seq (list 7 8)))
 
-(semigroup-op-associativity (lazy-seq (list 1 2))
-                            (lazy-seq (list 3 4)))
+(semigroup-op-associativity (lazy-seq (list 1 2)) (lazy-seq (list 3 4)))
 
-(semigroup-op-associativity (lazy-seq (list 1 2))
-                            (lazy-seq (list 3 4))
-                            (lazy-seq (list 5 6))
-                            (lazy-seq (list 7 8)))
+(semigroup-op-associativity (lazy-seq (list 1 2)) (lazy-seq (list 3 4))
+                            (lazy-seq (list 5 6)) (lazy-seq (list 7 8)))
 
 (monoid-identity-law (lazy-seq (list 1 2)))
 
 ;;----------------------- Seq --------------------------
 
-(magma-op-keeps-type (seq (list 1 2))
-                     (seq (list 3 4)))
+(magma-op-keeps-type (seq (list 1 2)) (seq (list 3 4)))
 
-(magma-op-keeps-type (seq (list 1 2))
-                     (seq (list 3 4))
-                     (seq (list 5 6))
-                     (seq (list 7 8)))
+(magma-op-keeps-type (seq (list 1 2)) (seq (list 3 4))
+                     (seq (list 5 6)) (seq (list 7 8)))
 
-(semigroup-op-associativity (seq (list 1 2))
-                            (seq (list 3 4)))
+(semigroup-op-associativity (seq (list 1 2)) (seq (list 3 4)))
 
-(semigroup-op-associativity (seq (list 1 2))
-                            (seq (list 3 4))
-                            (seq (list 5 6))
-                            (seq (list 7 8)))
+(semigroup-op-associativity (seq (list 1 2)) (seq (list 3 4))
+                            (seq (list 5 6)) (seq (list 7 8)))
 
 (monoid-identity-law (seq (list 1 2)))
 
@@ -1005,58 +1085,35 @@
 
 (magma-op-keeps-type {:a 1} {:b 2})
 
-(magma-op-keeps-type {:a 1}
-                     {:b 2 :c 3}
-                     {:d 5}
-                     {:e 6})
+(magma-op-keeps-type {:a 1} {:b 2 :c 3} {:d 5} {:e 6})
 
-(semigroup-op-associativity {:a 1}
-                            {:b 2})
+(semigroup-op-associativity {:a 1} {:b 2})
 
-(semigroup-op-associativity {:a 1}
-                            {:b 2 :c 3}
-                            {:d 5}
-                            {:e 6})
+(semigroup-op-associativity {:a 1} {:b 2 :c 3} {:d 5} {:e 6})
 
 (monoid-identity-law {:a 1 :b 2})
 
 ;;----------------------- MapEntry --------------------------
 
-(magma-op-keeps-type (first {:a 1})
-                     (first {:b 2}))
+(magma-op-keeps-type (first {:a 1}) (first {:b 2}))
 
-(magma-op-keeps-type (first {:a 1})
-                     (first {:b 2 :c 3})
-                     (first {:d 5})
-                     (first {:e 6}))
+(magma-op-keeps-type (first {:a 1}) (first {:b 2 :c 3}) (first {:d 5}) (first {:e 6}))
 
-(semigroup-op-associativity (first {:a 1})
-                            (first {:b 2}))
+(semigroup-op-associativity (first {:a 1}) (first {:b 2}))
 
-(semigroup-op-associativity (first {:a 1})
-                            (first {:b 2 :c 3})
-                            (first {:d 5})
-                            (first {:e 6}))
+(semigroup-op-associativity (first {:a 1}) (first {:b 2 :c 3}) (first {:d 5}) (first {:e 6}))
 
 (monoid-identity-law (first {:a 1}))
 
 ;;----------------------- String --------------------------
 
-(magma-op-keeps-type "something"
-                     "else")
+(magma-op-keeps-type "something" "else")
 
-(magma-op-keeps-type "something"
-                     "else"
-                     "even"
-                     "more")
+(magma-op-keeps-type "something" "else" "even" "more")
 
-(semigroup-op-associativity "something"
-                            "else")
+(semigroup-op-associativity "something" "else")
 
-(semigroup-op-associativity "something"
-                            "else"
-                            "even"
-                            "more")
+(semigroup-op-associativity "something" "else" "even" "more")
 
 (monoid-identity-law "something")
 
@@ -1074,60 +1131,51 @@
 
 ;;----------------------- Keyword --------------------------
 
-(magma-op-keeps-type :something
-                     :else)
+(magma-op-keeps-type :something :else)
 
-(magma-op-keeps-type :something
-                     :else
-                     :even
-                     :more)
+(magma-op-keeps-type :something :else :even :more)
 
-(semigroup-op-associativity :something
-                            :else)
+(semigroup-op-associativity :something :else)
 
-(semigroup-op-associativity :something
-                            :else
-                            :even
-                            :more)
+(semigroup-op-associativity :something :else :even :more)
 
 (monoid-identity-law :something)
 
 ;;----------------------- Atom --------------------------
 
-(magma-op-keeps-type (atom 1)
-                     (atom 2))
+(magma-op-keeps-type (atom 1) (atom 2))
 
-(magma-op-keeps-type (atom 2)
-                     (atom 3)
-                     (atom 4))
+(magma-op-keeps-type (atom 2) (atom 3) (atom 4))
 
-(semigroup-op-associativity (atom 5)
-                            (atom 6))
+(semigroup-op-associativity (atom 5) (atom 6))
 
-(semigroup-op-associativity (atom 7)
-                            (atom 8)
-                            (atom 9))
+(semigroup-op-associativity (atom 7) (atom 8) (atom 9))
 
 (monoid-identity-law (atom 4))
 
+;;----------------------- Volatile --------------------------
+
+(magma-op-keeps-type (volatile! 1) (volatile! 2))
+
+(magma-op-keeps-type (volatile! 2) (volatile! 3) (volatile! 4))
+
+(semigroup-op-associativity (volatile! 5) (volatile! 6))
+
+(semigroup-op-associativity (volatile! 7) (volatile! 8) (volatile! 9))
+
+(monoid-identity-law (volatile! 4))
+
 ;;----------------------- Ref --------------------------
 
-(dosync
- (magma-op-keeps-type (ref 1)
-                      (ref 2)))
-(dosync
- (magma-op-keeps-type (ref 2)
-                      (ref 3)
-                      (ref 4)))
-(dosync
- (semigroup-op-associativity (ref 5)
-                             (ref 6)))
-(dosync
- (semigroup-op-associativity (ref 7)
-                             (ref 8)
-                             (ref 9)))
-(dosync
- (monoid-identity-law (ref 5)))
+(dosync (magma-op-keeps-type (ref 1) (ref 2)))
+
+(dosync (magma-op-keeps-type (ref 2) (ref 3) (ref 4)))
+
+(dosync (semigroup-op-associativity (ref 5) (ref 6)))
+
+(dosync (semigroup-op-associativity (ref 7) (ref 8) (ref 9)))
+
+(dosync (monoid-identity-law (ref 5)))
 
 ;;------------------- Functions --------------------------
 
@@ -1162,22 +1210,17 @@
 (facts "Monoids are used by collection fold."
        (fold [[1] [2]]) => [1 2]
        (fold [(list 1) (list 2)]) => (list 1 2)
-       (fold [(seq (list 1)) (seq (list 2))])
-       => (seq (list 1 2))
-       (fold [(lazy-seq (list 1)) (lazy-seq (list 2))])
-       => (lazy-seq (list 1 2))
+       (fold [(seq (list 1)) (seq (list 2))]) => (seq (list 1 2))
+       (fold [(lazy-seq (list 1)) (lazy-seq (list 2))]) => (lazy-seq (list 1 2))
        (fold [#{1} #{2}]) => #{1 2}
        (fold [{:a 1} {:b 2}]) => {:a 1 :b 2}
        (fold [:a :b :c]) => :abc
        (fold ["a" "b" "c"]) => "abc"
        (fold [1 2 3]) => 6
        (fold [(just 1) (just 2) (just 3)]) => (just 6)
-       (fold [(atom 1) (atom 2) (atom 3)])
-       => (check-eq (atom 6))
-       (fold [(ref 1) (ref 2) (ref 3)])
-       => (check-eq (ref 6))
-       (fold [(first {:a 1}) (first {:a 2}) (first {:b 3})])
-       => (check-eq (first {:aab 6})))
+       (fold [(atom 1) (atom 2) (atom 3)]) => (check-eq (atom 6))
+       (fold [(ref 1) (ref 2) (ref 3)]) => (check-eq (ref 6))
+       (fold [(first {:a 1}) (first {:a 2}) (first {:b 3})]) => (check-eq (first {:aab 6})))
 
 ;;===================== Foldable =====================
 
@@ -1211,6 +1254,30 @@
        (foldmap inc #{1 2 3 4 5}) => 20
 
        (foldmap * 2 + [1 2 3] [4 5 6] [7 8 9] [1 2 1] [3 2 1]) => 12160)
+
+(facts "How Foldable arrays work."
+       (fold (double-array [1 2 3 4 5])) => 15.0
+       (fold (long-array (range 999))) => 498501
+       (fold (short-array [])) => 0
+       (fold (int-array [1 2 3 4 5]))= > 15
+       (fold (float-array [1 2 3 4 5])) => 15.0
+
+       (fold + (double-array [1 2 3 4])) => 10.0
+       (fold * (float-array [1 2 3 4])) => 24.0
+       (fold + 0 (int-array [1 2 3]) (int-array [4 5 6])) => 21
+       (fold * 1 (short-array [1 2 3]) (short-array [4 5 6])) => 315
+       (fold * 2 (long-array [1 2 3]) (long-array [4 5 6]) (long-array [7 8 9])
+             (long-array [1 2 1]) (long-array [3 2 1])) => (throws UnsupportedOperationException)
+       (fold * 2 (double-array [1 2 3 4]) (double-array [4 5 6]) (double-array [7 8 9])
+             (double-array [1 2 1]) (double-array [3 2 1])) => (throws UnsupportedOperationException)
+
+       (foldmap inc (double-array [1 2 3 4 5])) => 20.0
+       (foldmap inc (float-array [])) => 0.0
+       (foldmap inc (double-array [1 2 3 4 5])) => 20.0
+
+       (foldmap * 2 + (long-array [1 2 3]) (long-array [4 5 6])
+                (long-array [7 8 9]) (long-array [1 2 1]) (long-array [3 2 1]))
+       => (throws UnsupportedOperationException))
 
 (fact "fold extract the value from the reference context."
       (fold (atom :something)) => :something
@@ -1246,18 +1313,14 @@
           (meta (fmap! inc a1)) => {:test true}
           (meta (fmap! + a1 a2)) => {:test true}
 
-          (meta (fapply! (pure a1 inc) a1))
-          => {:test true}
-          (meta (fapply! (pure a1 +) a1 a2))
-          => {:test true}
+          (meta (fapply! (pure a1 inc) a1)) => {:test true}
+          (meta (fapply! (pure a1 +) a1 a2)) => {:test true}
 
-          (meta (bind! a1 #(atom (inc %))))
-          => {:test true}
+          (meta (bind! a1 #(atom (inc %)))) => {:test true}
           (meta (bind! a1 a2 #(atom (+ %1 %2))))
           => {:test true}
 
-          (meta (join! (atom (atom 1) :meta {:test true})))
-          => {:test true}))
+          (meta (join! (atom (atom 1) :meta {:test true}))) => {:test true}))
 
 (let [r1 (ref 1 :meta {:test true})
       r2 (ref 2 :meta {:test true})]
@@ -1268,22 +1331,17 @@
            (meta (fmap! + r1 r2)) => {:test true})
 
           (dosync
-           (meta (fapply! (pure r1 inc) r1)))
-          => {:test true}
+           (meta (fapply! (pure r1 inc) r1))) => {:test true}
           (dosync
-           (meta (fapply! (pure r1 +) r1 r2)))
-          => {:test true}
+           (meta (fapply! (pure r1 +) r1 r2))) => {:test true}
 
           (dosync
-           (meta (bind! r1 #(ref (inc %)))))
-          => {:test true}
+           (meta (bind! r1 #(ref (inc %))))) => {:test true}
           (dosync
-           (meta (bind! r1 r2 #(ref (+ %1 %2)))))
-          => {:test true}
+           (meta (bind! r1 r2 #(ref (+ %1 %2))))) => {:test true}
 
           (dosync
-           (meta (join! (ref (ref 1) :meta {:test true}))))
-          => {:test true}))
+           (meta (join! (ref (ref 1) :meta {:test true})))) => {:test true}))
 
 ;; Reducers and MapEntry do not support metadata.
 
@@ -1309,14 +1367,9 @@
 
 (applicative-law2-identity (just 5))
 
-(applicative-law3-composition (just inc)
-                              (just (partial * 10))
-                              (just 5))
+(applicative-law3-composition (just inc) (just (partial * 10)) (just 5))
 
-(applicative-law3-composition (just inc)
-                              (just (partial * 10))
-                              (just 5)
-                              (just 9))
+(applicative-law3-composition (just inc) (just (partial * 10)) (just 5) (just 9))
 
 (applicative-law4-homomorphism (just nil) inc 1)
 
@@ -1332,25 +1385,15 @@
 
 (monad-law2-right-identity (just 5))
 
-(monad-law3-associativity (comp just inc)
-                          (comp just (partial * 10))
-                          (just 5))
+(monad-law3-associativity (comp just inc) (comp just (partial * 10)) (just 5))
 
-(magma-op-keeps-type (just :something)
-                     (just :else))
+(magma-op-keeps-type (just :something) (just :else))
 
-(magma-op-keeps-type (just :something)
-                     (just :else)
-                     (just :even)
-                     (just :more))
+(magma-op-keeps-type (just :something) (just :else) (just :even) (just :more))
 
-(semigroup-op-associativity (just :something)
-                            (just :else))
+(semigroup-op-associativity (just :something) (just :else))
 
-(semigroup-op-associativity (just :something)
-                            (just :else)
-                            (just :even)
-                            (just :more))
+(semigroup-op-associativity (just :something) (just :else) (just :even) (just :more))
 
 (monoid-identity-law (just :something))
 
@@ -1382,22 +1425,14 @@
                      ([x & ys]
                       (return (apply + x ys))))]
 
-   (bind (vec (range 1 500)) returning-f)
-   => (range 2 501)
+   (bind (vec (range 1 500)) returning-f) => (range 2 501)
 
-   (bind (vec (range 1 500))
-         (vec (range 1 500))
-         (vec (range 1 500))
-         returning-f)
+   (bind (vec (range 1 500)) (vec (range 1 500)) (vec (range 1 500)) returning-f)
    => (range 3 1500 3)
 
-   (bind (apply list (range 1 500)) returning-f)
-   => (range 2 501)
+   (bind (apply list (range 1 500)) returning-f) => (range 2 501)
 
-   (bind (apply list (range 1 500))
-         (apply list (range 1 500))
-         (apply list (range 1 500))
-         returning-f)
+   (bind (apply list (range 1 500)) (apply list (range 1 500)) (apply list (range 1 500)) returning-f)
    => (range 3 1500 3)
 
    ;; ===== TODO: clojure.lang.Range has been introduced in 1.7.0-beta1
@@ -1412,67 +1447,42 @@
              returning-f)
       => (range 3 1500 3))
 
-   (bind (vec (range 1 500)) returning-f)
-   => (range 2 501)
+   (bind (vec (range 1 500)) returning-f) => (range 2 501)
 
-   (bind (vec (range 1 500))
-         (range 1 500)
-         (range 1 500)
-         returning-f)
+   (bind (vec (range 1 500)) (range 1 500) (range 1 500) returning-f)
    => (range 3 1500 3)
 
-   (bind (seq (apply list (range 1 500))) returning-f)
-   => (range 2 501)
+   (bind (seq (apply list (range 1 500))) returning-f) => (range 2 501)
 
-   (bind (seq (apply list (range 1 500)))
-         (seq (apply list (range 1 500)))
-         (seq (apply list (range 1 500)))
-         returning-f)
+   (bind (seq (apply list (range 1 500))) (seq (apply list (range 1 500)))
+         (seq (apply list (range 1 500))) returning-f)
    => (range 3 1500 3)
 
-   (bind (apply hash-set (range 1 500)) returning-f)
-   => (apply hash-set (distinct (range 2 501)))
+   (bind (apply hash-set (range 1 500)) returning-f) => (apply hash-set (distinct (range 2 501)))
 
-   (bind (apply hash-set (range 1 500))
-         (apply hash-set (range 1 500))
-         (apply hash-set (range 1 500))
-         returning-f)
+   (bind (apply hash-set (range 1 500)) (apply hash-set (range 1 500))
+         (apply hash-set (range 1 500)) returning-f)
    => (apply hash-set (distinct (range 3 1500 3)))
 
-   (bind (apply hash-map
-                (interleave (range 1 500) (range 1 500)))
-         returning-f)
+   (bind (apply hash-map (interleave (range 1 500) (range 1 500))) returning-f)
    => (apply hash-map (interleave (range 1 500) (range 2 501)))
 
-   (bind (apply hash-map
-                (interleave (range 1 500) (range 1 500)))
-         (apply hash-map
-                (interleave (range 1 500) (range 1 500)))
-         (apply hash-map
-                (interleave (range 1 500) (range 1 500)))
-         returning-f)
+   (bind (apply hash-map (interleave (range 1 500) (range 1 500)))
+         (apply hash-map (interleave (range 1 500) (range 1 500)))
+         (apply hash-map (interleave (range 1 500) (range 1 500))) returning-f)
    => (apply hash-map (interleave (range 1 500) (range 3 1500 3)))
 
-   (realize [] (bind (r/map identity (vec (range 1 500))) returning-f))
-   => (range 2 501)
+   (realize [] (bind (r/map identity (vec (range 1 500))) returning-f)) => (range 2 501)
 
-   (bind (first {:a 1}) returning-f)
-   => (first {:a 2})
+   (bind (first {:a 1}) returning-f) => (first {:a 2})
 
-   (bind (atom 1) returning-f)
-   => (check-eq (atom 2))
+   (bind (atom 1) returning-f) => (check-eq (atom 2))
 
-   (dosync (bind (ref 1) returning-f))
-   => (check-eq (ref 2))
+   (dosync (bind (ref 1) returning-f)) => (check-eq (ref 2))
 
-   ((bind (pure curried 3) returning-f) 7)
-   => 4
+   ((bind (pure curried 3) returning-f) 7) => 4
 
-   ((bind (pure curried 3)
-          (pure curried 6)
-          (pure curried 9)
-          returning-f) 7)
-   => 18))
+   ((bind (pure curried 3) (pure curried 6) (pure curried 9) returning-f) 7) => 18))
 
 (fact
  "Syntactic sugar for the bind function - mdo"

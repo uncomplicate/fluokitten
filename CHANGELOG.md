@@ -1,5 +1,10 @@
 # [Fluokitten](http://fluokitten.uncomplicate.org) - notable changes between versions
 
+## 0.7.0
+
+* Support volatile.
+* Support Java arrays.
+
 ## 0.6.1
 
 * Clojure dep updated to 1.9.0

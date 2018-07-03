@@ -25,14 +25,12 @@ beyond what the compiler can assert."
      (check-eq expected actual)))
   ([expected actual]
    (cond
-     (nil? expected)
-     (nil? actual)
-     (and (instance? (type expected) actual)
-          (deref? expected) (deref? actual))
+     (nil? expected) (nil? actual)
+     (and (instance? (type expected) actual) (deref? expected) (deref? actual))
      (let [e (deref expected)
            a (deref actual)]
        (check-eq e a))
-     (reducible? expected)
+     (or (.isArray (class expected)) (reducible? expected))
      (= (into [] expected) (into [] actual))
      :else (= expected actual))))
 
@@ -50,8 +48,7 @@ beyond what the compiler can assert."
   ([f x] `(functor-law2 ~f ~f ~x))
   ([f g x & xs]
    `(facts "Second functor law."
-           (fmap (comp ~f ~g) ~x ~@xs) =>
-           (check-eq (fmap ~f (fmap ~g ~x ~@xs))))))
+           (fmap (comp ~f ~g) ~x ~@xs) => (check-eq (fmap ~f (fmap ~g ~x ~@xs))))))
 
 (defmacro fmap-keeps-type
   "Generates a test that checks if the functor x's implementation of
@@ -70,8 +67,7 @@ beyond what the compiler can assert."
   "
   [f x & xs]
   `(fact "First applicative law."
-         (fapply (pure ~x ~f) ~x ~@xs)
-         => (check-eq (fmap ~f ~x ~@xs))))
+         (fapply (pure ~x ~f) ~x ~@xs) => (check-eq (fmap ~f ~x ~@xs))))
 
 (defmacro applicative-law2-identity
   "Generates a test that checks if the applicative functor x
@@ -81,8 +77,7 @@ beyond what the compiler can assert."
   "
   [x]
   `(fact "Identity applicative law."
-         (fapply (pure ~x identity) ~x)
-         => (check-eq ~x)))
+         (fapply (pure ~x identity) ~x) => (check-eq ~x)))
 
 (defmacro applicative-law3-composition
   "Generates a test that checks if the applicative functor x
@@ -93,8 +88,7 @@ beyond what the compiler can assert."
   "
   [u v x & xs]
   `(fact "Composition applicative law."
-         (-> (pure ~x #(partial comp %))
-             (fapply ~u) (fapply ~v) (fapply ~x ~@xs))
+         (-> (pure ~x #(partial comp %)) (fapply ~u) (fapply ~v) (fapply ~x ~@xs))
          => (check-eq (fapply ~u (fapply ~v ~x ~@xs)))))
 
 (defmacro applicative-law4-homomorphism
@@ -105,8 +99,7 @@ beyond what the compiler can assert."
   "
   [ap f x & xs]
   `(fact "Homomorphism applicative law."
-         (apply fapply (pure ~ap ~f) (pure ~ap ~x)
-                (map (pure ~ap) '~xs))
+         (apply fapply (pure ~ap ~f) (pure ~ap ~x) (map (pure ~ap) '~xs))
          => (check-eq (pure ~ap (~f ~x ~@xs)))))
 
 (defmacro applicative-law5-interchange
@@ -117,10 +110,8 @@ beyond what the compiler can assert."
   "
   [ap f x & xs]
   `(fact "Interchange applicative law."
-         (apply fapply (pure ~ap ~f) (pure ~ap ~x)
-                (map (pure ~ap) '~xs))
-         => (check-eq (fapply (pure ~ap #(% ~x ~@xs))
-                              (pure ~ap ~f)))))
+         (apply fapply (pure ~ap ~f) (pure ~ap ~x) (map (pure ~ap) '~xs))
+         => (check-eq (fapply (pure ~ap #(% ~x ~@xs)) (pure ~ap ~f)))))
 
 (defmacro fapply-keeps-type
   "Generates a test that checks if the applicative functor x's
@@ -129,8 +120,7 @@ beyond what the compiler can assert."
   [f x & xs]
   `(fact "fapply should return data of the same type
             as the applicative argument."
-         (type (fapply (pure ~x ~f) ~x ~@xs))
-         => (type ~x)))
+         (type (fapply (pure ~x ~f) ~x ~@xs)) => (type ~x)))
 
 ;;=============== Monad tests ============================
 (defmacro monad-law1-left-identity

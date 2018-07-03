@@ -1054,6 +1054,31 @@
 (defn ref-id [r]
   (ref (id @r)))
 
+;;------------------ Volatile ----------------------
+
+(defmacro ^:private vswap!! [vol f ry rz rw rws]
+  `(vswap! ~vol ~f ~ry ~rz ~rw ~@rws))
+
+(defn volatile-fmap!
+  ([v g]
+   (doto v (vswap! g)))
+  ([vx g ry]
+   (doto vx (vswap! g @ry)))
+  ([vx g ry rz]
+   (doto vx (vswap! g @ry @rz)))
+  ([vx g ry rz rw]
+   (doto vx (vswap! g @ry @rz @rw)))
+  ([vx g ry rz rw rws]
+   (do
+     (vswap!! vx g @ry @rz @rw (map deref rws))
+     vx)))
+
+(defn volatile-pure [_ v]
+  (volatile! v))
+
+(defn volatile-id [a]
+  (volatile! (id (deref a))))
+
 ;;------------------ Extensions --------------------
 
 (defmacro extend-atom [t]
@@ -1105,6 +1130,49 @@
      {:op reference-op}
      Monoid
      {:id ref-id}))
+
+(defmacro extend-volatile [t]
+  `(extend ~t
+     Functor
+     {:fmap reference-fmap}
+     PseudoFunctor
+     {:fmap! volatile-fmap!}
+     Applicative
+     {:pure volatile-pure
+      :fapply reference-fapply}
+     PseudoApplicative
+     {:fapply! reference-fapply!}
+     Monad
+     {:join reference-join
+      :bind reference-bind}
+     PseudoMonad
+     {:join! reference-join!
+      :bind! reference-bind!}
+     Foldable
+     {:fold reference-fold
+      :foldmap reference-foldmap}
+     Magma
+     {:op reference-op}
+     Monoid
+     {:id volatile-id}))
+
+(defmacro extend-ideref [t]
+  `(extend ~t
+     Functor
+     {:fmap reference-fmap}
+     PseudoApplicative
+     {:fapply! reference-fapply!}
+     Monad
+     {:join reference-join
+      :bind reference-bind}
+     PseudoMonad
+     {:join! reference-join!
+      :bind! reference-bind!}
+     Foldable
+     {:fold reference-fold
+      :foldmap reference-foldmap}
+     Magma
+     {:op reference-op}))
 
 ;;================== Maybe  ===========================
 
