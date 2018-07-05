@@ -26,6 +26,11 @@ Automatically generated reference API documentation.
 
 This guide explains in detail how various Clojure core artifacts (collections, functions, references, etc.) implement Fluokitten protocols (`Functor`, `Applicative`, `Monad`, `Monoid`, `Foldable` etc)
 
+### [Map and Reduce Primitive Arrays Without Clojure Macros](https://dragan.rocks/articles/18/Fluokitten-070-map-reduce-primitive-arrays-without-macros)
+
+### [Fast Map and Reduce for Primitive Vectors](https://neanderthal.uncomplicate.org/articles/fast-map-and-reduce-for-primitive-vectors.html)
+
+
 ### [Implementing Fluokitten Protocols](/articles/implementing_protocols.html)
 
 This guide explains how you can make your own implementations of Fluokitten protocols.
