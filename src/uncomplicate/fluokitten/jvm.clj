@@ -16,7 +16,9 @@ run on JVM platform."
              [protocols :refer :all]
              [algo :refer :all]
              [utils :refer [split-last with-context]]])
-  (:import clojure.lang.IFn))
+  (:import clojure.lang.IFn
+           java.util.concurrent.Callable
+           java.lang.Runnable))
 
 (set! *warn-on-reflection* true)
 
@@ -291,69 +293,143 @@ run on JVM platform."
 (let [objects identity]
   (extend-array (class (make-array Object 0)) objects identity Object))
 
+;; ====================== Functions as Curry =======================
+
+(defn ^:private max-arg-count ^long [f]
+  (let [methods (.getDeclaredMethods ^java.lang.Class (class f))
+        n (alength methods)]
+    (loop [i 0 max-ac 0]
+      (if (< i n)
+        (recur (inc i)
+               (max max-ac (alength (.getParameterTypes ^java.lang.reflect.Method (aget methods i)))))
+        max-ac))))
+
+(declare create-curried)
+
+(defn fn-curry
+  ([f]
+   (curry f (min 2 (max-arg-count f))))
+  ([f ^long arity]
+   (if (< 0 arity)
+     (create-curried f arity)
+     f)))
+
+(extend IFn
+  Curry
+  {:arity (constantly 0)
+   :curry fn-curry
+   :uncurry identity})
+
 ;;===================== CurriedFn ===========================
 
-(defn ^:private arg-counts [f]
-  (map alength (map (fn [^java.lang.reflect.Method m]
-                      ( .getParameterTypes m))
-                    (.getDeclaredMethods
-                     ^java.lang.Class (class f)))))
-
-(defn ^:private gen-invoke [^clojure.lang.IFn f arity n]
-  (let [args (map #(symbol (str "a" %)) (range arity))]
+(defn ^:private gen-invoke [f ^long arity ^long n]
+  (let [args (repeatedly arity gensym)]
     `(invoke [~'_ ~@args]
-             (if (> ~n ~arity)
-               (CurriedFn. (partial ~f ~@args) (- ~n ~arity))
-               (.invoke ~f ~@args)))))
+             ~(if (< arity n)
+                `(create-curried (partial ~f ~@args) (- ~n ~arity))
+                `(~f ~@args)))))
 
-(defn ^:private gen-applyto [^clojure.lang.IFn f n]
-  `(applyTo [~'_ ~'args]
-            (let [as# (- ~n (count ~'args))]
-              (if (pos? as#)
-                (CurriedFn. (apply partial ~f ~'args) as#)
-                (.applyTo ~f ~'args)))))
+(definterface CurriedFn
+  (curriedfn []))
 
-(defmacro ^:private deftype-curried-fn []
-  `(deftype ~'CurriedFn ~'[^clojure.lang.IFn f ^long n]
-     java.lang.Object
-     ~'(hashCode [_]
-         (clojure.lang.Util/hashCombine f (Long/hashCode n)))
-     ~'(equals [x y]
+(defmacro ^:private deftype-curried-fn [name-symbol arity]
+  (let [f (gensym)
+        call #(.call ^Callable %)
+        run #(.run ^Runnable %)]
+    `(deftype ~name-symbol [~f]
+       Object
+       (hashCode [x#]
+         (hash ~f))
+       (equals [x# y#]
          (or
-          (identical? x y)
-          (and (instance? CurriedFn y)
-               (= n (.n ^CurriedFn y)) (identical? f (.f ^CurriedFn y)))))
-     ~'(toString [_]
-         (format "#curried-function[arity: %d, %s]" n f))
-     clojure.lang.IFn
-     ~@(map #(gen-invoke 'f % 'n) (range 22))
-     ~(gen-applyto 'f 'n)
-     java.util.concurrent.Callable
-     ~'(call [_]
-         (if (pos? n) f (.call f)))
-     java.lang.Runnable
-     ~'(run [_]
-         (if (pos? n) f (.run f)))))
+          (identical? x# y#)
+          (and (instance? ~name-symbol y#) (identical? ~f (uncurry y#)))))
+       (toString [this#]
+         (format "#curried-function[arity: %d, %s]" ~arity (. this# ~f)))
+       Curry
+       (curry [this#]
+         this#)
+       (curry [this# arity#]
+         (if (= ~arity arity#)
+           this#
+           (if (< 0 arity# (max-arg-count ~f))
+             (create-curried ~f arity#)
+             this#)))
+       (arity [this#]
+         ~arity)
+       (uncurry [this#]
+         ~f)
+       CurriedFn
+       (curriedfn [_]
+         ~f)
+       clojure.lang.IFn
+       (applyTo [this# args#]
+         (let [as# (- ~arity (count args#))]
+           (if (< 0 as#)
+             (create-curried (apply partial ~f args#) as#)
+             (apply ~f args#))))
+       ~@(map #(gen-invoke f % arity) (range 22))
+       Callable
+       (call [_]
+         (if (< 0 ~arity) (~f) (~call ~f)))
+       Runnable
+       (run [_]
+         (if (< 0 ~arity) (~f) (~run ~f))))))
 
-(deftype-curried-fn)
+(deftype-curried-fn CurriedFn0 0)
+(deftype-curried-fn CurriedFn1 1)
+(deftype-curried-fn CurriedFn2 2)
+(deftype-curried-fn CurriedFn3 3)
+(deftype-curried-fn CurriedFn4 4)
+(deftype-curried-fn CurriedFn5 5)
+(deftype-curried-fn CurriedFn6 6)
+(deftype-curried-fn CurriedFn7 7)
+(deftype-curried-fn CurriedFn8 8)
+(deftype-curried-fn CurriedFn9 9)
+(deftype-curried-fn CurriedFn10 10)
+(deftype-curried-fn CurriedFn11 11)
+(deftype-curried-fn CurriedFn12 12)
+(deftype-curried-fn CurriedFn13 13)
+(deftype-curried-fn CurriedFn14 14)
+(deftype-curried-fn CurriedFn15 15)
+(deftype-curried-fn CurriedFn16 16)
+(deftype-curried-fn CurriedFn17 17)
+(deftype-curried-fn CurriedFn18 18)
+(deftype-curried-fn CurriedFn19 19)
+(deftype-curried-fn CurriedFn20 20)
+(deftype-curried-fn CurriedFn21 21)
+
+(defn curried-constructor [^long arity]
+  (case arity
+    1 ->CurriedFn1
+    2 ->CurriedFn2
+    3 ->CurriedFn3
+    4 ->CurriedFn4
+    5 ->CurriedFn5
+    6 ->CurriedFn6
+    7 ->CurriedFn7
+    8 ->CurriedFn8
+    9 ->CurriedFn9
+    10 ->CurriedFn10
+    11 ->CurriedFn11
+    12 ->CurriedFn12
+    13 ->CurriedFn13
+    14 ->CurriedFn14
+    15 ->CurriedFn15
+    16 ->CurriedFn16
+    17 ->CurriedFn17
+    18 ->CurriedFn18
+    19 ->CurriedFn19
+    20 ->CurriedFn20
+    21 ->CurriedFn21))
+
+(defn create-curried [f ^long ^long arity]
+  (if (< 0 arity)
+    ((curried-constructor arity) f)))
 
 (defmethod print-method CurriedFn
   [cf ^java.io.Writer w]
   (.write w (str cf)))
-
-(defn curried-arity [^CurriedFn cf]
-  (.n cf))
-
-(defn curried-curry
-  ([cf]
-   cf)
-  ([^CurriedFn cf ^long arity]
-   (if (pos? arity)
-     (->CurriedFn (.f cf) arity)
-     cf)))
-
-(defn curried-uncurry [^CurriedFn cf]
-  (.f cf))
 
 (defn curried-op
   ([]
@@ -363,7 +439,7 @@ run on JVM platform."
   ([x y]
    (if (identical? identity y)
      x
-     (->CurriedFn (comp x y) (arity y))))
+     (create-curried (comp x y) (arity y))))
   ([x y z]
    (if (identical? identity z)
      (curried-op x y)
@@ -378,19 +454,15 @@ run on JVM platform."
   ([cf g]
    (curried-op g cf))
   ([cf g chs]
-   (->CurriedFn (function-fmap cf g chs) (apply max (arity cf) (map arity chs)))))
+   (create-curried (function-fmap cf g chs) (apply max (arity cf) (map arity chs)))))
 
 (defn curried-fapply
   ([cf cg]
-   (->CurriedFn (function-fapply cf cg) 1))
+   (create-curried (function-fapply cf cg) 1))
   ([cf cg chs]
-   (->CurriedFn (function-fapply cf cg chs) 1)))
+   (create-curried (function-fapply cf cg chs) 1)))
 
 (extend CurriedFn
-  Curry
-  {:arity curried-arity
-   :curry curried-curry
-   :uncurry curried-uncurry}
   Functor
   {:fmap curried-fmap}
   Applicative
@@ -406,22 +478,6 @@ run on JVM platform."
   {:op curried-op}
   Monoid
   {:id (constantly identity)})
-
-;; ====================== Functions as Curry =======================
-
-(defn fn-curry
-  ([f]
-   (curry f (min 2 ^long (apply max (arg-counts f)))))
-  ([f ^long arity]
-   (if (pos? arity)
-     (->CurriedFn f arity)
-     f)))
-
-(extend clojure.lang.IFn
-  Curry
-  {:arity (constantly 0)
-   :curry fn-curry
-   :uncurry identity})
 
 ;; ====================== Maybe Just ==============================
 
