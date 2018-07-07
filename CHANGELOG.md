@@ -1,5 +1,10 @@
 # [Fluokitten](http://fluokitten.uncomplicate.org) - notable changes between versions
 
+## 0.8.0
+
+* Optimized curried function creation performance.
+* Optimized curried function execution performance.
+
 ## 0.7.0
 
 * Support volatile.
