@@ -295,20 +295,24 @@ run on JVM platform."
 
 ;; ====================== Functions as Curry =======================
 
-(defn ^:private min-arg-count ^long [f]
+(defn ^:private min-max-arg-count [f]
   (let [methods (.getDeclaredMethods ^java.lang.Class (class f))
         n (alength methods)]
-    (loop [i 0 min-ac Long/MAX_VALUE]
+    (loop [i 0 min-ac Long/MAX_VALUE max-ac 0]
       (if (< i n)
-        (recur (inc i)
-               (min min-ac (alength (.getParameterTypes ^java.lang.reflect.Method (aget methods i)))))
-        min-ac))))
+        (let [len (alength (.getParameterTypes ^java.lang.reflect.Method (aget methods i)))]
+          (recur (inc i) (min min-ac len) (max max-ac len)))
+        [min-ac max-ac]))))
+
+(defn ^:private default-arity [f]
+  (let [[min-ac max-ac] (min-max-arg-count f)]
+    (max (long min-ac) (min 2 (long max-ac)))))
 
 (declare create-curried)
 
 (defn fn-curry
   ([f]
-   (curry f (max 2 (min-arg-count f))))
+   (curry f (default-arity f)))
   ([f ^long arity]
    (create-curried f arity)))
 
