@@ -30,6 +30,7 @@
                                  *print-length* 128}
                    :plugins [[lein-midje "3.2.1"]
                              [lein-codox "0.10.3"]]
-                   :jvm-opts ^:replace [#_"--add-opens=java.base/jdk.internal.ref=ALL-UNNAMED"]}}
+                   ;;:jvm-opts ^:replace ["--add-opens=java.base/jdk.internal.ref=ALL-UNNAMED"]
+                   }}
 
   :javac-options ["-target" "1.8" "-source" "1.8" "-Xlint:-options"])

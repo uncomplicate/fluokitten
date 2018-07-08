@@ -295,24 +295,22 @@ run on JVM platform."
 
 ;; ====================== Functions as Curry =======================
 
-(defn ^:private max-arg-count ^long [f]
+(defn ^:private min-arg-count ^long [f]
   (let [methods (.getDeclaredMethods ^java.lang.Class (class f))
         n (alength methods)]
-    (loop [i 0 max-ac 0]
+    (loop [i 0 min-ac Long/MAX_VALUE]
       (if (< i n)
         (recur (inc i)
-               (max max-ac (alength (.getParameterTypes ^java.lang.reflect.Method (aget methods i)))))
-        max-ac))))
+               (min min-ac (alength (.getParameterTypes ^java.lang.reflect.Method (aget methods i)))))
+        min-ac))))
 
 (declare create-curried)
 
 (defn fn-curry
   ([f]
-   (curry f (min 2 (max-arg-count f))))
+   (curry f (max 2 (min-arg-count f))))
   ([f ^long arity]
-   (if (< 0 arity)
-     (create-curried f arity)
-     f)))
+   (create-curried f arity)))
 
 (extend IFn
   Curry
@@ -352,9 +350,7 @@ run on JVM platform."
        (curry [this# arity#]
          (if (= ~arity arity#)
            this#
-           (if (< 0 arity# (max-arg-count ~f))
-             (create-curried ~f arity#)
-             this#)))
+           (create-curried ~f arity#)))
        (arity [this#]
          ~arity)
        (uncurry [this#]
@@ -425,7 +421,8 @@ run on JVM platform."
 
 (defn create-curried [f ^long ^long arity]
   (if (< 0 arity)
-    ((curried-constructor arity) f)))
+    ((curried-constructor arity) f)
+    f))
 
 (defmethod print-method CurriedFn
   [cf ^java.io.Writer w]

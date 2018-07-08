@@ -84,14 +84,12 @@ contain the implementations of the protocols, by default jvm.
   "
   ([f functor]
    (p/fmap functor f))
+  ([f functor & functors]
+   (p/fmap functor f functors))
   ([f]
    (if (identical? identity f)
      identity
-     (fn
-       ([functor & functors]
-        (apply fmap f functor functors)))))
-  ([f functor & functors]
-   (p/fmap functor f functors)))
+     (partial fmap f))))
 
 (defn fmap!
   "Impure, possibly destructive, version of fmap.
@@ -109,7 +107,11 @@ contain the implementations of the protocols, by default jvm.
   ([f x y z w]
    (p/fmap! x f y z w))
   ([f x y z w & ws]
-   (p/fmap! x f y z w ws)))
+   (p/fmap! x f y z w ws))
+  ([f]
+   (if (identical? identity f)
+     identity
+     (partial fmap! f))))
 
 (defn pure
   "Takes any value x and wraps it in a minimal, default, context
@@ -139,7 +141,7 @@ contain the implementations of the protocols, by default jvm.
    => 1
   "
   ([applicative]
-   #(p/pure applicative %))
+   (partial p/pure applicative))
   ([applicative x]
    (p/pure applicative x))
   ([applicative x & xs]
@@ -189,8 +191,7 @@ contain the implementations of the protocols, by default jvm.
    => 2
   "
   ([af]
-   (fn [av & avs]
-     (p/fapply av af avs)))
+   (partial fapply af))
   ([af av]
    (p/fapply av af))
   ([af av & avs]
@@ -207,8 +208,7 @@ contain the implementations of the protocols, by default jvm.
   or av is a primitive array, while af is an array of function objects.
   Be warned, Haskell people will complain mercilessly."
   ([af]
-   (fn [av & avs]
-     (p/fapply! av af avs)))
+   (partial fapply! af))
   ([af av]
    (p/fapply! av af))
   ([af av & avs]
@@ -369,8 +369,7 @@ contain the implementations of the protocols, by default jvm.
    functions that depend on it, such are return and unit.
   "
   ([monadic]
-   (fn [f & fs]
-     (apply >>= monadic f fs) ))
+   (partial >>= monadic))
   ([monadic f]
    (bind monadic f))
   ([monadic f & fs]
@@ -382,8 +381,7 @@ contain the implementations of the protocols, by default jvm.
    through >>=.
   "
   ([f]
-   (fn [g & gs]
-     (apply >=> f g gs)))
+   (partial >=> f))
   ([f g]
    (fn
      ([x]
@@ -402,8 +400,7 @@ contain the implementations of the protocols, by default jvm.
   in the reverse order than >=>.
   "
   ([f]
-   (fn [g & gs]
-     (apply <=< f g gs)))
+   (partial <=< f))
   ([f g]
    (>=> g f))
   ([f g & hs]
@@ -614,5 +611,12 @@ contain the implementations of the protocols, by default jvm.
   ([f ^long arity]
    (p/curry f arity)))
 
-(defn arity [f]
-  (p/arity f))
+(defn arity
+  "The number of parameters that this function curries up to."
+  [cf]
+  (p/arity cf))
+
+(defn uncurry
+  "The original function that has been curried."
+  [cf]
+  (p/uncurry cf))
