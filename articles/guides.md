@@ -30,6 +30,8 @@ This guide explains in detail how various Clojure core artifacts (collections, f
 
 ### [Fast Map and Reduce for Primitive Vectors](https://neanderthal.uncomplicate.org/articles/fast-map-and-reduce-for-primitive-vectors.html)
 
+### [Fast Function Currying in Clojure (Without Macros)](https://dragan.rocks/articles/18/Fluokitten-080-Fast-function-currying-in-Clojure)
+
 
 ### [Implementing Fluokitten Protocols](/articles/implementing_protocols.html)
 
