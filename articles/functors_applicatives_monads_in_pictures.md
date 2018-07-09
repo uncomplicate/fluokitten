@@ -99,7 +99,7 @@ And, let's see a slightly more complex box - Clojure vector:
 Functions are functors, too:
 
 ```clojure
-(def foo (fmap (partial + 3) (partial + 2))
+(def foo (fmap (partial + 3) (partial + 2)))
 
 (foo 10)
 ;=> 15)
@@ -110,7 +110,7 @@ Functions are functors, too:
 A slightly more powerful kind of box is a box that can accept function(s) to be applied not only bare, but also boxed. Every box that can be applicative can also be a functor.
 
 ```clojure
-(def add3 (partial + 3)
+(def add3 (partial + 3))
 
 (just add3)
 ;=> (just add3)

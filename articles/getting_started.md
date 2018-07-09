@@ -132,7 +132,7 @@ The core monad function is `bind`, and in the case of vector, it is trivially us
 ;=> [2 0 3 1 4 2]
 ```
 
-If the function produces minimal context, it does even need to know which context it is. The return function is going to create the right context for the value, in this case atom.
+If the function produces minimal context, it does not need to know which context it is. The return function is going to create the right context for the value, in this case atom.
 
 ```clojure
 (bind (atom 1) (comp return inc))
@@ -183,7 +183,7 @@ With more than one value though, fold aggregates. If the data are subject to a m
 ;=> 31
 ```
 
-Fold is similar to Clojure's reduce, but more powerful. It can work without explicitly supplied function, and it can acept multiple foldables. If you need to transform entries before folding, there is the `foldmap` function:
+Fold is similar to Clojure's reduce, but more powerful. It can work without explicitly supplied function, and it can accept multiple foldables. If you need to transform entries before folding, there is the `foldmap` function:
 
 ``` clojure
 
