@@ -99,7 +99,7 @@ And, let's see a slightly more complex box - Clojure vector:
 Functions are functors, too:
 
 ```clojure
-(def foo (fmap (partial + 3) (partial + 2))
+(def foo (fmap (partial + 3) (partial + 2)))
 
 (foo 10)
 ;=> 15)
