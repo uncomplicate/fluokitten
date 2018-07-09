@@ -357,7 +357,7 @@ Map entries do not care about the keys when feeding the values to the function. 
 => {[:a :sum] 8}
 ```
 
-The `join` function flattens one nesting level of the the data structure if it contains nested data structures of the same type, in a similar way as clojure's `flatten` function (but only one level deep), for all collections except maps. For maps, it have to take account of the nesting of the map's keys as parts of the context, by creating a vector of all the keys that were flattened and using it as the key for the value of the flattened entry, as shown in the following examples:
+The `join` function flattens one nesting level of the the data structure if it contains nested data structures of the same type, in a similar way as clojure's `flatten` function (but only one level deep), for all collections except maps. For maps, it has to take into account the nesting of the map's keys as part of the context. It creates a vector of all the keys that were flattened and uses that as the key for the value of the flattened entry. This is shown in the following examples:
 
 ```clojure
 (join [[1 2] [3 [4 5] 6]])
