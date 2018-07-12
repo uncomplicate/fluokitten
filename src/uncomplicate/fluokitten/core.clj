@@ -375,10 +375,19 @@ contain the implementations of the protocols, by default jvm.
   ([monadic f & fs]
    (reduce bind monadic (cons f fs))))
 
+(defn =<<
+  "Flipped >>=. Performs a right-associative bind on its arguments."
+  ([f]
+   (partial =<< f))
+  ([f monadic]
+   (bind monadic f))
+  ([f g & args]
+   (apply >>= (reverse (cons f (cons g args))))))
+
 (defn >=>
   "Composes monadic functions from left to right, in the reverse
    order from comp. The composed functions threads the calls
-   through >>=.
+   through >>=. Pronounced 'fish'.
   "
   ([f]
    (partial >=> f))
@@ -404,7 +413,7 @@ contain the implementations of the protocols, by default jvm.
   ([f g]
    (>=> g f))
   ([f g & hs]
-   (apply >=> (reverse (into [f g] hs)))))
+   (apply >=> (reverse (cons f (cons g hs))))))
 
 (defmacro mdo
   "A syntactic sugar for gluing together chained bind calls.
@@ -454,6 +463,26 @@ contain the implementations of the protocols, by default jvm.
                  (mdo ~(subvec bindings 2) ~body))))
       body)
     (throw (IllegalArgumentException. "bindings has to be a vector with even number of elements."))))
+
+(defn extract
+  "Dual of pure. Extracts the first available value out of context.
+
+   ---- Example 1: extracting a number from a vector context.
+   (extract [1 2 3])
+   => 1
+  "
+  ([wa]
+   (p/extract wa)))
+
+(defn unbind
+  "
+  "
+  ([f]
+   (partial unbind f))
+  ([f wa]
+   (p/unbind wa f))
+  ([f wa was]
+   (p/unbind wa f was)))
 
 (defn fold
   "Folds all the contents of a foldable context by either

@@ -145,14 +145,14 @@ code. The client code should call the generic functions from Fluokitten core."
     "An impure version of fapply."))
 
 (defprotocol Monad
-  "Monad is an abstraction for a context (box, container,
+  "Monad is an abstraction of a context (box, container,
    computation) along with the ability to apply a function
    that accepts the value without the context and produces
    the result in a context. The resulting context may be
    different than the starting context. While the main idea
    with functors and applicatives is modifying the values
    inside the context, monad is more oriented towards modifying
-   the context.  Every Monad should also implement
+   the context. Every Monad should also implement
    Applicative and Functor protocols, although this can not be
    automatically forced by Clojure compiler.
 
@@ -177,7 +177,7 @@ code. The client code should call the generic functions from Fluokitten core."
   "
   (bind [mv g] [mv g mvs]
     "Applies the function g to the value(s) inside mv's context.
-     Function g produces the result inside with the context,
+     Function g produces the result inside altered context,
      in contrast to fmap where function g is expect to produce
      normal values. If more monadic values are supplied in a
      sequence mvs, uses them as arguments for a vararg g.
@@ -200,6 +200,24 @@ code. The client code should call the generic functions from Fluokitten core."
     "Impure variant of bind.")
   (join! [mv]
     "Impure variant of join."))
+
+(defprotocol Comonad
+  "Categorical dual of Monad. It is like Monad, but with all function arrows reversed.
+  While monads put things in context, comonads extract things from context.
+
+  Everything in Comonad is a dual (reverse) of Monad.
+  extract is a dual of pure, and unbind of =<< (reversed bind).
+  "
+  (unbind [wa g] [wa g was]
+    "Applies the function g to the value(s) inside wa's context.
+     Function g takes monadic values inside the context w, and produces the result without context.
+     If more comonadic values are supplied in a, uses them as arguments for a vararg g.
+     This method is intended to be used by fluokitten core's extend, not directly by clients.
+     The third argument, was, contains a sequence of all additional arguments, normally
+     supplied by core unbind's varargs (protocol methods do not support varargs).
+    ")
+  (extract [wa]
+    "Takes the first available value out of context. Dual of pure."))
 
 (defprotocol Magma
   "Magma is an abstraction of elements that have an operation op,
