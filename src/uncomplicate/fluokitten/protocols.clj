@@ -313,5 +313,5 @@ code. The client code should call the generic functions from Fluokitten core."
      a summary, applies the function g to transform it
      (to a Monoid if needed)."))
 
-(defprotocol Maybe
+(defprotocol Maybe;;TODO remove
   (value [m]))

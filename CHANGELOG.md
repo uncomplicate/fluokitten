@@ -4,6 +4,7 @@
 
 * Added Comonad protocol
 * Added extract, unbind, =>>, and <<= Comonad methods to core.
+* Tranducers support.
 
 ## 0.8.0
 

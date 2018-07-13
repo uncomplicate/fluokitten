@@ -45,11 +45,15 @@ run on JVM platform."
 
 ;;======== Clojure JVM-specific Extensions =====================
 
+(extend-seq clojure.lang.Sequential)
+
 (extend-collection clojure.lang.IPersistentCollection)
 
 (extend-seq clojure.lang.ASeq)
 
 (extend-lazyseq clojure.lang.LazySeq)
+
+(extend-eduction clojure.core.Eduction)
 
 (extend-vector clojure.lang.APersistentVector)
 

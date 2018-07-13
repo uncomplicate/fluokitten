@@ -824,7 +824,6 @@
          ((bind + (comp return (partial + 3))) 3 4 5) => 15
          ((bind c+ (comp return inc)) 3 4) => 8
          ((bind (pure identity 5) (comp return inc)) 3 1) => 6
-
          ((bind (bind (c* 3) (comp return inc)) (comp return (c+ 17))) 7)
          ((bind (bind (c* 3) c*) c+) 7) => 154)
 

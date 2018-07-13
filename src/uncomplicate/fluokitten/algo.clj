@@ -107,16 +107,12 @@
 
 (defn reducible-fmap
   ([c g]
-   (into (empty c)
-         (r/map g c)))
+   (into (empty c) (r/map g c)))
   ([c g cs]
-   (into (empty c)
-         (apply map g c cs))))
+   (into (empty c) (apply map g c cs))))
 
 (defn ^:private group-entries-xf [k]
-  (comp (map #(find % k))
-        (remove nil?)
-        (map val)))
+  (comp (map #(find % k)) (remove nil?) (map val)))
 
 (defn ^:private map-fmap-xf
   ([g ms]
@@ -129,9 +125,7 @@
    (into (empty m) (r/map (fn [[k v]] [k (g v)]) m)))
   ([m g ms]
    (let [ms (cons m ms)]
-     (into (empty m)
-           (map-fmap-xf g ms)
-           ms))))
+     (into (empty m) (map-fmap-xf g ms) ms))))
 
 (defn list-fmap
   ([l g]
@@ -159,22 +153,29 @@
   ([c g ss]
    (into (empty c) (apply map g c ss))))
 
+(defn eduction-fmap
+  ([e g]
+   (eduction (map g) e))
+  ([e g ss]
+   (eduction (map g) e)))
+
 ;;================ Applicative implementations ==================
 ;;-------------- fapply implementations ----------------
 
-(defn collreduce-fapply [crv crg]
-  (r/mapcat #(r/map % crv) crg))
+(defn collreduce-fapply
+  ([crv crg]
+   (r/mapcat (partial fmap crv) crg))
+  ([cv cg cvs]
+   (r/mapcat #(fmap cv % cvs) cg)))
 
 (defn collreduce-pure [_ v]
   (r/map identity [v]))
 
 (defn reducible-fapply
   ([cv cg]
-   (into (empty cv)
-         (collreduce-fapply cv cg)))
+   (into (empty cv) (collreduce-fapply cv cg)))
   ([cv cg cvs]
-   (into (empty cv)
-         (r/mapcat #(apply map % cv cvs) cg))))
+   (into (empty cv) (collreduce-fapply cv cg cvs))))
 
 (defn map-fapply
   ([mv mg]
@@ -212,30 +213,34 @@
 (defn list-fapply
   ([cv cg]
    (with-meta
-     (apply list (mapcat #(map % cv) cg))
+     (apply list (mapcat (partial fmap cv) cg))
      (meta cv)))
   ([cv cg cvs]
    (with-meta
-     (apply list (mapcat #(apply map % cv cvs) cg))
+     (apply list (mapcat #(fmap cv % cvs) cg))
      (meta cv))))
 
 (defn seq-fapply
   ([cv cg]
    (with-meta
-     (mapcat #(map % cv) cg)
+     (mapcat (partial fmap cv) cg)
      (meta cv)))
   ([cv cg cvs]
    (with-meta
-     (mapcat #(apply map % cv cvs) cg)
+     (mapcat #(fmap cv % cvs) cg)
      (meta cv))))
 
 (defn coll-fapply
   ([cv cg]
-   (into (empty cv)
-         (mapcat #(map % cv) cg)))
+   (into (empty cv) (mapcat (partial fmap cv) cg)))
   ([cv cg cvs]
-   (into (empty cv)
-         (mapcat #(apply map % cv cvs) cg))))
+   (into (empty cv) (mapcat #(fmap cv % cvs) cg))))
+
+(defn eduction-fapply
+  ([ev eg]
+   (eduction (mapcat (partial fmap ev)) eg))
+  ([ev eg evs]
+   (eduction (mapcat #(fmap ev % evs)) eg)))
 
 (defn coll-pure
   ([cv v]
@@ -248,6 +253,12 @@
    (cons v nil))
   ([cv v vs]
    (cons v vs)))
+
+(defn eduction-pure
+  ([e v]
+   (eduction [v]))
+  ([e v vs]
+   (eduction (cons v vs))))
 
 (defn map-pure
   ([m v]
@@ -304,35 +315,37 @@
   ([c g ss]
    (into (empty c) (apply mapcat g c ss))))
 
-(defn seq-join [c]
-  (let [o (op c)]
-    (with-meta
-      (reduce (fn [c e] (if (coll? e) (o c e) (conj c e))) [] c)
-      (meta c))))
-
 (defn coll-join [c]
-  (into (empty c) (seq-join c)))
+  (with-meta
+    (persistent! (reduce (fn [acc e] (if (coll? e)
+                                       (reduce conj! acc e)
+                                       (conj! acc e)))
+                         (transient (empty c)) c))
+    (meta c)))
+
+(defn seq-join [s]
+  (let [o (op s)]
+    (with-meta
+      (reduce (fn [acc e]
+                (if (sequential? e)
+                  (o acc e)
+                  (cons acc e)))
+              (id s) s)
+      (meta s))))
 
 (defn list-join [c]
   (with-meta
     (apply list (seq-join c))
     (meta c)))
 
+(defn eduction-join [e]
+  (eduction (mapcat #(if (sequential? %) % [%])) e))
+
 (defn collreduce-join [c]
-  (let [o (op c)]
-    (r/fold (fn
-              ([] [])
-              ([x y]
-               (if (coll? x)
-                 (if (coll? y)
-                   (o x y)
-                   (conj x y))
-                 [x y])))
-            c)))
+  (r/mapcat #(if (coll? %) % [%]) c))
 
 (defn reducible-join [c]
-  (into (empty c)
-        (collreduce-join c)))
+  (into (empty c) (collreduce-join c)))
 
 (defn list-bind
   ([c g]
@@ -353,6 +366,12 @@
    (with-meta
      (apply mapcat g c ss)
      (meta c))))
+
+(defn eduction-bind
+  ([e g]
+   (eduction (mapcat g) e))
+  ([e g ss]
+   (eduction (apply mapcat g e ss))))
 
 ;;================== Comonad Implementations ======================
 
@@ -592,6 +611,22 @@
       :unbind seq-unbind}
      Magma
      {:op (constantly (seq-op* (lazy-seq)))}))
+
+(defmacro extend-eduction [t]
+  `(extend ~t
+     Functor
+     {:fmap eduction-fmap}
+     Applicative
+     {:pure eduction-pure
+      :fapply eduction-fapply}
+     Monad
+     {:join eduction-join
+      :bind eduction-bind}
+     Comonad
+     {:extract first
+      :unbind default-unbind}
+     Magma
+     {:op (constantly (seq-op* (eduction)))}))
 
 (defmacro extend-set [t]
   `(extend ~t
@@ -883,8 +918,7 @@
       (apply (apply g x xs) (apply f x xs) (map #(apply % x xs) hs))))))
 
 (defn function-pure [f x]
-  (fn [& _]
-    x))
+  (constantly x))
 
 (defn function-join [f]
   (fn
