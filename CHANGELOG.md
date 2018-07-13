@@ -3,8 +3,9 @@
 ## 0.9.0
 
 * Added Comonad protocol
+* Added PseudoComonad protocol
 * Added extract, unbind, =>>, and <<= Comonad methods to core.
-* Tranducers support.
+* Support for transducers and eduction.
 
 ## 0.8.0
 

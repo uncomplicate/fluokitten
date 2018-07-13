@@ -155,6 +155,15 @@
 
 (fmap-keeps-type + (lazy-seq (list 8 9 -2)) (lazy-seq (list 18 5 -92)))
 
+;;--------------- Eduction ---------------
+
+(functor-law2 inc (partial * 100) (eduction [78 -3 5]))
+
+(functor-law2 inc (partial * 100) (eduction (list 78 -3 5)) (eduction (list 88 0 -4)))
+
+(fmap-keeps-type inc (eduction (list 8 9 -2)))
+
+(fmap-keeps-type + (eduction (list 8 9 -2)) (eduction (list 18 5 -92)))
 
 ;;--------------- CollReduce ---------------
 
@@ -419,6 +428,32 @@
 
 (fapply-keeps-type + (lazy-seq (list 3 -4 9)) (lazy-seq (list -5 -5 -5)))
 
+;;-------------- Eduction ----------------
+
+(applicative-law1 inc (eduction (list 3 9 0)))
+
+(applicative-law1 + (eduction (list 3 9 0)) (eduction (list -4 -5)))
+
+(applicative-law2-identity (eduction (list 3 -79 29)))
+
+(applicative-law3-composition (eduction (list inc)) (eduction (list (partial * 10)))
+                              (eduction (list 3 -1 0)))
+
+(applicative-law3-composition (eduction (list inc)) (eduction (list (partial * 10)))
+                              (eduction (list 3 -1 0)) (eduction (list 9)))
+
+(applicative-law4-homomorphism (eduction (list 3)) inc 3)
+
+(applicative-law4-homomorphism (eduction (list 3)) + 3 -2)
+
+(applicative-law5-interchange (eduction (list 3)) inc 3)
+
+(applicative-law5-interchange (eduction (list 3)) + 3 -2 -3)
+
+(fapply-keeps-type inc (eduction (list 3 -4 9)))
+
+(fapply-keeps-type + (lazy-seq (list 3 -4 9)) (lazy-seq (list -5 -5 -5)))
+
 ;;-------------- Set ----------------
 
 (applicative-law1 inc #{4 2 -44})
@@ -649,6 +684,8 @@
   (facts "Interchange applicative law."
          ((fapply c+ (pure curried 7)) 9) => ((fapply (pure curried #(% 7)) c+) 9)))
 
+;; ================ Monad =============================================================
+
 ;;--------------- Vector --------------------------------
 
 (monad-law1-left-identity [] (comp vector inc) 1)
@@ -700,6 +737,16 @@
 (monad-law2-right-identity (lazy-seq (list 3 2 -33)))
 
 (monad-law3-associativity (comp list inc) (comp list (partial * 10)) (lazy-seq (list 3 -3 -88)))
+
+;;--------------- Eduction -----------------------------------
+
+(monad-law1-left-identity (eduction (list)) (comp list inc) 3)
+
+(monad-law1-left-identity (eduction (list)) (comp list +) 3 49 9)
+
+(monad-law2-right-identity (eduction (list 3 2 -33)))
+
+(monad-law3-associativity (comp list inc) (comp list (partial * 10)) (eduction (list 3 -3 -88)))
 
 ;;--------------- Seq -----------------------------------
 
@@ -843,7 +890,12 @@
 
          ((bind (bind (c* 3) c*) c+) 2 3 4) => ((bind (c* 3) (fn [x] (bind (c* x) c+))) 2 3 4)))
 
+;; ====================== Comonads =============================================================
+
+
+
 ;;============= Magmas, Semigroups and Monoids =======================
+
 ;;----------------------- Vector --------------------------
 
 (magma-op-keeps-type [1 2] [3 4])
@@ -893,6 +945,20 @@
                             (lazy-seq (list 5 6)) (lazy-seq (list 7 8)))
 
 (monoid-identity-law (lazy-seq (list 1 2)))
+
+;;----------------------- Eduction --------------------------
+
+(magma-op-keeps-type (eduction (list 1 2)) (eduction (list 3 4)))
+
+(magma-op-keeps-type (eduction (list 1 2)) (eduction (list 3 4))
+                     (eduction (list 5 6)) (eduction (list 7 8)))
+
+(semigroup-op-associativity (eduction (list 1 2)) (eduction (list 3 4)))
+
+(semigroup-op-associativity (eduction (list 1 2)) (eduction (list 3 4))
+                            (eduction (list 5 6)) (eduction (list 7 8)))
+
+(monoid-identity-law (eduction (list 1 2)))
 
 ;;----------------------- Seq --------------------------
 
@@ -1040,7 +1106,7 @@
 
   (monoid-identity-law c+))
 
-;;----------------- monoid fold -------------------------
+;;----------------- Monoid fold -------------------------
 
 (facts "Monoids are used by collection fold."
        (fold [[1] [2]]) => [1 2]
@@ -1067,6 +1133,7 @@
        (fold (r/map inc [1 2 3 4 5])) => 20
        (fold (list 1 2 3 4 5)) => 15
        (fold (lazy-seq (list 1 2 3 4 5))) => 15
+       (fold (eduction (list 1 2 3 4 5))) => 15
        (fold (seq (list 1 2 3 4 5))) => 15
        (fold {:a 1 :b 2 :c 3}) => 6
        (fold #{1 2 3 4 5}) => 15
@@ -1084,6 +1151,7 @@
        (foldmap inc (r/map inc [1 2 3 4 5])) => 25
        (foldmap inc (list 1 2 3 4 5)) => 20
        (foldmap inc (lazy-seq (list 1 2 3 4 5))) => 20
+       (foldmap inc (eduction (list 1 2 3 4 5))) => 20
        (foldmap inc (seq (list 1 2 3 4 5))) => 20
        (foldmap inc {:a 1 :b 2 :c 3}) => 9
        (foldmap inc #{1 2 3 4 5}) => 20

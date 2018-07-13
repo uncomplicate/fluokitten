@@ -30,7 +30,7 @@ beyond what the compiler can assert."
      (let [e (deref expected)
            a (deref actual)]
        (check-eq e a))
-     (or (.isArray (class expected)) (reducible? expected))
+     (or (.isArray (class expected)) (reducible? expected) (instance? clojure.core.Eduction expected))
      (= (into [] expected) (into [] actual))
      :else (= expected actual))))
 
@@ -165,8 +165,7 @@ beyond what the compiler can assert."
   "Generates a test that checks if the operation op is closed on magma x."
   [x y & ys]
   `(fact "Magma - op should keep the type."
-         (type (op ~x ~y ~@ys))
-         => #(isa? % (type ~x))))
+         (type (op ~x ~y ~@ys)) => #(isa? % (type ~x))))
 
 (defmacro semigroup-op-associativity
   "Generates a test that checks if x and op form a semigroup,

@@ -163,7 +163,7 @@
   ([e g]
    (eduction (map g) e))
   ([e g ss]
-   (eduction (map g) e)))
+   (eduction (seq-fmap e g ss))))
 
 ;;================ Applicative implementations ==================
 ;;-------------- fapply implementations ----------------
@@ -449,6 +449,20 @@
     ([x y z w & ws]
      (apply concat x y z w ws))))
 
+(defn eduction-op
+  ([]
+   (eduction))
+  ([x]
+   x)
+  ([x y]
+   (eduction cat [x y]))
+  ([x y z]
+   (eduction cat [x y z]))
+  ([x y z w]
+   (eduction cat [x y z w]))
+  ([x y z w & ws]
+   (eduction cat (into [x y z w] ws))))
+
 (defn list-op
   ([]
    (list))
@@ -515,6 +529,21 @@
        (recur (f acc (apply (op (first cx)) (first cx) (first cy) (first cz) (first cw) (map first cws)))
               (next cx) (next cy) (next cz) (next cw) (map next cws))
        acc))))
+
+(defn eduction-foldmap
+  ([c g]
+   (if-let [e (first c)]
+     (transduce (map g) (op (g e)) c)))
+  ([c g f init]
+   (transduce (map g) f init c))
+  ([cx g f init cy]
+   (collection-foldmap cx g f init cy))
+  ([cx g f init cy cz]
+   (collection-foldmap cx g f init cy cz))
+  ([cx g f init cy cz cw]
+   (collection-foldmap cx g f init cy cz cz cw))
+  ([cx g f init cy cz cw cws]
+   (collection-foldmap cx g f init cy cz cz cw cws)))
 
 (defn hashmap-fold
   ([m]
@@ -631,8 +660,13 @@
      Comonad
      {:extract first
       :unbind default-unbind}
+     Foldable
+     {:fold collection-fold
+      :foldmap eduction-foldmap}
      Magma
-     {:op (constantly (seq-op* (eduction)))}))
+     {:op (constantly eduction-op)}
+     Monoid
+     {:id (constantly (eduction))}))
 
 (defmacro extend-set [t]
   `(extend ~t
