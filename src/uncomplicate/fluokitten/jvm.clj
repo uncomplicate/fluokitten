@@ -63,7 +63,7 @@ run on JVM platform."
 
 (extend-set clojure.lang.APersistentSet)
 
-(extend-map clojure.lang.APersistentMap)
+(extend-hashmap clojure.lang.APersistentMap)
 
 (extend-mapentry clojure.lang.MapEntry)
 
@@ -71,13 +71,13 @@ run on JVM platform."
 
 (extend-function clojure.lang.AFunction)
 
+(extend-ideref clojure.lang.IDeref)
+
 (extend-atom clojure.lang.Atom)
 
 (extend-ref clojure.lang.Ref)
 
 (extend-volatile clojure.lang.Volatile)
-
-(extend-ideref clojure.lang.IDeref)
 
 ;; ==================== Java Arrays =========================
 
@@ -476,6 +476,9 @@ run on JVM platform."
   Monad
   {:join function-join
    :bind function-bind}
+  Comonad
+  {:extract function-extract
+   :unbind default-unbind}
   Foldable
   {:fold function-fold
    :foldmap default-foldmap}

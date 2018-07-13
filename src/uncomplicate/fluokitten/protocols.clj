@@ -18,11 +18,6 @@ code. The client code should call the generic functions from Fluokitten core."
       :author "Dragan Djuric"}
     uncomplicate.fluokitten.protocols)
 
-(defprotocol Curry
-  (arity [f])
-  (curry [f] [f arity])
-  (uncurry [f]))
-
 (defprotocol Functor
   "Functor is an abstraction for a context (box, container,
    computation) along with the abiliity to apply a function
@@ -220,6 +215,12 @@ code. The client code should call the generic functions from Fluokitten core."
     "Takes the first available value out of context. Dual of pure."))
 
 (defprotocol PseudoComonad
+  "Categorical dual of PseudoMonad.
+  "
+  (unbind! [wa g] [wa g was]
+    "Unpure variant of unbind."))
+
+(defprotocol PseudoComonad
   "Dirty variant of monad that may be destructively changed during the unbind! "
   (unbind! [wa g] [wa g was]
     "Impure variant of unbind."))
@@ -313,5 +314,10 @@ code. The client code should call the generic functions from Fluokitten core."
      a summary, applies the function g to transform it
      (to a Monoid if needed)."))
 
-(defprotocol Maybe;;TODO remove
+(defprotocol Curry
+  (arity [f])
+  (curry [f] [f arity])
+  (uncurry [f]))
+
+(defprotocol Maybe
   (value [m]))

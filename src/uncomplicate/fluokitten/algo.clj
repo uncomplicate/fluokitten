@@ -36,10 +36,16 @@
    (join (fmap m g ms))))
 
 (defn default-unbind
-  ([w g]
-   (pure w (g w)))
-  ([w g ws]
-   (pure w (apply g w ws))))
+  ([wa g]
+   (fmap wa (comp g (partial pure wa))))
+  ([wa g was]
+   (fmap wa (fn [a as] (apply g (pure wa a) (map (partial pure wa) as))) was)))
+
+(defn default-unbind!
+  ([wa g]
+   (fmap! wa (comp g (partial pure wa))))
+  ([wa g was]
+   (fmap! wa (fn [a as] (apply g (pure wa a) (map (partial pure wa) as))) was)))
 
 ;; ==================== Object =====================
 
@@ -91,7 +97,7 @@
    :bind object-fmap}
   Comonad
   {:extract identity
-   :unbind object-fmap}
+   :unbind default-unbind}
   Foldable
   {:fold object-fold
    :foldmap object-foldmap})
@@ -114,18 +120,18 @@
 (defn ^:private group-entries-xf [k]
   (comp (map #(find % k)) (remove nil?) (map val)))
 
-(defn ^:private map-fmap-xf
+(defn ^:private hashmap-fmap-xf
   ([g ms]
    (comp (mapcat keys)
          (dedupe)
          (map (fn [k] [k (apply g (into [] (group-entries-xf k) ms))])))))
 
-(defn map-fmap
+(defn hashmap-fmap
   ([m g]
    (into (empty m) (r/map (fn [[k v]] [k (g v)]) m)))
   ([m g ms]
    (let [ms (cons m ms)]
-     (into (empty m) (map-fmap-xf g ms) ms))))
+     (into (empty m) (hashmap-fmap-xf g ms) ms))))
 
 (defn list-fmap
   ([l g]
@@ -177,7 +183,7 @@
   ([cv cg cvs]
    (into (empty cv) (collreduce-fapply cv cg cvs))))
 
-(defn map-fapply
+(defn hashmap-fapply
   ([mv mg]
    (if-let [f (mg nil)]
      (into (empty mv)
@@ -260,7 +266,7 @@
   ([e v vs]
    (eduction (cons v vs))))
 
-(defn map-pure
+(defn hashmap-pure
   ([m v]
    (coll-pure m [nil v]))
   ([m v vs]
@@ -293,10 +299,10 @@
                             x)
                        [e]))]
 
-  (defn map-join [m]
+  (defn hashmap-join [m]
     (into (empty m) (r/mapcat flatten-keys m)))
 
-  (defn map-bind
+  (defn hashmap-bind
     ([m g]
      (into (empty m)
            (comp (map (fn [[k v]] [k (g v)]))
@@ -305,7 +311,7 @@
     ([m g ms]
      (let [ms (cons m ms)]
        (into (empty m)
-             (comp (map-fmap-xf g ms)
+             (comp (hashmap-fmap-xf g ms)
                    (mapcat flatten-keys))
              ms)))))
 
@@ -510,7 +516,7 @@
               (next cx) (next cy) (next cz) (next cw) (map next cws))
        acc))))
 
-(defn map-fold
+(defn hashmap-fold
   ([m]
    (collection-fold (vals m)))
   ([m f init]
@@ -641,18 +647,18 @@
      Magma
      {:op (constantly (coll-op* #{}))}))
 
-(defmacro extend-map [t]
+(defmacro extend-hashmap [t]
   `(extend ~t
      Functor
-     {:fmap map-fmap}
+     {:fmap hashmap-fmap}
      Applicative
-     {:pure map-pure
-      :fapply map-fapply}
+     {:pure hashmap-pure
+      :fapply hashmap-fapply}
      Monad
-     {:join map-join
-      :bind map-bind}
+     {:join hashmap-join
+      :bind hashmap-bind}
      Foldable
-     {:fold map-fold
+     {:fold hashmap-fold
       :foldmap default-foldmap}
      Magma
      {:op (constantly (coll-op* {}))}))
@@ -938,6 +944,9 @@
   ([f g hs]
    (join (fmap f g hs))))
 
+(defn function-extract [f]
+  (f))
+
 (defn function-fold
   ([fx]
    (fx))
@@ -970,6 +979,9 @@
      Monad
      {:join function-join
       :bind function-bind}
+     Comonad
+     {:extract function-extract
+      :unbind default-unbind}
      Foldable
      {:fold function-fold
       :foldmap default-foldmap}
@@ -1006,7 +1018,7 @@
 
 (defn reference-join [r]
   (if (deref? @r)
-    (fmap r deref)
+    (fmap! r deref)
     r))
 
 (defn reference-bind!
@@ -1128,85 +1140,12 @@
 
 ;;------------------ Extensions --------------------
 
-(defmacro extend-atom [t]
-  `(extend ~t
-     Functor
-     {:fmap reference-fmap}
-     PseudoFunctor
-     {:fmap! atom-fmap!}
-     Applicative
-     {:pure atom-pure
-      :fapply reference-fapply}
-     PseudoApplicative
-     {:fapply! reference-fapply!}
-     Monad
-     {:join reference-join
-      :bind reference-bind}
-     PseudoMonad
-     {:join! reference-join!
-      :bind! reference-bind!}
-     Foldable
-     {:fold reference-fold
-      :foldmap reference-foldmap}
-     Magma
-     {:op reference-op}
-     Monoid
-     {:id atom-id}))
-
-(defmacro extend-ref [t]
-  `(extend ~t
-     Functor
-     {:fmap reference-fmap}
-     PseudoFunctor
-     {:fmap! ref-fmap!}
-     Applicative
-     {:pure ref-pure
-      :fapply reference-fapply}
-     PseudoApplicative
-     {:fapply! reference-fapply!}
-     Monad
-     {:join reference-join
-      :bind reference-bind}
-     PseudoMonad
-     {:join! reference-join!
-      :bind! reference-bind!}
-     Foldable
-     {:fold reference-fold
-      :foldmap reference-foldmap}
-     Magma
-     {:op reference-op}
-     Monoid
-     {:id ref-id}))
-
-(defmacro extend-volatile [t]
-  `(extend ~t
-     Functor
-     {:fmap reference-fmap}
-     PseudoFunctor
-     {:fmap! volatile-fmap!}
-     Applicative
-     {:pure volatile-pure
-      :fapply reference-fapply}
-     PseudoApplicative
-     {:fapply! reference-fapply!}
-     Monad
-     {:join reference-join
-      :bind reference-bind}
-     PseudoMonad
-     {:join! reference-join!
-      :bind! reference-bind!}
-     Foldable
-     {:fold reference-fold
-      :foldmap reference-foldmap}
-     Magma
-     {:op reference-op}
-     Monoid
-     {:id volatile-id}))
-
 (defmacro extend-ideref [t]
   `(extend ~t
      Functor
      {:fmap reference-fmap}
+     Applicative
+     {:fapply reference-fapply}
      PseudoApplicative
      {:fapply! reference-fapply!}
      Monad
@@ -1215,11 +1154,46 @@
      PseudoMonad
      {:join! reference-join!
       :bind! reference-bind!}
+     Comonad
+     {:extract deref
+      :unbind default-unbind}
+     PseudoComonad
+     {:unbind! default-unbind!}
      Foldable
      {:fold reference-fold
       :foldmap reference-foldmap}
      Magma
      {:op reference-op}))
+
+(defmacro extend-atom [t]
+  `(extend ~t
+     PseudoFunctor
+     {:fmap! atom-fmap!}
+     Applicative
+     {:pure atom-pure
+      :fapply reference-fapply}
+     Monoid
+     {:id atom-id}))
+
+(defmacro extend-ref [t]
+  `(extend ~t
+     PseudoFunctor
+     {:fmap! ref-fmap!}
+     Applicative
+     {:pure ref-pure
+      :fapply reference-fapply}
+     Monoid
+     {:id ref-id}))
+
+(defmacro extend-volatile [t]
+  `(extend ~t
+     PseudoFunctor
+     {:fmap! volatile-fmap!}
+     Applicative
+     {:pure volatile-pure
+      :fapply reference-fapply}
+     Monoid
+     {:id volatile-id}))
 
 ;;================== Maybe  ===========================
 
@@ -1303,6 +1277,9 @@
      Monad
      {:join just-join
       :bind just-bind}
+     Comonad
+     {:extract value
+      :unbind default-unbind}
      Foldable
      {:fold just-fold
       :foldmap just-foldmap}
