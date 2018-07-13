@@ -387,6 +387,9 @@
   ([s g ss]
    (cons (apply g s ss) (lazy-seq (seq-unbind (rest s) g (map rest ss))))))
 
+(defn collreduce-extract [c]
+  (reduce + (r/take 1 c)))
+
 ;;======== Algebraic structures implementations ==================
 
 (defn coll-op* [zero]
@@ -678,6 +681,9 @@
      Monad
      {:join coll-join
       :bind reducible-bind}
+     Comonad
+     {:extract first
+      :unbind default-unbind}
      Magma
      {:op (constantly (coll-op* #{}))}))
 
@@ -691,6 +697,9 @@
      Monad
      {:join hashmap-join
       :bind hashmap-bind}
+     Comonad
+     {:extract (comp val first)
+      :unbind default-unbind}
      Foldable
      {:fold hashmap-fold
       :foldmap default-foldmap}
@@ -706,6 +715,9 @@
   Monad
   {:join collreduce-join
    :bind collreduce-bind}
+  Comonad
+  {:extract collreduce-extract
+   :unbind default-unbind}
   Magma
   {:op (constantly collreduce-op)})
 
@@ -804,6 +816,9 @@
      Monad
      {:join mapentry-join
       :bind default-bind}
+     Comonad
+     {:extract val
+      :unbind default-unbind}
      Magma
      {:op mapentry-op}
      Monoid

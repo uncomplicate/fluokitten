@@ -30,7 +30,9 @@ beyond what the compiler can assert."
      (let [e (deref expected)
            a (deref actual)]
        (check-eq e a))
-     (or (.isArray (class expected)) (reducible? expected) (instance? clojure.core.Eduction expected))
+     (or (.isArray (class expected)) (.isArray (class actual))
+         (reducible? expected) (reducible? actual)
+         (instance? clojure.core.Eduction expected) (instance? clojure.core.Eduction actual))
      (= (into [] expected) (into [] actual))
      :else (= expected actual))))
 
@@ -160,7 +162,14 @@ beyond what the compiler can assert."
                             (fn [& xs#]
                               (bind (apply ~f xs#) ~g))))))
 
+;; ============ Comonad ==============================================
+
+(defmacro extract-is-dual-of-pure [m v]
+  `(fact "Extract must be dual of pure."
+         (extract (pure ~m ~v)) => ~v))
+
 ;;============= Magmas, Semigroups and Monoids =======================
+
 (defmacro magma-op-keeps-type
   "Generates a test that checks if the operation op is closed on magma x."
   [x y & ys]

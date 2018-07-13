@@ -828,7 +828,7 @@
 
 (monad-law3-associativity (comp atom inc) (comp atom (partial * 10)) (atom 9))
 
-;;--------------- Atom ----------------------------
+;;--------------- Volatile ----------------------------
 
 (facts "Join function for volatiles."
        (join (volatile! 1)) => (check-eq (volatile! 1))
@@ -892,7 +892,20 @@
 
 ;; ====================== Comonads =============================================================
 
-
+(extract-is-dual-of-pure [0] 1)
+(extract-is-dual-of-pure (double-array [0]) 1.0)
+(extract-is-dual-of-pure (list 0) 1)
+(extract-is-dual-of-pure (reducible []) 1)
+(extract-is-dual-of-pure (lazy-seq []) 1)
+(extract-is-dual-of-pure (eduction []) 1)
+(extract-is-dual-of-pure (seq []) 1)
+(extract-is-dual-of-pure #{0} 1)
+(extract-is-dual-of-pure {:a :b} 1)
+(extract-is-dual-of-pure (first {:a :b}) 1)
+(extract-is-dual-of-pure (atom 0) 1)
+(extract-is-dual-of-pure (ref 0) 1)
+(extract-is-dual-of-pure (volatile! 0) 1)
+(extract-is-dual-of-pure + 1)
 
 ;;============= Magmas, Semigroups and Monoids =======================
 

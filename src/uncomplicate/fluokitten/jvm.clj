@@ -274,7 +274,7 @@ run on JVM platform."
      {:join identity
       :bind num-array-bind}
      Comonad
-     {:extract (fn [a#] (aget* ~atype ~t 0))
+     {:extract (fn [a#] (aget* ~atype a# 0))
       :unbind default-unbind}
      PseudoComonad
      {:unbind! default-unbind!}
