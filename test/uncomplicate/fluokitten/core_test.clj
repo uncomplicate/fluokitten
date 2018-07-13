@@ -906,6 +906,7 @@
 (extract-is-dual-of-pure (ref 0) 1)
 (extract-is-dual-of-pure (volatile! 0) 1)
 (extract-is-dual-of-pure + 1)
+(extract-is-dual-of-pure (just 0) 1)
 
 ;;============= Magmas, Semigroups and Monoids =======================
 
@@ -1195,7 +1196,7 @@
                 (long-array [7 8 9]) (long-array [1 2 1]) (long-array [3 2 1]))
        => (throws UnsupportedOperationException))
 
-(fact "fold extract the value from the reference context."
+(fact "fold extracts the value from the reference context."
       (fold (atom :something)) => :something
       (foldmap inc (atom 5)) => 6
       (fold (ref :something)) => :something
@@ -1322,6 +1323,8 @@
 (fact "fold extracts the value from the Just context."
       (fold (just :something)) => :something
       (foldmap inc (just 5)) => 6)
+
+;; ======= Monad context binding ======================================================
 
 (facts
  "Automatic binding of context for return and unit"
