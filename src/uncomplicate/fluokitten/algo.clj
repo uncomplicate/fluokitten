@@ -35,6 +35,12 @@
   ([m g ms]
    (join (fmap m g ms))))
 
+(defn default-unbind
+  ([w g]
+   (pure w (g w)))
+  ([w g ws]
+   (pure w (apply g w ws))))
+
 ;; ==================== Object =====================
 
 (defn object-fmap
@@ -82,7 +88,10 @@
    :pure object-pure}
   Monad
   {:join identity
-   :bind default-bind}
+   :bind object-fmap}
+  Comonad
+  {:extract identity
+   :unbind object-fmap}
   Foldable
   {:fold object-fold
    :foldmap object-foldmap})
@@ -234,14 +243,11 @@
   ([cv v vs]
    (into (coll-pure cv v) vs)))
 
-(defn lazyseq-pure
+(defn seq-pure
   ([cv v]
-   (lazy-seq (coll-pure cv v)))
+   (cons v nil))
   ([cv v vs]
-   (lazy-seq
-    (if v
-      (cons v (lazyseq-pure cv (first vs) (rest vs)))
-      (empty cv) ))))
+   (cons v vs)))
 
 (defn map-pure
   ([m v]
@@ -262,11 +268,9 @@
 
 (defn reducible-bind
   ([c g]
-   (into (empty c)
-         (r/mapcat g c)))
+   (into (empty c) (r/mapcat g c)))
   ([c g ss]
-   (into (empty c)
-         (apply mapcat g c ss))))
+   (into (empty c) (apply mapcat g c ss))))
 
 (let [flatten-keys (fn [[k x :as e]]
                      (if (map? x)
@@ -296,11 +300,9 @@
 
 (defn coll-bind
   ([c g]
-   (into (empty c)
-         (mapcat g) c))
+   (into (empty c) (mapcat g) c))
   ([c g ss]
-   (into (empty c)
-         (apply mapcat g c ss))))
+   (into (empty c) (apply mapcat g c ss))))
 
 (defn seq-join [c]
   (let [o (op c)]
@@ -352,11 +354,13 @@
      (apply mapcat g c ss)
      (meta c))))
 
-(defn lazyseq-bind
-  ([c g]
-   (seq-bind c g))
-  ([c g ss]
-   (seq-bind c g ss)))
+;;================== Comonad Implementations ======================
+
+(defn seq-unbind
+  ([s g]
+   (cons (g s) (lazy-seq (seq-unbind (rest s) g))))
+  ([s g ss]
+   (cons (apply g s ss) (lazy-seq (seq-unbind (rest s) g (map rest ss))))))
 
 ;;======== Algebraic structures implementations ==================
 
@@ -520,6 +524,9 @@
      Monad
      {:join coll-join
       :bind coll-bind}
+     Comonad
+     {:extract peek
+      :unbind default-unbind}
      Foldable
      {:fold collection-fold
       :foldmap collection-foldmap}
@@ -559,11 +566,14 @@
      Functor
      {:fmap seq-fmap}
      Applicative
-     {:pure coll-pure
+     {:pure seq-pure
       :fapply seq-fapply}
      Monad
      {:join seq-join
       :bind seq-bind}
+     Comonad
+     {:extract first
+      :unbind seq-unbind}
      Magma
      {:op (constantly (seq-op* (list)))}))
 
@@ -572,11 +582,14 @@
      Functor
      {:fmap seq-fmap}
      Applicative
-     {:pure lazyseq-pure
+     {:pure seq-pure
       :fapply seq-fapply}
      Monad
      {:join seq-join
-      :bind lazyseq-bind}
+      :bind seq-bind}
+     Comonad
+     {:extract first
+      :unbind seq-unbind}
      Magma
      {:op (constantly (seq-op* (lazy-seq)))}))
 

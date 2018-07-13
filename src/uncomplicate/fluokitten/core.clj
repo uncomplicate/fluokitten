@@ -224,8 +224,7 @@ contain the implementations of the protocols, by default jvm.
    that can accept the rest of the arguments and apply <*>.
   "
   ([af]
-   (fn [a & as]
-     (apply <*> af a as)))
+   (partial <*> af))
   ([af av]
    (p/fapply av af))
   ([af av & avs]
@@ -332,9 +331,8 @@ contain the implementations of the protocols, by default jvm.
    (bind (atom 1) (comp atom inc))
    => #<Atom: 2>
   "
-  ([f]
-   (fn [monadic & ms]
-     (apply bind monadic f ms)))
+  ([monadic]
+   (apply bind monadic))
   ([monadic f]
    (utils/with-context monadic
      (p/bind monadic f)))
@@ -345,9 +343,8 @@ contain the implementations of the protocols, by default jvm.
 
 (defn bind!
   "An impure, heretic variant of bind that sacrifices kittens to C++ gods."
-  ([f]
-   (fn [monadic & ms]
-     (apply bind! monadic f ms)))
+  ([monadic]
+   (apply bind monadic))
   ([monadic f]
    (utils/with-context monadic
      (p/bind! monadic f)))
@@ -475,14 +472,50 @@ contain the implementations of the protocols, by default jvm.
    (p/extract wa)))
 
 (defn unbind
+  "Dual of bind. Function g have opposite types of arguments than the one used in bind.
+  Monadic value is the input, and naked value the output.
   "
+  ([g]
+   (partial unbind g))
+  ([g wa]
+   (p/unbind wa g))
+  ([g wa was]
+   (p/unbind wa g was)))
+
+(defn unbind!
+  "Dual of bind!. Function g have opposite types of arguments than the one used in bind.
+  Monadic value is the input, and naked value the output.
   "
-  ([f]
-   (partial unbind f))
-  ([f wa]
-   (p/unbind wa f))
-  ([f wa was]
-   (p/unbind wa f was)))
+  ([g]
+   (partial unbind! g))
+  ([g wa]
+   (p/unbind! wa g))
+  ([g wa was]
+   (p/unbind! wa g was)))
+
+(defn =>>
+  "Performs a left-associative unbind on its arguments. It always uses a two-argument unbind.
+
+   If only two arguments are supplied, it is equivalent to unbind.
+   When called with one argument, creates a function that can accept the rest of the arguments
+   and apply =>>.
+  "
+  ([g]
+   (partial =>> g))
+  ([g wa]
+   (unbind g wa))
+  ([g wa & was]
+   (reduce unbind g (cons wa was))))
+
+(defn <<=
+  "Performs a right-associative unbind on its arguments. It always uses a two-argument unbind.
+  "
+  ([wa]
+   (partial <<= wa))
+  ([wa g]
+   (unbind g wa))
+  ([wa wb & args]
+   (apply <<= (reverse (cons wa (cons wb args))))))
 
 (defn fold
   "Folds all the contents of a foldable context by either
@@ -546,8 +579,7 @@ contain the implementations of the protocols, by default jvm.
    by first using f to convert them to monoids.
   "
   ([g]
-   (fn [x]
-     (p/foldmap x g)))
+   (partial foldmap g))
   ([g x]
    (p/foldmap x g))
   ([f g x]

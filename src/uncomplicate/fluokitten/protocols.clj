@@ -219,6 +219,11 @@ code. The client code should call the generic functions from Fluokitten core."
   (extract [wa]
     "Takes the first available value out of context. Dual of pure."))
 
+(defprotocol PseudoComonad
+  "Dirty variant of monad that may be destructively changed during the unbind! "
+  (unbind! [wa g] [wa g was]
+    "Impure variant of unbind."))
+
 (defprotocol Magma
   "Magma is an abstraction of elements that have an operation op,
    which combines its arguments into an element of the same

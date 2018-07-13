@@ -1,5 +1,10 @@
 # [Fluokitten](http://fluokitten.uncomplicate.org) - notable changes between versions
 
+## 0.9.0
+
+* Added Comonad protocol
+* Added extract, unbind, =>>, and <<= Comonad methods to core.
+
 ## 0.8.0
 
 * Optimized curried function creation performance.

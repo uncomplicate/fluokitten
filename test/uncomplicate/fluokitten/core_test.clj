@@ -12,6 +12,9 @@
   (:require [clojure.string :as s]
             [clojure.core.reducers :as r]))
 
+(def unchecked-math *unchecked-math*)
+(set! *unchecked-math* false)
+
 ;;=============== Curry tests ========================
 
 (facts
@@ -77,17 +80,13 @@
 
 ;;--------------- Vector ---------------
 
-(functor-law2 inc (partial * 100)
-              [1 -199 9])
+(functor-law2 inc (partial * 100) [1 -199 9])
 
-(functor-law2 inc (partial * 100)
-              [1 -199 9]
-              [1 -66 9])
+(functor-law2 inc (partial * 100) [1 -199 9] [1 -66 9])
 
 (fmap-keeps-type inc [100 0 -999])
 
-(fmap-keeps-type + [100 0 -999]
-                 (list 44 0 -54))
+(fmap-keeps-type + [100 0 -999] (list 44 0 -54))
 
 (facts "Vectors as functors"
        (fmap inc [1 2 3]) => [2 3 4]
@@ -112,17 +111,13 @@
 
 ;;--------------- List ---------------
 
-(functor-law2 inc (partial * 100)
-              (list -3 5 0))
+(functor-law2 inc (partial * 100) (list -3 5 0))
 
-(functor-law2 inc (partial * 100)
-              (list -3 5 0)
-              (list -3 44 -2))
+(functor-law2 inc (partial * 100) (list -3 5 0) (list -3 44 -2))
 
 (fmap-keeps-type inc (list 77 0 -39))
 
-(fmap-keeps-type + (list 77 0 -39)
-                 (list 88 -8 8))
+(fmap-keeps-type + (list 77 0 -39) (list 88 -8 8))
 
 (facts "Lists as functors"
        (fmap inc (list 1 2 3)) => (list 2 3 4)
@@ -131,17 +126,13 @@
 
 ;;--------------- Set ---------------
 
-(functor-law2 inc (partial * 100)
-              #{-449 9 6})
+(functor-law2 inc (partial * 100) #{-449 9 6})
 
-(functor-law2 inc (partial * 100)
-              #{-449 9 6}
-              #{-4 88 7})
+(functor-law2 inc (partial * 100) #{-449 9 6} #{-4 88 7})
 
 (fmap-keeps-type inc #{5 89 -7})
 
-(fmap-keeps-type + #{5 89 -7}
-                 (list -3 -4 -45))
+(fmap-keeps-type + #{5 89 -7} (list -3 -4 -45))
 
 ;;--------------- Seq ---------------
 ;; Due to Clojure implementation details,
@@ -150,72 +141,53 @@
 ;; However, keeping the type is not mandated by any Functor law.
 ;; Both seqs implement the seq interface, though.
 
-(functor-law2 inc (partial * 100)
-              (seq (list 8 9 10)))
+(functor-law2 inc (partial * 100) (seq (list 8 9 10)))
 
-(functor-law2 inc (partial * 100)
-              (seq (list 8 9 10))
-              (seq (list -5 -4 -5)))
+(functor-law2 inc (partial * 100) (seq (list 8 9 10)) (seq (list -5 -4 -5)))
 
 ;;--------------- LazySeq ---------------
 
-(functor-law2 inc (partial * 100)
-              (lazy-seq (list 78 -3 5)))
+(functor-law2 inc (partial * 100) (lazy-seq (list 78 -3 5)))
 
-(functor-law2 inc (partial * 100)
-              (lazy-seq (list 78 -3 5))
-              (lazy-seq (list 88 0 -4)))
+(functor-law2 inc (partial * 100) (lazy-seq (list 78 -3 5)) (lazy-seq (list 88 0 -4)))
 
 (fmap-keeps-type inc (lazy-seq (list 8 9 -2)))
 
-(fmap-keeps-type + (lazy-seq (list 8 9 -2))
-                 (lazy-seq (list 18 5 -92)))
+(fmap-keeps-type + (lazy-seq (list 8 9 -2)) (lazy-seq (list 18 5 -92)))
 
 
 ;;--------------- CollReduce ---------------
 
-(functor-law2 inc (partial * 100)
-              (reducible [1 -199 9]))
+(functor-law2 inc (partial * 100) (reducible [1 -199 9]))
 
 (fmap-keeps-type inc (reducible [100 0 -999]))
 
 ;;--------------- MapEntry ---------------
 
-(functor-law2 inc (partial * 100)
-              (first {:a 11}))
+(functor-law2 inc (partial * 100) (first {:a 11}))
 
-(functor-law2 inc (partial * 100)
-              (first {:a 11})
-              (first {:a 5}))
+(functor-law2 inc (partial * 100) (first {:a 11}) (first {:a 5}))
 
 (fmap-keeps-type inc (first {:c 3}))
 
-(fmap-keeps-type + (first {:c 3})
-                 (first {:d 5}))
+(fmap-keeps-type + (first {:c 3}) (first {:d 5}))
 
 ;;--------------- Map ---------------
 
 (fact
- (fmap (comp inc +) {:a 1} {:a 2} {:a 3})
- => {:a 7})
+ (fmap (comp inc +) {:a 1} {:a 2} {:a 3}) => {:a 7})
 
 (fact
  (fmap (fn [& xs]
-         (hash-map :sum (apply + xs)))
-       {:a 1 :b 2} {:a 4})
- => {:a {:sum 5}, :b {:sum 2}})
+         (hash-map :sum (apply + xs))) {:a 1 :b 2} {:a 4}) => {:a {:sum 5}, :b {:sum 2}})
 
-(functor-law2 inc (partial * 100)
-              {:a 2 :t 5 :h 99})
-(functor-law2 inc +
-              {:a 2 :t 5 :h 99}
-              {:a 7 :t 8 :h 49}
-              {:a 8 :t 3 :h 59})
+(functor-law2 inc (partial * 100) {:a 2 :t 5 :h 99})
+
+(functor-law2 inc + {:a 2 :t 5 :h 99} {:a 7 :t 8 :h 49} {:a 8 :t 3 :h 59})
 
 (fmap-keeps-type inc {:a 2 :t 5 :h 99})
 
-(fmap-keeps-type + {:a 2 :t 5 :h 99}
-                 {:k 5 :n 4 :dd 5})
+(fmap-keeps-type + {:a 2 :t 5 :h 99} {:k 5 :n 4 :dd 5})
 
 ;;--------------- Atom ---------------
 
@@ -234,9 +206,9 @@
 
 (functor-law2 inc (partial * 100) (volatile! 35) (volatile! 5))
 
-(fmap-keeps-type  inc (volatile! 36))
+(fmap-keeps-type inc (volatile! 36))
 
-(fmap-keeps-type  + (volatile! 37) (volatile! 5))
+(fmap-keeps-type + (volatile! 37) (volatile! 5))
 
 ;;--------------- Ref ---------------
 
@@ -301,6 +273,7 @@
                (curry + 4)
                (curry (partial * 10) 3)) 2 3 5) 2)
        => 1/50
+
        (((fmap /
                (curry + 4)
                (curry (partial * 10) 3)
@@ -323,14 +296,9 @@
 
 (applicative-law2-identity [1 445 -4])
 
-(applicative-law3-composition [inc]
-                              [(partial * 10)]
-                              [1 -34343444])
+(applicative-law3-composition [inc] [(partial * 10)] [1 -34343444])
 
-(applicative-law3-composition [inc]
-                              [(partial * 10)]
-                              [1 -34343444]
-                              (list 1 78))
+(applicative-law3-composition [inc] [(partial * 10)] [1 -34343444] (list 1 78))
 
 (applicative-law4-homomorphism [] inc 1)
 (applicative-law4-homomorphism [] + 1 55 6)
@@ -368,9 +336,7 @@
 
 (applicative-law2-identity (reducible [1 445 -4]))
 
-(applicative-law3-composition (reducible [inc])
-                              (reducible [(partial * 10)])
-                              (reducible [1 -34343444]))
+(applicative-law3-composition (reducible [inc]) (reducible [(partial * 10)]) (reducible [1 -34343444]))
 
 (applicative-law4-homomorphism (reducible []) inc 1)
 
@@ -386,14 +352,9 @@
 
 (applicative-law2-identity (list 2 -5 99))
 
-(applicative-law3-composition (list inc)
-                              (list (partial * 10))
-                              (list 2 8 -33))
+(applicative-law3-composition (list inc) (list (partial * 10)) (list 2 8 -33))
 
-(applicative-law3-composition (list inc)
-                              (list (partial * 10))
-                              (list 2 8 -33)
-                              (list -4 -5 -5))
+(applicative-law3-composition (list inc) (list (partial * 10)) (list 2 8 -33) (list -4 -5 -5))
 
 (applicative-law4-homomorphism (list) inc 2)
 
@@ -411,20 +372,14 @@
 
 (applicative-law1 inc (seq (list 3 9 0)))
 
-(applicative-law1 +
-                  (seq (list 3 9 0))
-                  (seq (list -5 4 6)))
+(applicative-law1 + (seq (list 3 9 0)) (seq (list -5 4 6)))
 
 (applicative-law2-identity (seq (list 3 -79 29)))
 
-(applicative-law3-composition (seq (list inc))
-                              (seq (list (partial * 10)))
-                              (seq (list 3 -1 0)))
+(applicative-law3-composition (seq (list inc)) (seq (list (partial * 10))) (seq (list 3 -1 0)))
 
-(applicative-law3-composition (seq (list inc))
-                              (seq (list (partial * 10)))
-                              (seq (list 3 -1 0))
-                              (seq (list -5 3 4)))
+(applicative-law3-composition (seq (list inc)) (seq (list (partial * 10)))
+                              (seq (list 3 -1 0)) (seq (list -5 3 4)))
 
 (applicative-law4-homomorphism (seq (list 3)) inc 3)
 
@@ -436,27 +391,21 @@
 
 (fapply-keeps-type inc (seq (list 3 -4 9)))
 
-(fapply-keeps-type + (seq (list 3 -4 9))
-                   (seq (list -5 -5 -3)))
+(fapply-keeps-type + (seq (list 3 -4 9)) (seq (list -5 -5 -3)))
 
 ;;-------------- Lazy Seq ----------------
 
 (applicative-law1 inc (lazy-seq (list 3 9 0)))
 
-(applicative-law1 +
-                  (lazy-seq (list 3 9 0))
-                  (lazy-seq (list -4 -5)))
+(applicative-law1 + (lazy-seq (list 3 9 0)) (lazy-seq (list -4 -5)))
 
 (applicative-law2-identity (lazy-seq (list 3 -79 29)))
 
-(applicative-law3-composition (lazy-seq (list inc))
-                              (lazy-seq (list (partial * 10)))
+(applicative-law3-composition (lazy-seq (list inc)) (lazy-seq (list (partial * 10)))
                               (lazy-seq (list 3 -1 0)))
 
-(applicative-law3-composition (lazy-seq (list inc))
-                              (lazy-seq (list (partial * 10)))
-                              (lazy-seq (list 3 -1 0))
-                              (lazy-seq (list 9)))
+(applicative-law3-composition (lazy-seq (list inc)) (lazy-seq (list (partial * 10)))
+                              (lazy-seq (list 3 -1 0)) (lazy-seq (list 9)))
 
 (applicative-law4-homomorphism (lazy-seq (list 3)) inc 3)
 
@@ -468,8 +417,7 @@
 
 (fapply-keeps-type inc (lazy-seq (list 3 -4 9)))
 
-(fapply-keeps-type + (lazy-seq (list 3 -4 9))
-                   (lazy-seq (list -5 -5 -5)))
+(fapply-keeps-type + (lazy-seq (list 3 -4 9)) (lazy-seq (list -5 -5 -5)))
 
 ;;-------------- Set ----------------
 
@@ -479,14 +427,9 @@
 
 (applicative-law2-identity #{4 40 -1})
 
-(applicative-law3-composition #{inc}
-                              #{(partial * 10)}
-                              #{4 -5 -6})
+(applicative-law3-composition #{inc} #{(partial * 10)} #{4 -5 -6})
 
-(applicative-law3-composition #{inc}
-                              #{(partial * 10)}
-                              #{4 -5 -6}
-                              #{0 -4})
+(applicative-law3-composition #{inc} #{(partial * 10)} #{4 -5 -6} #{0 -4})
 
 (applicative-law4-homomorphism #{} inc 4)
 
@@ -498,72 +441,43 @@
 
 (fapply-keeps-type inc #{4 -2 5})
 
-(fapply-keeps-type + #{4 -2 5}
-                   #{-9 -7})
+(fapply-keeps-type + #{4 -2 5} #{-9 -7})
 
 ;;-------------- MapEntry -----------
 
 (applicative-law1 inc (first {5 5}))
 
-(applicative-law1 +
-                  (first {5 5})
-                  (first {5 6}))
+(applicative-law1 + (first {5 5}) (first {5 6}))
 
 (applicative-law2-identity (first {5 5}))
 
-(applicative-law3-composition (first {58 inc})
-                              (first {57 (partial * 10)})
-                              (first {5 5}))
+(applicative-law3-composition (first {58 inc}) (first {57 (partial * 10)}) (first {5 5}))
 
-(applicative-law3-composition (first {58 inc})
-                              (first {57 (partial * 10)})
-                              (first {5 5})
-                              (first {5 6}))
+(applicative-law3-composition (first {58 inc}) (first {57 (partial * 10)}) (first {5 5}) (first {5 6}))
 
-(applicative-law4-homomorphism (first {57 57})
-                               inc
-                               5)
+(applicative-law4-homomorphism (first {57 57}) inc 5)
 
-(applicative-law4-homomorphism (first {57 57})
-                               +
-                               5 -4 5)
+(applicative-law4-homomorphism (first {57 57}) + 5 -4 5)
 
-(applicative-law5-interchange (first {58 58})
-                              inc
-                              5)
+(applicative-law5-interchange (first {58 58}) inc 5)
 
-(applicative-law5-interchange (first {58 58})
-                              +
-                              5 3 4 5)
+(applicative-law5-interchange (first {58 58}) + 5 3 4 5)
 
 ;;-------------- Map ----------------
 
 (fact (pure {} 2) => {nil 2})
 
-(fact (fapply {:a inc :b dec
-               nil (partial * 2)}
-              {:a 1 :b 5})
-      => {:a 2 :b 4})
+(fact (fapply {:a inc :b dec nil (partial * 2)} {:a 1 :b 5}) => {:a 2 :b 4})
 
-(fact (fapply {:a inc :b dec} {:a 1 :c 2})
-      => {:a 2 :c 2})
+(fact (fapply {:a inc :b dec} {:a 1 :c 2}) => {:a 2 :c 2})
 
-(fact (fapply {:a + :b - nil (partial * 2)}
-              {:a 1 :b 1}
-              {:a 2 :b 3 :c 44}
-              {:b 4})
+(fact (fapply {:a + :b - nil (partial * 2)} {:a 1 :b 1} {:a 2 :b 3 :c 44} {:b 4})
       => {:a 3 :b -6 :c 88})
 
-(fact (fapply {:a + :b - :d (partial * 2)}
-              {:a 1 :b 1}
-              {:a 2 :b 3 :c 44}
-              {:b 4})
+(fact (fapply {:a + :b - :d (partial * 2)} {:a 1 :b 1} {:a 2 :b 3 :c 44} {:b 4})
       => {:a 3 :b -6 :c 44})
 
-(fact (fapply {nil +}
-              {:a 1 :b 3}
-              {:a 2 :b 4}
-              {:a 3 :b 5})
+(fact (fapply {nil +} {:a 1 :b 3} {:a 2 :b 4} {:a 3 :b 5})
       => {:a 6 :b 12})
 
 (applicative-law1 inc {nil 6})
@@ -576,18 +490,11 @@
 
 (applicative-law2-identity {6 6})
 
-(applicative-law3-composition {6 inc}
-                              {6 (partial * 10)}
-                              {6 6 -5 -6})
+(applicative-law3-composition {6 inc} {6 (partial * 10)} {6 6 -5 -6})
 
-(applicative-law3-composition {6 inc}
-                              {6 (partial * 10)}
-                              {6 6 -5 -6}
-                              {6 8 -5 -2})
+(applicative-law3-composition {6 inc} {6 (partial * 10)} {6 6 -5 -6} {6 8 -5 -2})
 
-(applicative-law3-composition {nil inc}
-                              {nil (partial * 10)}
-                              {6 6 -5 -6})
+(applicative-law3-composition {nil inc} {nil (partial * 10)} {6 6 -5 -6})
 
 (applicative-law4-homomorphism {} inc 4)
 
@@ -603,22 +510,13 @@
 
 (applicative-law1 inc (atom 6))
 
-(applicative-law1 +
-                  (atom 6)
-                  (atom 9)
-                  (atom -77)
-                  (atom -1))
+(applicative-law1 + (atom 6) (atom 9) (atom -77) (atom -1))
 
 (applicative-law2-identity (atom 6))
 
-(applicative-law3-composition (atom inc)
-                              (atom (partial * 10))
-                              (atom 6))
+(applicative-law3-composition (atom inc) (atom (partial * 10)) (atom 6))
 
-(applicative-law3-composition (atom inc)
-                              (atom (partial * 10))
-                              (atom 6)
-                              (atom -2))
+(applicative-law3-composition (atom inc) (atom (partial * 10)) (atom 6) (atom -2))
 
 (applicative-law4-homomorphism (atom 6) inc 5)
 
@@ -654,25 +552,16 @@
  (applicative-law1 inc (ref 6)))
 
 (dosync
- (applicative-law1 +
-                   (ref 6)
-                   (ref 9)
-                   (ref -77)
-                   (ref -1)))
+ (applicative-law1 + (ref 6) (ref 9) (ref -77) (ref -1)))
 
 (dosync
  (applicative-law2-identity (ref 6)))
 
 (dosync
- (applicative-law3-composition (ref inc)
-                               (ref (partial * 10))
-                               (ref 6)))
+ (applicative-law3-composition (ref inc) (ref (partial * 10)) (ref 6)))
 
 (dosync
- (applicative-law3-composition (ref inc)
-                               (ref (partial * 10))
-                               (ref 6)
-                               (ref -2)))
+ (applicative-law3-composition (ref inc) (ref (partial * 10)) (ref 6) (ref -2)))
 
 (dosync
  (applicative-law4-homomorphism (ref 6) inc 5))
@@ -738,42 +627,27 @@
          ((fapply (pure curried identity) c+) 7 8 2) => 17)
 
   (facts "How fapply works for curried functions"
-         ((fapply (curry + 4)
-                  (<*> (pure curried c+) (c+ 2) (c* 10)))
-          2 3 4)
-         => 260
+         ((fapply (curry + 4) (<*> (pure curried c+) (c+ 2) (c* 10))) 2 3 4) => 260
 
-         ((-> (pure (curry +) (curry  / 3))
-              (fapply (curry +))
-              (fapply (curry +))
-              (fapply ((curry *) 10))) 7 1)
-         => 1/70
+         ((-> (pure (curry +) (curry  / 3)) (fapply (curry +))
+              (fapply (curry +)) (fapply ((curry *) 10))) 7 1) => 1/70
 
          ((fapply c+ (pure curried 7)) 9)=> 16
 
-         ((fapply (pure curried +) (pure curried 1)
-                  (pure curried 2) (pure curried 3)) 11)
-         => 6
+         ((fapply (pure curried +) (pure curried 1) (pure curried 2) (pure curried 3)) 11) => 6
 
-         ((fapply (pure curried +) (pure curried 1)
-                  (pure curried 2) (pure curried 3)) 11 33)
-         => 6)
+         ((fapply (pure curried +) (pure curried 1) (pure curried 2) (pure curried 3)) 11 33) => 6)
 
   (facts "Composition applicative law"
-         ((-> (pure curried (curry comp))
-              (fapply c+)
-              (fapply c*)
-              (fapply (c* 10))) 7)
+         ((-> (pure curried (curry comp)) (fapply c+) (fapply c*) (fapply (c* 10))) 7)
          => ((fapply c+ (fapply c* (c* 10))) 7))
 
   (facts "Homomorphism applicative law."
-         ((fapply (pure curried #(% 7))
-                  (pure curried (c* 10))) 8)
+         ((fapply (pure curried #(% 7)) (pure curried (c* 10))) 8)
          => ((pure curried (#(% 7) (c* 10))) 8))
 
   (facts "Interchange applicative law."
-         ((fapply c+ (pure curried 7)) 9)
-         => ((fapply (pure curried #(% 7)) c+) 9)))
+         ((fapply c+ (pure curried 7)) 9) => ((fapply (pure curried #(% 7)) c+) 9)))
 
 ;;--------------- Vector --------------------------------
 
@@ -799,8 +673,7 @@
 
 ;;--------------- CollReduce ---------------------------------
 
-(monad-law1-left-identity (reducible [])
-                          (comp reducible vector inc) 1)
+(monad-law1-left-identity (reducible []) (comp reducible vector inc) 1)
 
 (monad-law2-right-identity (reducible [1 2 -33]))
 
@@ -816,31 +689,23 @@
 
 (monad-law2-right-identity (list 2 4 -33))
 
-(monad-law3-associativity (comp list inc)
-                          (comp list (partial * 10))
-                          (list 2 -3 -88))
+(monad-law3-associativity (comp list inc) (comp list (partial * 10)) (list 2 -3 -88))
 
 ;;--------------- LazySeq -----------------------------------
 
-(monad-law1-left-identity (lazy-seq (list))
-                          (comp list inc) 3)
+(monad-law1-left-identity (lazy-seq (list)) (comp list inc) 3)
 
-(monad-law1-left-identity (lazy-seq (list))
-                          (comp list +) 3 49 9)
+(monad-law1-left-identity (lazy-seq (list)) (comp list +) 3 49 9)
 
 (monad-law2-right-identity (lazy-seq (list 3 2 -33)))
 
-(monad-law3-associativity (comp list inc)
-                          (comp list (partial * 10))
-                          (lazy-seq (list 3 -3 -88)))
+(monad-law3-associativity (comp list inc) (comp list (partial * 10)) (lazy-seq (list 3 -3 -88)))
 
 ;;--------------- Seq -----------------------------------
 
-(monad-law1-left-identity (conj (seq [0]) 2)
-                          (comp seq vector inc) 4)
+(monad-law1-left-identity (conj (seq [0]) 2) (comp seq vector inc) 4)
 
-(monad-law1-left-identity (conj (seq [0]) 2)
-                          (comp seq vector +) 4 8 9)
+(monad-law1-left-identity (conj (seq [0]) 2) (comp seq vector +) 4 8 9)
 
 (monad-law2-right-identity (conj (seq [4 2 -33]) 2))
 
@@ -856,9 +721,7 @@
 
 (monad-law2-right-identity #{5 -3 24})
 
-(monad-law3-associativity (comp hash-set inc)
-                          (comp hash-set (partial * 10))
-                          #{5 -56 30})
+(monad-law3-associativity (comp hash-set inc) (comp hash-set (partial * 10)) #{5 -56 30})
 
 ;;--------------- Map ---------------------------------
 
@@ -869,28 +732,19 @@
 
 (monad-law1-left-identity {} #(hash-map :increment (inc %)) 5)
 
-(monad-law1-left-identity {}
-                          (fn [& xs]
-                            (hash-map :sum (apply + xs)))
-                          5 6 88 9)
+(monad-law1-left-identity {} (fn [& xs] (hash-map :sum (apply + xs))) 5 6 88 9)
 
 (monad-law2-right-identity {:a 1 :b 2})
 
-(monad-law3-associativity #(hash-map :increment (inc %))
-                          #(hash-map :10times (* 10 %))
-                          {:a 1 :b 2})
+(monad-law3-associativity #(hash-map :increment (inc %)) #(hash-map :10times (* 10 %)) {:a 1 :b 2})
 
-(monad-law3-associativity (fn [& xs] (hash-map :sum (apply + xs)))
-                          #(hash-map :10times (* 10 %))
-                          {:a 1 :b 2 :c 3}
-                          {:a 4 :b 3 :c 2}
-                          {:a 12 :b 23 :c 9})
+(monad-law3-associativity (fn [& xs] (hash-map :sum (apply + xs))) #(hash-map :10times (* 10 %))
+                          {:a 1 :b 2 :c 3} {:a 4 :b 3 :c 2} {:a 12 :b 23 :c 9})
 
 (fact
  (let [f #(hash-map :increment (inc %))
        m {:a 1 :b 2}]
-   (fapply (pure {} f) m)
-   => (bind (pure {} f) #(fmap % m))))
+   (fapply (pure {} f) m) => (bind (pure {} f) #(fmap % m))))
 
 ;;--------------- MapEntry ----------------------------
 
@@ -898,13 +752,9 @@
  (join (first {:a 1})) => (first {:a 1})
  (join (first {:a [:b 1]})) => (first {[:a :b] 1}))
 
-(monad-law1-left-identity (first {:a 1})
-                          #(first (hash-map :increment (inc %)))
-                          5)
+(monad-law1-left-identity (first {:a 1}) #(first (hash-map :increment (inc %))) 5)
 
-(monad-law1-left-identity (first {:a 1})
-                          (fn [& xs] (first (hash-map :sum (apply + xs))))
-                          5 77 8)
+(monad-law1-left-identity (first {:a 1}) (fn [& xs] (first (hash-map :sum (apply + xs)))) 5 77 8)
 
 (monad-law2-right-identity (first {:a 4}))
 
@@ -915,9 +765,7 @@
 (monad-law3-associativity (fn [& xs]
                             (first (hash-map :sum (apply + xs))))
                           #(first (hash-map :10times (* 10 %)))
-                          (first {:a 1})
-                          (first {:a 2})
-                          (first {:a 77}))
+                          (first {:a 1}) (first {:a 2}) (first {:a 77}))
 
 ;;--------------- Atom ----------------------------
 
@@ -964,9 +812,7 @@
  (monad-law2-right-identity (ref 9)))
 
 (dosync
- (monad-law3-associativity (comp ref inc)
-                           (comp ref (partial * 10))
-                           (ref 9)))
+ (monad-law3-associativity (comp ref inc) (comp ref (partial * 10)) (ref 9)))
 
 ;;------------------- Curried Function ---------------------------
 
@@ -983,26 +829,20 @@
          ((bind (bind (c* 3) c*) c+) 7) => 154)
 
   (facts "How join for curried function works."
-         ((bind c* c+) 3 4)
-         => ((join (fmap c+ c*)) 3 4))
+         ((bind c* c+) 3 4) => ((join (fmap c+ c*)) 3 4))
 
   (facts "Left Identity Monad Law"
-         ((bind (pure curried 7) c*) 6)
-         => ((c* 7) 6)
+         ((bind (pure curried 7) c*) 6) => ((c* 7) 6)
 
-         ((bind (pure curried 7) c*) 6 7 8)
-         => ((c* 7) 6 7 8))
+         ((bind (pure curried 7) c*) 6 7 8) => ((c* 7) 6 7 8))
 
   (fact "Right identity Monad Law."
-        ((bind c* (pure c*)) 2 3)
-        => (c* 2 3))
+        ((bind c* (pure c*)) 2 3) => (c* 2 3))
 
   (facts "Associativity Monad Law."
-         ((bind (bind (c* 3) c*) c+) 7)
-         => ((bind (c* 3) (fn [x] (bind (c* x) c+))) 7)
+         ((bind (bind (c* 3) c*) c+) 7) => ((bind (c* 3) (fn [x] (bind (c* x) c+))) 7)
 
-         ((bind (bind (c* 3) c*) c+) 2 3 4)
-         => ((bind (c* 3) (fn [x] (bind (c* x) c+))) 2 3 4)))
+         ((bind (bind (c* 3) c*) c+) 2 3 4) => ((bind (c* 3) (fn [x] (bind (c* x) c+))) 2 3 4)))
 
 ;;============= Magmas, Semigroups and Monoids =======================
 ;;----------------------- Vector --------------------------
@@ -1059,13 +899,11 @@
 
 (magma-op-keeps-type (seq (list 1 2)) (seq (list 3 4)))
 
-(magma-op-keeps-type (seq (list 1 2)) (seq (list 3 4))
-                     (seq (list 5 6)) (seq (list 7 8)))
+(magma-op-keeps-type (seq (list 1 2)) (seq (list 3 4)) (seq (list 5 6)) (seq (list 7 8)))
 
 (semigroup-op-associativity (seq (list 1 2)) (seq (list 3 4)))
 
-(semigroup-op-associativity (seq (list 1 2)) (seq (list 3 4))
-                            (seq (list 5 6)) (seq (list 7 8)))
+(semigroup-op-associativity (seq (list 1 2)) (seq (list 3 4)) (seq (list 5 6)) (seq (list 7 8)))
 
 (monoid-identity-law (seq (list 1 2)))
 
@@ -1184,8 +1022,7 @@
        (op + * /) => fn?)
 
 (facts "Function semigroup op associativity."
-       ((op (op inc (partial * 10)) +) 7 9)
-       => ((op inc (op (partial * 10) +)) 7 9))
+       ((op (op inc (partial * 10)) +) 7 9) => ((op inc (op (partial * 10) +)) 7 9))
 
 (monoid-identity-law +)
 
@@ -1200,8 +1037,7 @@
   (magma-op-keeps-type c+ c* cdiv)
 
   (facts "CurriedFn semigroup op associativity."
-         ((op (op (c+ 2) (cdiv 3)) (c* 5)) 7 9)
-         => ((op (c+ 2) (op (cdiv 3) (c* 5))) 7 9))
+         ((op (op (c+ 2) (cdiv 3)) (c* 5)) 7 9) => ((op (c+ 2) (op (cdiv 3) (c* 5))) 7 9))
 
   (monoid-identity-law c+))
 
@@ -1287,25 +1123,18 @@
 
 ;;=============== Metadata ==========================
 
-(data-structures-should-preserve-metadata
- inc + vector [1 2 3] [4 5 6])
+(data-structures-should-preserve-metadata inc + vector [1 2 3] [4 5 6])
 
-(data-structures-should-preserve-metadata
- inc + list (list 1 2 3) (list 4 5 6))
+(data-structures-should-preserve-metadata inc + list (list 1 2 3) (list 4 5 6))
 
-(data-structures-should-preserve-metadata
- inc + (comp seq list)
- (seq [1 2 3]) (seq [4 5 6]))
+(data-structures-should-preserve-metadata inc + (comp seq list) (seq [1 2 3]) (seq [4 5 6]))
 
-(data-structures-should-preserve-metadata
- inc + #(lazy-seq (list %))
- (lazy-seq (list 1 2 3)) (lazy-seq (list 4 5 6)))
+(data-structures-should-preserve-metadata inc + #(lazy-seq (list %))
+                                          (lazy-seq (list 1 2 3)) (lazy-seq (list 4 5 6)))
 
-(data-structures-should-preserve-metadata
- inc + hash-set #{1 2 3} #{4 5 6})
+(data-structures-should-preserve-metadata inc + hash-set #{1 2 3} #{4 5 6})
 
-(data-structures-should-preserve-metadata
- inc + #(hash-map nil %) {:a 2 :b 4} {:a 5 :b 7})
+(data-structures-should-preserve-metadata inc + #(hash-map nil %) {:a 2 :b 4} {:a 5 :b 7})
 
 (let [a1 (atom 1 :meta {:test true})
       a2 (atom 2 :meta {:test true})]
@@ -1317,8 +1146,7 @@
           (meta (fapply! (pure a1 +) a1 a2)) => {:test true}
 
           (meta (bind! a1 #(atom (inc %)))) => {:test true}
-          (meta (bind! a1 a2 #(atom (+ %1 %2))))
-          => {:test true}
+          (meta (bind! a1 a2 #(atom (+ %1 %2)))) => {:test true}
 
           (meta (join! (atom (atom 1) :meta {:test true}))) => {:test true}))
 
@@ -1352,8 +1180,7 @@
 
   (facts
    "<*> is a left-associative fapply."
-   (<*> (pure [] (curry comp)) [(c+ 2)] [(c* 2)] [1 2 3])
-   => [4 6 8]))
+   (<*> (pure [] (curry comp)) [(c+ 2)] [(c* 2)] [1 2 3]) => [4 6 8]))
 
 ;;=================== Just ===================================
 
@@ -1427,8 +1254,7 @@
 
    (bind (vec (range 1 500)) returning-f) => (range 2 501)
 
-   (bind (vec (range 1 500)) (vec (range 1 500)) (vec (range 1 500)) returning-f)
-   => (range 3 1500 3)
+   (bind (vec (range 1 500)) (vec (range 1 500)) (vec (range 1 500)) returning-f) => (range 3 1500 3)
 
    (bind (apply list (range 1 500)) returning-f) => (range 2 501)
 
@@ -1512,3 +1338,5 @@
                     (bind [7 8 9]
                           (fn [c]
                             (pure [7 8 9] (* a b c)))))))))
+
+(set! *unchecked-math* unchecked-math)
