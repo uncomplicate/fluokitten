@@ -329,7 +329,7 @@
       (reduce (fn [acc e]
                 (if (sequential? e)
                   (o acc e)
-                  (cons acc e)))
+                  (cons e acc)))
               (id s) s)
       (meta s))))
 
