@@ -273,6 +273,11 @@ run on JVM platform."
      Monad
      {:join identity
       :bind num-array-bind}
+     Comonad
+     {:extract (fn [a#] (aget* ~atype ~t 0))
+      :unbind default-unbind}
+     PseudoComonad
+     {:unbind! default-unbind!}
      Foldable
      {:fold (num-array-fold ~atype ~etype)
       :foldmap (num-array-foldmap ~atype ~etype)}))
