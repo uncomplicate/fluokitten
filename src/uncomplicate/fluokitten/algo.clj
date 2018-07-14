@@ -1363,6 +1363,16 @@
     ([_ _] nil)
     ([_ _ _] nil))
   (join! [_] nil)
+  Comonad
+  (extract [_]
+    nil)
+  (unbind
+    ([_ _] nil)
+    ([_ _ _] nil))
+  PseudoComonad
+  (unbind!
+    ([_ _] nil)
+    ([_ _ _] nil))
   Foldable
   (fold
     ([_] nil)
