@@ -43,7 +43,7 @@ These are the learning resources available for free on the Web that we think are
 
 ### [Functors, Applicatives and Monads in Pictures](/articles/functors_applicatives_monads_in_pictures.html)
 
-A Fluokitten version of an excellent visual introductory article [Functors, Applicatives and Monads in Pictures](https://adit.io/posts/2013-04-17-functors,_applicatives,_and_monads_in_pictures.html).
+A Fluokitten version of an excellent visual introductory article [Functors, Applicatives and Monads in Pictures](https://web.archive.org/web/20180218211616/http://adit.io/posts/2013-04-17-functors,_applicatives,_and_monads_in_pictures.html).
 
 ### [Learn You a Haskell for Great Good](/articles/learnyouahaskell.html)
 
