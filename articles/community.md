@@ -5,9 +5,12 @@ layout: article
 
 ## Where to contact me
 
-[I hang around at Slack Clojurians Uncomplicate](https://clojurians.slack.com/messages/uncomplicate/details/)
+~~[I hang around at Slack Clojurians Uncomplicate](https://clojurians.slack.com/messages/uncomplicate/details/)~~
+<p><a href="https://patreon.com/draganrocks">Please support my work on Patreon</a>. I'll intive you to a dedicated <a href="https://discordapp.com">Discord</a> discussion server. Can't afford to donate? Ask for a free invite.</p>
 
 [Fluokitten has a mailing list](https://groups.google.com/forum/#!forum/uncomplicate). Feel free to join it and ask any questions you may have.
+
+[Follow my blog at dragan.rocks](https://dragan.rocks) to keep up with the development and tutorials.
 
 ## News & Announcements on Twitter
 
