@@ -6,12 +6,12 @@
 ;;   the terms of this license.
 ;;   You must not remove this notice, or any other, from this software.
 
-(ns ^{:doc "Extends Clojure core with the implementations of
-fluokitten protocols. Defines curried functions. Need to be
-used or required for enabling Fluokitten on projects that
-run on JVM platform."
-      :author "Dragan Djuric"}
+(ns ^{:author "Dragan Djuric"}
     uncomplicate.fluokitten.jvm
+  "Extends Clojure core with the implementations of
+  fluokitten protocols. Defines curried functions. Need to be
+  used or required for enabling Fluokitten on projects that
+  run on JVM platform."
   (:require [uncomplicate.fluokitten
              [protocols :refer :all]
              [algo :refer :all]

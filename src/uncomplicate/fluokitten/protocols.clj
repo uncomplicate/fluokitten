@@ -6,17 +6,17 @@
 ;;   the terms of this license.
 ;;   You must not remove this notice, or any other, from this software.
 
-(ns ^{:doc "Defines Fluokitten protocols for various categorical concepts.
-You need to use or require this namespace and provide your implementations
-of these protocols if you want to extend Fluokitten with specific instances
-of categorical concepts beyond those from Clojure core that Fluokitten
-itself extends to be categorical. To use your own implementations, you need
-to use or require the namespace where you define the implementations
-from the calling code's namespace, as well as to use or require Fluokitten
-core. Your implementations are normally not called directly from the client
-code. The client code should call the generic functions from Fluokitten core."
-      :author "Dragan Djuric"}
-    uncomplicate.fluokitten.protocols)
+(ns ^{:author "Dragan Djuric"}
+    uncomplicate.fluokitten.protocols
+  "Defines Fluokitten protocols for various categorical concepts.
+  You need to use or require this namespace and provide your implementations
+  of these protocols if you want to extend Fluokitten with specific instances
+  of categorical concepts beyond those from Clojure core that Fluokitten
+  itself extends to be categorical. To use your own implementations, you need
+  to use or require the namespace where you define the implementations
+  from the calling code's namespace, as well as to use or require Fluokitten
+  core. Your implementations are normally not called directly from the client
+  code. The client code should call the generic functions from Fluokitten core.")
 
 (defprotocol Functor
   "Functor is an abstraction for a context (box, container,

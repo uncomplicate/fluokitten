@@ -6,7 +6,8 @@
 ;;   the terms of this license.
 ;;   You must not remove this notice, or any other, from this software.
 
-(ns uncomplicate.fluokitten.algo
+(ns ^{:author "Dragan Djuric"}
+    uncomplicate.fluokitten.algo
   (:require [clojure.string :as cs]
             [uncomplicate.fluokitten
              [protocols :refer :all]

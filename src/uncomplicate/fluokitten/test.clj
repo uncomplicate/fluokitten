@@ -6,11 +6,12 @@
 ;;   the terms of this license.
 ;;   You must not remove this notice, or any other, from this software.
 
-(ns ^{:doc "Macros that generate Midje tests for various laws that
-categorical concepts have to satisfy. You should use these tests
-to check if your implementations of clojure protocols are valid
-beyond what the compiler can assert."
-      :author "Dragan Djuric"} uncomplicate.fluokitten.test
+(ns ^{:author "Dragan Djuric"}
+    uncomplicate.fluokitten.test
+  "Macros that generate Midje tests for various laws that
+  categorical concepts have to satisfy. You should use these tests
+  to check if your implementations of clojure protocols are valid
+  beyond what the compiler can assert."
   (:require [uncomplicate.fluokitten
              [core :refer :all]
              [algo :refer :all]

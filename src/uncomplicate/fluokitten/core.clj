@@ -6,16 +6,15 @@
 ;;   the terms of this license.
 ;;   You must not remove this notice, or any other, from this software.
 
-(ns ^{:doc "Contains core Fluokitten categorical functions. This is the
-namespace that you want to use or require in your projects that use
-Fluokitten built-in functionality or the functionality of various other
-libraries that implement Fluokitten protocols.
-Intended use: use or require this namespace and other namespaces that
-contain the implementations of the protocols, by default jvm.
-
-"
-      :author "Dragan Djuric"}
+(ns ^{:author "Dragan Djuric"}
     uncomplicate.fluokitten.core
+  "Contains core Fluokitten categorical functions. This is the
+  namespace that you want to use or require in your projects that use
+  Fluokitten built-in functionality or the functionality of various other
+  libraries that implement Fluokitten protocols.
+  Intended use: use or require this namespace and other namespaces that
+  contain the implementations of the protocols, by default jvm.
+  "
   (:require [uncomplicate.fluokitten.protocols :as p])
   (:require [uncomplicate.fluokitten.algo :as algo])
   (:require [uncomplicate.fluokitten.utils :as utils])

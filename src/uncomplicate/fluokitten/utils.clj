@@ -6,9 +6,10 @@
 ;;   the terms of this license.
 ;;   You must not remove this notice, or any other, from this software.
 
-(ns ^{:doc "TODO"
-      :author "Dragan Djuric"}
+(ns ^{:author "Dragan Djuric"}
     uncomplicate.fluokitten.utils
+  "TODO
+  "
   (:require [clojure.core.reducers :as r]))
 
 (def ^{:dynamic true :private true} *pure-context*)
