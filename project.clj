@@ -24,7 +24,7 @@
           :exclude [uncomplicate.fluokitten.algo]
           :output-path "docs/codox"}
 
-  :profiles {:dev {:dependencies [[midje "1.10.9"]]
+  :profiles {:dev {:dependencies [[midje "1.10.10"]]
                    :global-vars {*warn-on-reflection* true
                                  *print-length* 128}
                    :plugins [[lein-midje "3.2.1"]
