@@ -455,7 +455,7 @@
 
 (defn eduction-op
   ([]
-   (eduction))
+   (eduction []))
   ([x]
    x)
   ([x y]
@@ -670,7 +670,7 @@
      Magma
      {:op (constantly eduction-op)}
      Monoid
-     {:id (constantly (eduction))}))
+     {:id (constantly (eduction []))}))
 
 (defmacro extend-set [t]
   `(extend ~t

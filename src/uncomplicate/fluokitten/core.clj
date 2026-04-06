@@ -594,6 +594,8 @@
   ([f init g x y z w & ws]
    (p/foldmap x g f init y z w ws)))
 
+;; TODO implement destructive foldmap!. Useful for pointers, vectors, tensors, etc.
+
 (defn op
   "Applies the monoid operation op determined by the type
    of monoids x and y. Since op is closed on that monoid,

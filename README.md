@@ -28,6 +28,6 @@ Once it reaches version 1.0.0 it will be considered stable, and more considerati
 
 ## License
 
-Copyright © 2013-2018 Dragan Djuric
+Copyright © 2013-2026 Dragan Djuric
 
 Distributed under the Eclipse Public License, the same as Clojure
