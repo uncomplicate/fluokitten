@@ -6,14 +6,14 @@
 ;;   the terms of this license.
 ;;   You must not remove this notice, or any other, from this software.
 
-(defproject uncomplicate/fluokitten "0.10.1"
+(defproject uncomplicate/fluokitten "0.10.2"
   :description "Category theory concepts in Clojure - Functors, Applicatives, Monads, Monoids and more."
   :url "https://github.com/uncomplicate/fluokitten"
   :scm {:name "git"
         :url "https://github.com/uncomplicate/fluokitten"}
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :dependencies [[org.clojure/clojure "1.12.4"]]
+  :dependencies [[org.clojure/clojure "1.12.5"]]
   :codox {:src-dir-uri "http://github.com/uncomplicate/fluokitten/blob/master"
           :src-linenum-anchor-prefix "L"
           :namespaces [uncomplicate.fluokitten.core
