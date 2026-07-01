@@ -25,4 +25,4 @@ then navigate to [localhost:4002](http://localhost:4002)
 
 ## License & Copyright
 
-Copyright (C) 2013-2016 Dragan Djuric.
+Copyright (C) 2013-2026 Dragan Djuric.
